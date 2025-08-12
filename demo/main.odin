@@ -49,7 +49,6 @@ main :: proc() {
 					height = orui.fixed(height),
 					background_color = rl.BEIGE,
 					padding = orui.padding(16),
-					margin = orui.margin(16),
 					gap = 8,
 				},
 			)
@@ -75,8 +74,7 @@ main :: proc() {
 						direction = .LeftToRight,
 						width = orui.fixed(width),
 						height = orui.fixed(height - 100),
-						padding = orui.padding(8),
-						gap = 8,
+						gap = 5,
 					},
 				)
 
@@ -84,13 +82,13 @@ main :: proc() {
 						ctx,
 						"sidebar",
 						{
-							layout = .Flex,
-							direction = .TopToBottom,
-							width = orui.fixed(200),
-							height = orui.fixed(height),
+							layout           = .Flex,
+							direction        = .TopToBottom,
+							width            = orui.fixed(200),
+							height           = orui.fixed(height - 700),
 							background_color = rl.BLUE,
-							padding = orui.padding(8),
-							margin = orui.margin(8),
+							// padding = orui.padding(8),
+							margin           = orui.margin(6),
 						},
 					)}
 
@@ -98,13 +96,13 @@ main :: proc() {
 						ctx,
 						"content",
 						{
-							layout = .Flex,
-							direction = .TopToBottom,
-							width = orui.fixed(width - 200),
-							height = orui.fixed(height),
+							layout           = .Flex,
+							direction        = .TopToBottom,
+							width            = orui.fixed(width - 500),
+							height           = orui.fixed(height - 500),
 							background_color = rl.RED,
-							padding = orui.padding(8),
-							margin = orui.margin(8),
+							// padding = orui.padding(8),
+							margin           = orui.margin(7),
 						},
 					)}
 			}
@@ -112,6 +110,7 @@ main :: proc() {
 		orui.end(ctx)
 
 		rl.EndDrawing()
+		// break
 	}
 
 	rl.CloseWindow()

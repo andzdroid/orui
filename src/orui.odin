@@ -226,12 +226,14 @@ compute_layout_element :: proc(ctx: ^Context, element: ^Element) {
 compute_element_size :: proc(element: ^Element) {
 	if element.width.type == .Fixed {
 		width := element.width.value
-		element._size.x = width + element.padding.left + element.padding.right
+		element._size.x = width + element.margin.left + element.margin.right
+		// log.infof("set element fixed width: %v", element)
 	}
 
 	if element.height.type == .Fixed {
 		height := element.height.type == .Fixed ? element.height.value : 0
-		element._size.y = height + element.padding.top + element.padding.bottom
+		element._size.y = height + element.margin.top + element.margin.bottom
+		// log.infof("set element fixed height: %v", element)
 	}
 
 	if element.layout == .Flex {
@@ -240,9 +242,9 @@ compute_element_size :: proc(element: ^Element) {
 		gap := element.gap * f32(children - 1)
 
 		if element.direction == .LeftToRight {
-			element._size.x += element.width.value + gap
+			element._size.x += gap
 		} else {
-			element._size.y += element.height.value + gap
+			element._size.y += gap
 		}
 	}
 }
@@ -257,6 +259,7 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	if element.layout == .Flex {
+		// log.infof("layout flex children of %v", element)
 		child := element.children
 		x := element.padding.left
 		y := element.padding.top
@@ -268,12 +271,21 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 				continue
 			}
 
+			if element.direction == .LeftToRight {
+				x += child_element.margin.left
+				y = element.padding.top + child_element.margin.top
+			} else {
+				x = element.padding.left + child_element.margin.left
+				y += child_element.margin.top
+			}
+
 			child_element._position = element._position + {x, y}
+			// log.infof("set child element position: %v", child_element)
 
 			if element.direction == .LeftToRight {
-				x += child_element._size.x + element.gap
+				x += child_element._size.x + element.gap + child_element.margin.right
 			} else {
-				y += child_element._size.y + element.gap
+				y += child_element._size.y + element.gap + child_element.margin.bottom
 			}
 
 			child = child_element.next
@@ -334,14 +346,7 @@ print :: proc(ctx: ^Context) {
 
 print_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
-	log.infof(
-		"element %d, parent %d, children %v, next %v",
-		index,
-		element.parent,
-		element.children,
-		element.next,
-	)
-	log.infof("element %d, position %v, size %v", index, element._position, element._size)
+	log.infof("element %d: %v", index, element)
 
 	child := element.children
 	for child != 0 {
