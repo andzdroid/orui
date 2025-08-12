@@ -154,7 +154,7 @@ begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
 	element.id = hash_string(id, 0)
 	element.parent = parent_index
 
-	if parent.children == 0 && ctx.previous == 0 {
+	if parent.children == 0 {
 		parent.children = index
 	} else {
 		previous := &ctx.elements[ctx.previous]
@@ -268,7 +268,7 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 				continue
 			}
 
-			child_element._position = {x, y}
+			child_element._position = element._position + {x, y}
 
 			if element.direction == .LeftToRight {
 				x += child_element._size.x + element.gap
@@ -284,13 +284,15 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
-	rl.DrawRectangle(
-		i32(element._position.x),
-		i32(element._position.y),
-		i32(element._size.x),
-		i32(element._size.y),
-		element.background_color,
-	)
+	if element.background_color.a > 0 {
+		rl.DrawRectangle(
+			i32(element._position.x),
+			i32(element._position.y),
+			i32(element._size.x),
+			i32(element._size.y),
+			element.background_color,
+		)
+	}
 
 	child := element.children
 	for child != 0 {

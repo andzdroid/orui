@@ -76,7 +76,7 @@ main :: proc() {
 						width = orui.fixed(width),
 						height = orui.fixed(height - 100),
 						padding = orui.padding(8),
-						background_color = rl.WHITE,
+						gap = 8,
 					},
 				)
 
