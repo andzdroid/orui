@@ -24,7 +24,7 @@ main :: proc() {
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
-	rl.SetTargetFPS(10)
+	rl.SetTargetFPS(1)
 
 	ctx := new(orui.Context)
 	defer free(ctx)
@@ -59,22 +59,24 @@ main :: proc() {
 					{
 						layout = .Flex,
 						direction = .LeftToRight,
-						width = orui.fixed(width),
+						width = orui.grow(),
 						height = orui.fixed(100),
 						background_color = rl.GREEN,
 						padding = orui.padding(8),
 					},
 				)}
 
+			/*
 			{orui.container(
 					ctx,
 					"main section",
 					{
 						layout = .Flex,
 						direction = .LeftToRight,
-						width = orui.fixed(width),
+						width = orui.grow(),
 						height = orui.fixed(height - 100),
 						gap = 5,
+						background_color = rl.YELLOW,
 					},
 				)
 
@@ -85,7 +87,7 @@ main :: proc() {
 							layout           = .Flex,
 							direction        = .TopToBottom,
 							width            = orui.fixed(200),
-							height           = orui.fixed(height - 700),
+							height           = orui.grow(),
 							background_color = rl.BLUE,
 							// padding = orui.padding(8),
 							margin           = orui.margin(6),
@@ -99,13 +101,14 @@ main :: proc() {
 							layout           = .Flex,
 							direction        = .TopToBottom,
 							width            = orui.fixed(width - 500),
-							height           = orui.fixed(height - 500),
+							height           = orui.grow(),
 							background_color = rl.RED,
 							// padding = orui.padding(8),
 							margin           = orui.margin(7),
 						},
 					)}
 			}
+			*/
 		}
 		orui.end(ctx)
 

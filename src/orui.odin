@@ -85,7 +85,7 @@ Element :: struct {
 
 	// internal
 	_position:        rl.Vector2,
-	_size:            rl.Vector2,
+	_size:            rl.Vector2, // border box size
 	parent:           int,
 	children:         int,
 	next:             int,
@@ -124,6 +124,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 		id     = id("root"),
 		width  = fixed(width),
 		height = fixed(height),
+		_size  = {width, height},
 	}
 	ctx.element_count += 1
 
@@ -135,8 +136,14 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 }
 
 end :: proc(ctx: ^Context) {
-	compute_layout(ctx, ctx.elements[0].children)
-	render_element(ctx, ctx.elements[0].children)
+	size_pass_x(ctx)
+	text_wrap_pass(ctx)
+	propagate_heights(ctx)
+	size_pass_y(ctx)
+	cross_axis_finalize(ctx)
+	sort_roots_by_z(ctx)
+	position_pass(ctx)
+	render(ctx)
 }
 
 begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
@@ -168,26 +175,26 @@ begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
 end_element :: proc(ctx: ^Context, _: string, _: ElementConfig) {
 	element := &ctx.elements[ctx.current]
 
-	compute_element_size(element)
+	set_element_size(element)
 
-	parent := &ctx.elements[element.parent]
-	if parent.layout == .Flex {
-		if parent.direction == .LeftToRight {
-			parent._size.x += element._size.x
-			parent._size.y = max(parent._size.y, element._size.y)
+	// parent := &ctx.elements[element.parent]
+	// if parent.layout == .Flex {
+	// 	if parent.direction == .LeftToRight {
+	// 		parent._size.x += element._size.x
+	// 		parent._size.y = max(parent._size.y, element._size.y)
 
-			if parent.children != ctx.current {
-				parent._size.x += parent.gap
-			}
-		} else {
-			parent._size.y += element._size.y
-			parent._size.x = max(parent._size.x, element._size.x)
+	// 		if parent.children != ctx.current {
+	// 			parent._size.x += parent.gap
+	// 		}
+	// 	} else {
+	// 		parent._size.y += element._size.y
+	// 		parent._size.x = max(parent._size.x, element._size.x)
 
-			if parent.children != ctx.current {
-				parent._size.y += parent.gap
-			}
-		}
-	}
+	// 		if parent.children != ctx.current {
+	// 			parent._size.y += parent.gap
+	// 		}
+	// 	}
+	// }
 
 	ctx.previous = ctx.current
 	ctx.current = ctx.parent
@@ -206,111 +213,6 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.gap = config.gap
 	element.background_color = config.background_color
 	element.user_data = config.user_data
-}
-
-compute_layout :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
-	compute_layout_element(ctx, element)
-
-	child := element.children
-	for child != 0 {
-		compute_layout(ctx, child)
-		child = ctx.elements[child].next
-	}
-}
-
-compute_layout_element :: proc(ctx: ^Context, element: ^Element) {
-	compute_element_position(ctx, element)
-}
-
-compute_element_size :: proc(element: ^Element) {
-	if element.width.type == .Fixed {
-		width := element.width.value
-		element._size.x = width + element.margin.left + element.margin.right
-		// log.infof("set element fixed width: %v", element)
-	}
-
-	if element.height.type == .Fixed {
-		height := element.height.type == .Fixed ? element.height.value : 0
-		element._size.y = height + element.margin.top + element.margin.bottom
-		// log.infof("set element fixed height: %v", element)
-	}
-
-	if element.layout == .Flex {
-		// size has already been computed by the children
-		children := element.children_count
-		gap := element.gap * f32(children - 1)
-
-		if element.direction == .LeftToRight {
-			element._size.x += gap
-		} else {
-			element._size.y += gap
-		}
-	}
-}
-
-compute_element_position :: proc(ctx: ^Context, element: ^Element) {
-	parent := &ctx.elements[element.parent]
-
-	if element.position.type == .Absolute {
-		element._position = element.position.value
-	} else if element.position.type == .Relative {
-		element._position = parent._position + element.position.value
-	}
-
-	if element.layout == .Flex {
-		// log.infof("layout flex children of %v", element)
-		child := element.children
-		x := element.padding.left
-		y := element.padding.top
-		for child != 0 {
-			child_element := &ctx.elements[child]
-
-			if child_element.position.type != .Auto {
-				child = child_element.next
-				continue
-			}
-
-			if element.direction == .LeftToRight {
-				x += child_element.margin.left
-				y = element.padding.top + child_element.margin.top
-			} else {
-				x = element.padding.left + child_element.margin.left
-				y += child_element.margin.top
-			}
-
-			child_element._position = element._position + {x, y}
-			// log.infof("set child element position: %v", child_element)
-
-			if element.direction == .LeftToRight {
-				x += child_element._size.x + element.gap + child_element.margin.right
-			} else {
-				y += child_element._size.y + element.gap + child_element.margin.bottom
-			}
-
-			child = child_element.next
-		}
-	}
-}
-
-render_element :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
-
-	if element.background_color.a > 0 {
-		rl.DrawRectangle(
-			i32(element._position.x),
-			i32(element._position.y),
-			i32(element._size.x),
-			i32(element._size.y),
-			element.background_color,
-		)
-	}
-
-	child := element.children
-	for child != 0 {
-		render_element(ctx, child)
-		child = ctx.elements[child].next
-	}
 }
 
 @(deferred_in = end_element)
@@ -355,11 +257,7 @@ print_element :: proc(ctx: ^Context, index: int) {
 	}
 }
 
-primary_axis_size :: proc(e: ^Element) -> f32 {
-	return e.direction == .LeftToRight ? e._size.x : e._size.y
-}
-
-set_primary_axis_size :: proc(e: ^Element, size: f32) {
+set_main_size :: proc(e: ^Element, size: f32) {
 	if e.direction == .LeftToRight {
 		e._size.x = size
 	} else {
@@ -367,24 +265,12 @@ set_primary_axis_size :: proc(e: ^Element, size: f32) {
 	}
 }
 
-cross_axis_size :: proc(e: ^Element) -> f32 {
-	return e.direction == .LeftToRight ? e._size.y : e._size.x
-}
-
-set_cross_axis_size :: proc(e: ^Element, size: f32) {
+set_cross_size :: proc(e: ^Element, size: f32) {
 	if e.direction == .LeftToRight {
 		e._size.y = size
 	} else {
 		e._size.x = size
 	}
-}
-
-padding_primary :: proc(p: ^Edges, dir: LayoutDirection) -> f32 {
-	return dir == .LeftToRight ? p.left + p.right : p.top + p.bottom
-}
-
-padding_cross :: proc(p: ^Edges, dir: LayoutDirection) -> f32 {
-	return dir == .LeftToRight ? p.top + p.bottom : p.left + p.right
 }
 
 padding :: proc(p: f32) -> Edges {
@@ -406,21 +292,14 @@ fixed_i32 :: proc(value: i32) -> Size {
 	return {.Fixed, f32(value), 0, 0}
 }
 
-percent :: proc {
-	percent_f32,
-	percent_i32,
-}
-percent_f32 :: proc(value: f32) -> Size {
+percent :: proc(value: f32) -> Size {
 	return {.Percent, value, 0, 0}
 }
-percent_i32 :: proc(value: i32) -> Size {
-	return {.Percent, f32(value), 0, 0}
+
+fit :: proc(base: f32 = 0) -> Size {
+	return {.Fit, base, 0, 0}
 }
 
-fit :: proc() -> Size {
-	return {.Fit, 0, 0, 0}
-}
-
-grow :: proc() -> Size {
-	return {.Grow, 0, 0, 0}
+grow :: proc(base: f32 = 0) -> Size {
+	return {.Grow, base, 0, 0}
 }
