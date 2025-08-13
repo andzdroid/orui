@@ -136,10 +136,10 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 }
 
 end :: proc(ctx: ^Context) {
-	size_pass_x(ctx)
+	size_pass_x(ctx, 0)
 	text_wrap_pass(ctx)
 	propagate_heights(ctx)
-	size_pass_y(ctx)
+	size_pass_y(ctx, 0)
 	cross_axis_finalize(ctx)
 	sort_roots_by_z(ctx)
 	position_pass(ctx)
@@ -296,8 +296,8 @@ percent :: proc(value: f32) -> Size {
 	return {.Percent, value, 0, 0}
 }
 
-fit :: proc(base: f32 = 0) -> Size {
-	return {.Fit, base, 0, 0}
+fit :: proc() -> Size {
+	return {.Fit, 0, 0, 0}
 }
 
 grow :: proc(base: f32 = 0) -> Size {

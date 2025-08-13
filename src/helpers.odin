@@ -25,19 +25,33 @@ y_margin :: proc(e: ^Element) -> f32 {
 }
 
 inner_width :: proc(e: ^Element) -> f32 {
-	return e._size.x - x_padding(e)
+	return max(0, e._size.x - x_padding(e))
 }
 
 inner_height :: proc(e: ^Element) -> f32 {
-	return e._size.y - y_padding(e)
+	return max(0, e._size.y - y_padding(e))
 }
 
 parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: bool) {
 	if e.parent == 0 {
-		return e._size.x, true
+		root := &ctx.elements[0]
+		return root._size.x, true
 	}
 
 	parent := &ctx.elements[e.parent]
-	def := parent.width.type == .Fixed || parent.width.type == .Percent
-	return inner_width(parent), def
+	return inner_width(parent), size_is_explicit(parent.width)
+}
+
+parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bool) {
+	if e.parent == 0 {
+		root := &ctx.elements[0]
+		return root._size.y, true
+	}
+
+	parent := &ctx.elements[e.parent]
+	return inner_height(parent), size_is_explicit(parent.height)
+}
+
+size_is_explicit :: proc(size: Size) -> bool {
+	return size.type == .Fixed || size.type == .Percent
 }

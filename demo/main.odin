@@ -66,7 +66,6 @@ main :: proc() {
 					},
 				)}
 
-			/*
 			{orui.container(
 					ctx,
 					"main section",
@@ -74,7 +73,7 @@ main :: proc() {
 						layout = .Flex,
 						direction = .LeftToRight,
 						width = orui.grow(),
-						height = orui.fixed(height - 100),
+						height = orui.grow(),
 						gap = 5,
 						background_color = rl.YELLOW,
 					},
@@ -100,7 +99,7 @@ main :: proc() {
 						{
 							layout           = .Flex,
 							direction        = .TopToBottom,
-							width            = orui.fixed(width - 500),
+							width            = orui.grow(),
 							height           = orui.grow(),
 							background_color = rl.RED,
 							// padding = orui.padding(8),
@@ -108,7 +107,6 @@ main :: proc() {
 						},
 					)}
 			}
-			*/
 		}
 		orui.end(ctx)
 
