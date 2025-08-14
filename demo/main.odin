@@ -61,7 +61,7 @@ main :: proc() {
 						direction = .LeftToRight,
 						width = orui.grow(),
 						height = orui.fixed(100),
-						background_color = rl.GREEN,
+						background_color = {80, 180, 50, 255},
 						padding = orui.padding(8),
 					},
 				)}
@@ -75,7 +75,7 @@ main :: proc() {
 						width = orui.grow(),
 						height = orui.grow(),
 						gap = 5,
-						background_color = rl.YELLOW,
+						background_color = {200, 200, 80, 255},
 					},
 				)
 
@@ -87,7 +87,7 @@ main :: proc() {
 							direction        = .TopToBottom,
 							width            = orui.fixed(200),
 							height           = orui.grow(),
-							background_color = rl.BLUE,
+							background_color = {50, 80, 200, 255},
 							// padding = orui.padding(8),
 							margin           = orui.margin(6),
 						},
@@ -97,15 +97,67 @@ main :: proc() {
 						ctx,
 						"content",
 						{
-							layout           = .Flex,
-							direction        = .TopToBottom,
-							width            = orui.grow(),
-							height           = orui.grow(),
-							background_color = rl.RED,
-							// padding = orui.padding(8),
-							margin           = orui.margin(7),
+							layout = .Flex,
+							direction = .TopToBottom,
+							width = orui.grow(),
+							height = orui.grow(),
+							background_color = {200, 50, 80, 255},
+							padding = orui.padding(8),
+							margin = orui.margin(7),
+							gap = 5,
 						},
-					)}
+					)
+
+					{orui.container(
+							ctx,
+							"fit content",
+							{
+								layout = .Flex,
+								direction = .LeftToRight,
+								width = orui.fit(),
+								height = orui.fit(),
+								background_color = {0, 100, 0, 255},
+								padding = orui.padding(10),
+								margin = orui.margin(25),
+								gap = 10,
+							},
+						)
+
+						{orui.container(
+								ctx,
+								"box a",
+								{
+									width = orui.fixed(200),
+									height = orui.fixed(200),
+									background_color = {100, 100, 200, 255},
+									margin = orui.margin(20),
+								},
+							)}
+
+						{orui.container(
+								ctx,
+								"box b",
+								{
+									width = orui.fixed(200),
+									height = orui.fixed(200),
+									background_color = {100, 200, 100, 255},
+									margin = orui.margin(20),
+								},
+							)}
+
+						{orui.container(
+								ctx,
+								"box c",
+								{
+									position = {.Relative, {100, 100}},
+									width = orui.fixed(200),
+									height = orui.fixed(200),
+									background_color = {200, 100, 100, 255},
+									margin = orui.margin(20),
+								},
+							)}
+					}
+				}
 			}
 		}
 		orui.end(ctx)

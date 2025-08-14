@@ -5,92 +5,7 @@ import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
 
-Id :: distinct int
-
-Edges :: struct {
-	left:   f32,
-	right:  f32,
-	top:    f32,
-	bottom: f32,
-}
-
-SizeType :: enum {
-	Fit,
-	Grow,
-	Percent,
-	Fixed,
-}
-
-Size :: struct {
-	type:  SizeType,
-	value: f32,
-	min:   f32,
-	max:   f32,
-}
-
-PositionType :: enum {
-	Auto,
-	Absolute,
-	Relative,
-}
-
-Position :: struct {
-	type:  PositionType,
-	value: rl.Vector2,
-}
-
-Layout :: enum {
-	None,
-	Flex,
-}
-
-LayoutDirection :: enum {
-	LeftToRight,
-	TopToBottom,
-}
-
-ElementConfig :: struct {
-	user_data:        rawptr,
-
-	// layout
-	layout:           Layout,
-	direction:        LayoutDirection,
-	position:         Position,
-	width:            Size,
-	height:           Size,
-	padding:          Edges,
-	margin:           Edges,
-	gap:              f32,
-
-	// style
-	background_color: rl.Color,
-}
-
-Element :: struct {
-	id:               Id,
-	user_data:        rawptr,
-
-	// layout
-	layout:           Layout,
-	direction:        LayoutDirection,
-	position:         Position,
-	width:            Size,
-	height:           Size,
-	padding:          Edges,
-	margin:           Edges,
-	gap:              f32,
-
-	// style
-	background_color: rl.Color,
-
-	// internal
-	_position:        rl.Vector2,
-	_size:            rl.Vector2, // border box size
-	parent:           int,
-	children:         int,
-	next:             int,
-	children_count:   int,
-}
+current_context: ^Context = nil
 
 Context :: struct {
 	elements:      [MAX_ELEMENTS]Element,
@@ -152,6 +67,8 @@ end :: proc(ctx: ^Context) {
 }
 
 begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
+	current_context = ctx
+
 	parent_index := ctx.current
 	parent := &ctx.elements[parent_index]
 
@@ -177,74 +94,21 @@ begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
 	return element
 }
 
-end_element :: proc(ctx: ^Context, _: string, _: ElementConfig) {
+end_element :: proc() {
+	ctx := current_context
+
 	element := &ctx.elements[ctx.current]
-
-	set_element_size(element)
-
-	// parent := &ctx.elements[element.parent]
-	// if parent.layout == .Flex {
-	// 	if parent.direction == .LeftToRight {
-	// 		parent._size.x += element._size.x
-	// 		parent._size.y = max(parent._size.y, element._size.y)
-
-	// 		if parent.children != ctx.current {
-	// 			parent._size.x += parent.gap
-	// 		}
-	// 	} else {
-	// 		parent._size.y += element._size.y
-	// 		parent._size.x = max(parent._size.x, element._size.x)
-
-	// 		if parent.children != ctx.current {
-	// 			parent._size.y += parent.gap
-	// 		}
-	// 	}
-	// }
-
 	ctx.previous = ctx.current
 	ctx.current = ctx.parent
 	current := ctx.elements[ctx.current]
 	ctx.parent = current.parent
 }
 
-configure_element :: proc(element: ^Element, config: ElementConfig) {
-	element.layout = config.layout
-	element.direction = config.direction
-	element.position = config.position
-	element.width = config.width
-	element.height = config.height
-	element.padding = config.padding
-	element.margin = config.margin
-	element.gap = config.gap
-	element.background_color = config.background_color
-	element.user_data = config.user_data
-}
-
-@(deferred_in = end_element)
+@(deferred_none = end_element)
 container :: proc(ctx: ^Context, id: string, config: ElementConfig) -> bool {
 	element := begin_element(ctx, id)
 	configure_element(element, config)
 	return true
-}
-
-id :: proc(str: string) -> Id {
-	return hash_string(str, 0)
-}
-
-hash_string :: proc(str: string, seed: int) -> Id {
-	hash := seed
-
-	for c in str {
-		hash += int(c)
-		hash += (hash << 10)
-		hash ~= (hash >> 6)
-	}
-
-	hash += (hash << 3)
-	hash ~= (hash >> 11)
-	hash += (hash << 15)
-
-	return Id(hash)
 }
 
 print :: proc(ctx: ^Context) {
@@ -259,22 +123,6 @@ print_element :: proc(ctx: ^Context, index: int) {
 	for child != 0 {
 		print_element(ctx, child)
 		child = ctx.elements[child].next
-	}
-}
-
-set_main_size :: proc(e: ^Element, size: f32) {
-	if e.direction == .LeftToRight {
-		e._size.x = size
-	} else {
-		e._size.y = size
-	}
-}
-
-set_cross_size :: proc(e: ^Element, size: f32) {
-	if e.direction == .LeftToRight {
-		e._size.y = size
-	} else {
-		e._size.x = size
 	}
 }
 

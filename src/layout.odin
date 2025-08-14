@@ -22,8 +22,6 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 
 	if element.position.type == .Absolute {
 		element._position = element.position.value
-	} else if element.position.type == .Relative {
-		element._position = parent._position + element.position.value
 	}
 
 	if element.layout == .Flex {
@@ -34,7 +32,7 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 		for child != 0 {
 			child_element := &ctx.elements[child]
 
-			if child_element.position.type != .Auto {
+			if child_element.position.type == .Absolute {
 				child = child_element.next
 				continue
 			}
@@ -48,6 +46,10 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 			}
 
 			child_element._position = element._position + {x, y}
+
+			if child_element.position.type == .Relative {
+				child_element._position += child_element.position.value
+			}
 
 			if element.direction == .LeftToRight {
 				x += child_element._size.x + element.gap + child_element.margin.right

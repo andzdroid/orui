@@ -39,7 +39,7 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 	}
 
 	parent := &ctx.elements[e.parent]
-	return inner_width(parent), size_is_explicit(parent.width)
+	return inner_width(parent), parent._size.x > 0
 }
 
 parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bool) {
@@ -49,9 +49,5 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 	}
 
 	parent := &ctx.elements[e.parent]
-	return inner_height(parent), size_is_explicit(parent.height)
-}
-
-size_is_explicit :: proc(size: Size) -> bool {
-	return size.type == .Fixed || size.type == .Percent
+	return inner_height(parent), parent._size.y > 0
 }

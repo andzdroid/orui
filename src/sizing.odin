@@ -1,21 +1,14 @@
 package orui
 
+import "core:log"
+
 /*
 Border/padding box: size of element (_size)
 Content box: border box - padding
 Margin box: border box + margin
 */
 
-set_element_size :: proc(element: ^Element) {
-	if element.width.type == .Fixed {
-		element._size.x = element.width.value
-	}
-
-	if element.height.type == .Fixed {
-		element._size.y = element.height.value
-	}
-}
-
+// Set fixed widths and fit widths.
 fit_widths :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
@@ -44,18 +37,17 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			base: f32 = 0
-			switch child_element.width.type {
-			case .Fixed:
-				base = child_element.width.value
-			case .Percent:
-				base = 0
-			case .Fit:
-				base = child_element._size.x
-			case .Grow:
-				base = child_element._size.x
+			if child_element.position.type == .Absolute {
+				child = child_element.next
+				continue
 			}
-			sum += base
+
+			if child_element.width.type == .Percent {
+				child = child_element.next
+				continue
+			}
+
+			sum += child_element._size.x + x_margin(child_element)
 			child = child_element.next
 		}
 		element._size.x = sum + gaps + x_padding(element)
@@ -65,19 +57,19 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 		child = element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			base: f32 = 0
-			switch child_element.width.type {
-			case .Fixed:
-				base = child_element.width.value
-			case .Percent:
-				base = 0
-			case .Fit:
-				base = child_element._size.x
-			case .Grow:
-				base = child_element._size.x
+			if child_element.position.type == .Absolute {
+				child = child_element.next
+				continue
 			}
-			if base > max_child {
-				max_child = base
+
+			if child_element.width.type == .Percent {
+				child = child_element.next
+				continue
+			}
+
+			child_width := child_element._size.x + x_margin(child_element)
+			if child_width > max_child {
+				max_child = child_width
 			}
 			child = child_element.next
 		}
@@ -85,6 +77,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+// Set percent widths and grow widths.
 distribute_widths :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
@@ -106,16 +99,17 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 			child := element.children
 			for child != 0 {
 				child_element := &ctx.elements[child]
+				if child_element.position.type == .Absolute {
+					child = child_element.next
+					continue
+				}
+
 				base: f32 = 0
 				switch child_element.width.type {
 				case .Fixed:
-					base = child_element.width.value
+					base = child_element._size.x
 				case .Percent:
-					if has_definite {
-						base = element_inner_width * child_element.width.value
-					} else {
-						base = 0
-					}
+					base = element_inner_width * child_element.width.value
 				case .Fit:
 					base = child_element._size.x
 				case .Grow:
@@ -130,21 +124,19 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 				child = child_element.next
 			}
 
-			if has_definite {
-				gaps := element.gap * f32(max(element.children_count - 1, 0))
-				remaining := element_inner_width - sum_with_margins - gaps
-				if remaining > 0 && total_weight > 0 {
-					child = element.children
-					for child != 0 {
-						child_element := &ctx.elements[child]
-						if child_element.width.type == .Grow {
-							weight := child_element.width.value
-							if weight <= 0 {weight = 1}
-							add := remaining * (weight / total_weight)
-							child_element._size.x += add
-						}
-						child = child_element.next
+			gaps := element.gap * f32(max(element.children_count - 1, 0))
+			remaining := element_inner_width - sum_with_margins - gaps
+			if remaining > 0 && total_weight > 0 {
+				child = element.children
+				for child != 0 {
+					child_element := &ctx.elements[child]
+					if child_element.width.type == .Grow {
+						weight := child_element.width.value
+						if weight <= 0 {weight = 1}
+						add := remaining * (weight / total_weight)
+						child_element._size.x += add
 					}
+					child = child_element.next
 				}
 			}
 		} else {
@@ -155,13 +147,14 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 			for child != 0 {
 				child_element := &ctx.elements[child]
 
+				if child_element.position.type == .Absolute {
+					child = child_element.next
+					continue
+				}
+
 				if child_element.width.type == .Percent {
-					if has_definite {
-						available_width := element_inner_width - x_margin(child_element)
-						child_element._size.x = available_width * child_element.width.value
-					} else {
-						child_element._size.x = 0
-					}
+					available_width := element_inner_width - x_margin(child_element)
+					child_element._size.x = available_width * child_element.width.value
 				} else if child_element.width.type == .Grow {
 					child_element._size.x = element_inner_width - x_margin(child_element)
 				}
@@ -181,6 +174,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 text_wrap_pass :: proc(ctx: ^Context) {}
 propagate_heights :: proc(ctx: ^Context) {}
 
+// Set fixed heights and fit heights.
 fit_heights :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
@@ -209,18 +203,17 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			base: f32 = 0
-			switch child_element.height.type {
-			case .Fixed:
-				base = child_element.height.value
-			case .Percent:
-				base = 0
-			case .Fit:
-				base = child_element._size.y
-			case .Grow:
-				base = child_element._size.y
+			if child_element.position.type == .Absolute {
+				child = child_element.next
+				continue
 			}
-			sum += base
+
+			if child_element.height.type == .Percent {
+				child = child_element.next
+				continue
+			}
+
+			sum += child_element._size.y + y_margin(child_element)
 			child = child_element.next
 		}
 		element._size.y = sum + gaps + y_padding(element)
@@ -230,19 +223,19 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 		child = element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			base: f32 = 0
-			switch child_element.height.type {
-			case .Fixed:
-				base = child_element.height.value
-			case .Percent:
-				base = 0
-			case .Fit:
-				base = child_element._size.y
-			case .Grow:
-				base = child_element._size.y
+			if child_element.position.type == .Absolute {
+				child = child_element.next
+				continue
 			}
-			if base > max_child {
-				max_child = base
+
+			if child_element.height.type == .Percent {
+				child = child_element.next
+				continue
+			}
+
+			child_height := child_element._size.y + y_margin(child_element)
+			if child_height > max_child {
+				max_child = child_height
 			}
 			child = child_element.next
 		}
@@ -250,6 +243,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+// Set percent heights and grow heights.
 distribute_heights :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
@@ -271,16 +265,17 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 			child := element.children
 			for child != 0 {
 				child_element := &ctx.elements[child]
+				if child_element.position.type == .Absolute {
+					child = child_element.next
+					continue
+				}
+
 				base: f32 = 0
 				switch child_element.height.type {
 				case .Fixed:
-					base = child_element.height.value
+					base = child_element._size.y
 				case .Percent:
-					if has_definite {
-						base = element_inner_height * child_element.height.value
-					} else {
-						base = 0
-					}
+					base = element_inner_height * child_element.height.value
 				case .Fit:
 					base = child_element._size.y
 				case .Grow:
@@ -295,22 +290,20 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 				child = child_element.next
 			}
 
-			if has_definite {
-				gaps := element.gap * f32(max(element.children_count - 1, 0))
-				remaining := element_inner_height - sum_with_margins - gaps
-				if remaining > 0 && total_weight > 0 {
-					child = element.children
+			gaps := element.gap * f32(max(element.children_count - 1, 0))
+			remaining := element_inner_height - sum_with_margins - gaps
+			if remaining > 0 && total_weight > 0 {
+				child = element.children
+			}
+			for child != 0 {
+				child_element := &ctx.elements[child]
+				if child_element.height.type == .Grow {
+					weight := child_element.height.value
+					if weight <= 0 {weight = 1}
+					add := remaining * (weight / total_weight)
+					child_element._size.y += add
 				}
-				for child != 0 {
-					child_element := &ctx.elements[child]
-					if child_element.height.type == .Grow {
-						weight := child_element.height.value
-						if weight <= 0 {weight = 1}
-						add := remaining * (weight / total_weight)
-						child_element._size.y += add
-					}
-					child = child_element.next
-				}
+				child = child_element.next
 			}
 		} else {
 			element_inner_height := inner_height(element)
@@ -320,13 +313,14 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 			for child != 0 {
 				child_element := &ctx.elements[child]
 
+				if child_element.position.type == .Absolute {
+					child = child_element.next
+					continue
+				}
+
 				if child_element.height.type == .Percent {
-					if has_definite {
-						available_height := element_inner_height - y_margin(child_element)
-						child_element._size.y = available_height * child_element.height.value
-					} else {
-						child_element._size.y = 0
-					}
+					available_height := element_inner_height - y_margin(child_element)
+					child_element._size.y = available_height * child_element.height.value
 				} else if child_element.height.type == .Grow {
 					child_element._size.y = element_inner_height - y_margin(child_element)
 				}
