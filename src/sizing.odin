@@ -1,6 +1,8 @@
 package orui
 
 import "core:log"
+import "core:strings"
+import rl "vendor:raylib"
 
 /*
 Border/padding box: size of element (_size)
@@ -8,12 +10,61 @@ Content box: border box - padding
 Margin box: border box + margin
 */
 
+measure_text_width :: proc(
+	text: string,
+	font: ^rl.Font,
+	font_size: f32,
+	letter_spacing: f32,
+) -> f32 {
+	if len(text) == 0 {
+		return 0
+	}
+
+	measured := rl.MeasureTextEx(
+		font^,
+		strings.unsafe_string_to_cstring(text),
+		font_size,
+		letter_spacing,
+	)
+	return measured.x
+}
+
+measure_text_height :: proc(text: string, font_size: f32, line_height_multiplier: f32) -> f32 {
+	line_height := line_height_multiplier > 0 ? line_height_multiplier : 1
+	return font_size * line_height
+}
+
+measure_text_element :: proc(element: ^Element) -> rl.Vector2 {
+	if !element.has_text {
+		return {}
+	}
+
+	width := measure_text_width(
+		element.text,
+		element.font,
+		element.font_size,
+		element.letter_spacing,
+	)
+	height := measure_text_height(element.text, element.font_size, element.line_height)
+	return {width, height}
+}
+
 // Set fixed widths and fit widths.
 fit_widths :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
 	if element.width.type == .Fixed {
 		element._size.x = element.width.value
+	}
+
+	if (element.width.type == .Fit || element.width.type == .Grow) && element.has_text {
+		text_width := measure_text_width(
+			element.text,
+			element.font,
+			element.font_size,
+			element.letter_spacing,
+		)
+		element._size.x = text_width + x_padding(element)
 	}
 
 	child := element.children
@@ -180,6 +231,11 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 
 	if element.height.type == .Fixed {
 		element._size.y = element.height.value
+	}
+
+	if (element.height.type == .Fit || element.height.type == .Grow) && element.has_text {
+		text_height := measure_text_height(element.text, element.font_size, element.line_height)
+		element._size.y = text_height + y_padding(element)
 	}
 
 	child := element.children

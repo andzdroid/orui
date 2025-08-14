@@ -1,5 +1,6 @@
 package orui
 
+import "core:strings"
 import rl "vendor:raylib"
 
 render :: proc(ctx: ^Context) {
@@ -16,6 +17,19 @@ render_element :: proc(ctx: ^Context, index: int) {
 			i32(element._size.x),
 			i32(element._size.y),
 			element.background_color,
+		)
+	}
+
+	if element.has_text {
+		x := element._position.x + element.padding.left
+		y := element._position.y + element.padding.top
+		rl.DrawTextEx(
+			element.font^,
+			strings.unsafe_string_to_cstring(element.text),
+			{x, y},
+			element.font_size,
+			element.letter_spacing,
+			element.color,
 		)
 	}
 

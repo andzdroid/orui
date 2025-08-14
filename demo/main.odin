@@ -30,6 +30,8 @@ main :: proc() {
 	defer free(ctx)
 	orui.init(ctx)
 
+	default_font := rl.GetFontDefault()
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
@@ -39,7 +41,6 @@ main :: proc() {
 		orui.begin(ctx, width, height)
 
 		{orui.container(
-				ctx,
 				"container",
 				{
 					layout = .Flex,
@@ -54,7 +55,6 @@ main :: proc() {
 			)
 
 			{orui.container(
-					ctx,
 					"top bar",
 					{
 						layout = .Flex,
@@ -67,7 +67,6 @@ main :: proc() {
 				)}
 
 			{orui.container(
-					ctx,
 					"main section",
 					{
 						layout = .Flex,
@@ -80,7 +79,6 @@ main :: proc() {
 				)
 
 				{orui.container(
-						ctx,
 						"sidebar",
 						{
 							layout           = .Flex,
@@ -94,7 +92,6 @@ main :: proc() {
 					)}
 
 				{orui.container(
-						ctx,
 						"content",
 						{
 							layout = .Flex,
@@ -109,7 +106,6 @@ main :: proc() {
 					)
 
 					{orui.container(
-							ctx,
 							"fit content",
 							{
 								layout = .Flex,
@@ -124,18 +120,33 @@ main :: proc() {
 						)
 
 						{orui.container(
-								ctx,
 								"box a",
 								{
-									width = orui.fixed(200),
+									layout = .Flex,
+									direction = .TopToBottom,
+									width = orui.fit(),
 									height = orui.fixed(200),
 									background_color = {100, 100, 200, 255},
 									margin = orui.margin(20),
 								},
-							)}
+							)
+
+							orui.label(
+								"label",
+								"Hello world! here is some more text and more text to see how it looks",
+								{
+									font = &default_font,
+									font_size = 20,
+									color = rl.WHITE,
+									background_color = rl.BLACK,
+									padding = orui.padding(10),
+									margin = orui.margin(5),
+									width = orui.grow(),
+								},
+							)
+						}
 
 						{orui.container(
-								ctx,
 								"box b",
 								{
 									width = orui.fixed(200),
@@ -146,7 +157,6 @@ main :: proc() {
 							)}
 
 						{orui.container(
-								ctx,
 								"box c",
 								{
 									position = {.Relative, {100, 100}},
@@ -160,7 +170,7 @@ main :: proc() {
 				}
 			}
 		}
-		orui.end(ctx)
+		orui.end()
 
 		rl.EndDrawing()
 		// break

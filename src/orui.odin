@@ -33,6 +33,8 @@ begin_i32 :: proc(ctx: ^Context, width: i32, height: i32) {
 }
 
 _begin :: proc(ctx: ^Context, width: f32, height: f32) {
+	current_context = ctx
+
 	ctx.element_count = 0
 
 	ctx.elements[0] = {
@@ -50,7 +52,17 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.active = 0
 }
 
-end :: proc(ctx: ^Context) {
+end :: proc {
+	_end,
+	_end_with_context,
+}
+
+_end :: proc() {
+	ctx := current_context
+	_end_with_context(ctx)
+}
+
+_end_with_context :: proc(ctx: ^Context) {
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
 
@@ -66,9 +78,8 @@ end :: proc(ctx: ^Context) {
 	render(ctx)
 }
 
-begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
-	current_context = ctx
-
+begin_element :: proc(id: string) -> ^Element {
+	ctx := current_context
 	parent_index := ctx.current
 	parent := &ctx.elements[parent_index]
 
@@ -96,7 +107,6 @@ begin_element :: proc(ctx: ^Context, id: string) -> ^Element {
 
 end_element :: proc() {
 	ctx := current_context
-
 	element := &ctx.elements[ctx.current]
 	ctx.previous = ctx.current
 	ctx.current = ctx.parent
@@ -105,10 +115,17 @@ end_element :: proc() {
 }
 
 @(deferred_none = end_element)
-container :: proc(ctx: ^Context, id: string, config: ElementConfig) -> bool {
-	element := begin_element(ctx, id)
+container :: proc(id: string, config: ElementConfig) {
+	element := begin_element(id)
 	configure_element(element, config)
-	return true
+}
+
+label :: proc(id: string, text: string, config: ElementConfig) {
+	element := begin_element(id)
+	configure_element(element, config)
+	element.has_text = true
+	element.text = text
+	end_element()
 }
 
 print :: proc(ctx: ^Context) {
