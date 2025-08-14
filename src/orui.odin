@@ -136,10 +136,15 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 }
 
 end :: proc(ctx: ^Context) {
-	size_pass_x(ctx, 0)
+	fit_widths(ctx, 0)
+	distribute_widths(ctx, 0)
+
 	text_wrap_pass(ctx)
 	propagate_heights(ctx)
-	size_pass_y(ctx, 0)
+
+	fit_heights(ctx, 0)
+	distribute_heights(ctx, 0)
+
 	cross_axis_finalize(ctx)
 	sort_roots_by_z(ctx)
 	position_pass(ctx)
