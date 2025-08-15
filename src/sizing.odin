@@ -19,7 +19,7 @@ measure_text_width :: proc(
 	if len(text) == 0 {
 		return 0
 	}
-
+	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
 	measured := rl.MeasureTextEx(
 		font^,
 		strings.unsafe_string_to_cstring(text),
@@ -32,21 +32,6 @@ measure_text_width :: proc(
 measure_text_height :: proc(text: string, font_size: f32, line_height_multiplier: f32) -> f32 {
 	line_height := line_height_multiplier > 0 ? line_height_multiplier : 1
 	return font_size * line_height
-}
-
-measure_text_element :: proc(element: ^Element) -> rl.Vector2 {
-	if !element.has_text {
-		return {}
-	}
-
-	width := measure_text_width(
-		element.text,
-		element.font,
-		element.font_size,
-		element.letter_spacing,
-	)
-	height := measure_text_height(element.text, element.font_size, element.line_height)
-	return {width, height}
 }
 
 // Set fixed widths and fit widths.
@@ -84,7 +69,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	if element.direction == .LeftToRight {
 		// sum of child widths
 		sum: f32 = 0
-		gaps := element.gap * f32(max(element.children_count - 1, 0))
+		child_count := 0
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
@@ -92,6 +77,8 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 				child = child_element.next
 				continue
 			}
+
+			child_count += 1
 
 			if child_element.width.type == .Percent {
 				child = child_element.next
@@ -101,6 +88,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 			sum += child_element._size.x + x_margin(child_element)
 			child = child_element.next
 		}
+		gaps := element.gap * f32(max(child_count - 1, 0))
 		element._size.x = sum + gaps + x_padding(element)
 	} else {
 		// max of child widths
@@ -146,7 +134,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 
 			sum_with_margins: f32 = 0
 			total_weight: f32 = 0
-
+			child_count := 0
 			child := element.children
 			for child != 0 {
 				child_element := &ctx.elements[child]
@@ -172,10 +160,11 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 
 				child_element._size.x = base
 				sum_with_margins += base + x_margin(child_element)
+				child_count += 1
 				child = child_element.next
 			}
 
-			gaps := element.gap * f32(max(element.children_count - 1, 0))
+			gaps := element.gap * f32(max(child_count - 1, 0))
 			remaining := element_inner_width - sum_with_margins - gaps
 			if remaining > 0 && total_weight > 0 {
 				child = element.children
@@ -255,7 +244,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	if element.direction == .TopToBottom {
 		// sum of child heights
 		sum: f32 = 0
-		gaps := element.gap * f32(max(element.children_count - 1, 0))
+		child_count := 0
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
@@ -263,6 +252,8 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 				child = child_element.next
 				continue
 			}
+
+			child_count += 1
 
 			if child_element.height.type == .Percent {
 				child = child_element.next
@@ -272,7 +263,8 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 			sum += child_element._size.y + y_margin(child_element)
 			child = child_element.next
 		}
-		element._size.y = sum + gaps + y_padding(element)
+		gap := element.gap * f32(max(child_count - 1, 0))
+		element._size.y = sum + gap + y_padding(element)
 	} else {
 		// max of child heights
 		max_child: f32 = 0
@@ -317,7 +309,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 
 			sum_with_margins: f32 = 0
 			total_weight: f32 = 0
-
+			child_count := 0
 			child := element.children
 			for child != 0 {
 				child_element := &ctx.elements[child]
@@ -343,23 +335,24 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 
 				child_element._size.y = base
 				sum_with_margins += base + y_margin(child_element)
+				child_count += 1
 				child = child_element.next
 			}
 
-			gaps := element.gap * f32(max(element.children_count - 1, 0))
+			gaps := element.gap * f32(max(child_count - 1, 0))
 			remaining := element_inner_height - sum_with_margins - gaps
 			if remaining > 0 && total_weight > 0 {
 				child = element.children
-			}
-			for child != 0 {
-				child_element := &ctx.elements[child]
-				if child_element.height.type == .Grow {
-					weight := child_element.height.value
-					if weight <= 0 {weight = 1}
-					add := remaining * (weight / total_weight)
-					child_element._size.y += add
+				for child != 0 {
+					child_element := &ctx.elements[child]
+					if child_element.height.type == .Grow {
+						weight := child_element.height.value
+						if weight <= 0 {weight = 1}
+						add := remaining * (weight / total_weight)
+						child_element._size.y += add
+					}
+					child = child_element.next
 				}
-				child = child_element.next
 			}
 		} else {
 			element_inner_height := inner_height(element)

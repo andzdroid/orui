@@ -8,14 +8,23 @@ MAX_ELEMENTS :: 8192
 current_context: ^Context = nil
 
 Context :: struct {
-	elements:      [MAX_ELEMENTS]Element,
-	element_count: int,
+	elements:          [MAX_ELEMENTS]Element,
+	element_count:     int,
 	// TODO: lookup table of Id => index
-	current:       int,
-	previous:      int,
-	parent:        int,
-	hover:         int,
-	active:        int,
+	current:           int,
+	current_id:        Id,
+	previous:          int,
+	parent:            int,
+
+	// input state
+	hover:             [MAX_ELEMENTS]Id,
+	hover_count:       int,
+	active:            [MAX_ELEMENTS]Id,
+	active_count:      int,
+	hover_prev:        [MAX_ELEMENTS]Id,
+	hover_prev_count:  int,
+	active_prev:       [MAX_ELEMENTS]Id,
+	active_prev_count: int,
 }
 
 init :: proc(ctx: ^Context) {
@@ -38,7 +47,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.element_count = 0
 
 	ctx.elements[0] = {
-		id     = id("root"),
+		id     = to_id("root"),
 		width  = fixed(width),
 		height = fixed(height),
 		_size  = {width, height},
@@ -48,8 +57,14 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.current = 0
 	ctx.previous = 0
 	ctx.parent = 0
-	ctx.hover = 0
-	ctx.active = 0
+
+	ctx.hover_prev = ctx.hover
+	ctx.hover_prev_count = ctx.hover_count
+	ctx.hover_count = 0
+
+	ctx.active_prev = ctx.active
+	ctx.active_prev_count = ctx.active_count
+	ctx.active_count = 0
 }
 
 end :: proc {
@@ -76,10 +91,20 @@ _end_with_context :: proc(ctx: ^Context) {
 	sort_roots_by_z(ctx)
 	position_pass(ctx)
 	render(ctx)
+
+	handle_input_state(ctx)
 }
 
-begin_element :: proc(id: string) -> ^Element {
+id :: proc(str: string) -> Id {
+	id := to_id(str)
 	ctx := current_context
+	ctx.current_id = id
+	return id
+}
+
+begin_element :: proc(id: Id) -> ^Element {
+	ctx := current_context
+	assert(ctx.current_id == id, "id mismatch. id() should only be called in element declarations")
 	parent_index := ctx.current
 	parent := &ctx.elements[parent_index]
 
@@ -91,7 +116,7 @@ begin_element :: proc(id: string) -> ^Element {
 	ctx.current = index
 	ctx.parent = parent_index
 
-	element.id = hash_string(id, 0)
+	element.id = id
 	element.parent = parent_index
 
 	if parent.children == 0 {
@@ -114,18 +139,138 @@ end_element :: proc() {
 	ctx.parent = current.parent
 }
 
+ElementModifier :: proc(element: ^Element)
+
 @(deferred_none = end_element)
-container :: proc(id: string, config: ElementConfig) {
+container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
+
+	for modifier in modifiers {
+		modifier(element)
+	}
+
+	return true
 }
 
-label :: proc(id: string, text: string, config: ElementConfig) {
+label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
 	element.has_text = true
 	element.text = text
+
+	for modifier in modifiers {
+		modifier(element)
+	}
+
 	end_element()
+	return true
+}
+
+hovered :: proc {
+	_hovered,
+}
+
+_hovered :: proc() -> bool {
+	ctx := current_context
+	if ctx.current == 0 {
+		return false
+	}
+
+	for i := 0; i < ctx.hover_prev_count; i += 1 {
+		if ctx.hover_prev[i] == ctx.current_id {
+			return true
+		}
+	}
+
+	return false
+}
+
+_hovered_id :: proc(id: string) -> bool {
+	ctx := current_context
+	if ctx.current == 0 {
+		return false
+	}
+
+	id := to_id(id)
+	for i := 0; i < ctx.hover_prev_count; i += 1 {
+		if ctx.hover_prev[i] == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+active :: proc {
+	_active,
+	_active_id,
+}
+
+_active :: proc() -> bool {
+	ctx := current_context
+	if ctx.current == 0 {
+		return false
+	}
+
+	for i := 0; i < ctx.active_prev_count; i += 1 {
+		if ctx.active_prev[i] == ctx.current_id {
+			return true
+		}
+	}
+
+	return false
+}
+
+_active_id :: proc(id: string) -> bool {
+	ctx := current_context
+	if ctx.current == 0 {
+		return false
+	}
+
+	id := to_id(id)
+	for i := 0; i < ctx.active_prev_count; i += 1 {
+		if ctx.active_prev[i] == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+@(private)
+handle_input_state :: proc(ctx: ^Context) {
+	position := rl.GetMousePosition()
+	mouse_down := rl.IsMouseButtonDown(.LEFT)
+	ctx.hover_count = 0
+	ctx.active_count = 0
+	collect_hovered(ctx, 0, position, mouse_down)
+	// TODO: active state, click handling
+}
+
+@(private)
+collect_hovered :: proc(ctx: ^Context, index: int, position: rl.Vector2, mouse_down: bool) {
+	element := &ctx.elements[index]
+	if point_in_rect(position, element._position, element._size) {
+		ctx.hover[ctx.hover_count] = element.id
+		ctx.hover_count += 1
+
+		if mouse_down {
+			ctx.active[ctx.active_count] = element.id
+			ctx.active_count += 1
+		}
+	}
+
+	child := element.children
+	for child != 0 {
+		collect_hovered(ctx, child, position, mouse_down)
+		child = ctx.elements[child].next
+	}
+}
+
+@(private)
+point_in_rect :: proc(p: rl.Vector2, pos: rl.Vector2, size: rl.Vector2) -> bool {
+	return p.x >= pos.x && p.y >= pos.y && p.x < pos.x + size.x && p.y < pos.y + size.y
 }
 
 print :: proc(ctx: ^Context) {
@@ -172,4 +317,12 @@ fit :: proc() -> Size {
 
 grow :: proc(base: f32 = 0) -> Size {
 	return {.Grow, base, 0, 0}
+}
+
+width :: proc(element: ^Element, value: Size) {
+	element.width = value
+}
+
+height :: proc(element: ^Element, value: Size) {
+	element.height = value
 }

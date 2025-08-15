@@ -1,9 +1,15 @@
 package demo
 
 import orui "../src"
+import "core:fmt"
 import "core:log"
 import "core:os"
 import rl "vendor:raylib"
+
+button_background :: proc(element: ^orui.Element) {
+	element.background_color =
+		orui.active() && orui.hovered() ? {190, 90, 50, 255} : orui.hovered() ? {200, 110, 70, 255} : {200, 100, 60, 255}
+}
 
 main :: proc() {
 	mode: int = 0
@@ -24,11 +30,13 @@ main :: proc() {
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
-	rl.SetTargetFPS(1)
+	rl.SetTargetFPS(60)
 
 	ctx := new(orui.Context)
 	defer free(ctx)
 	orui.init(ctx)
+
+	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
 
 	default_font := rl.GetFontDefault()
 
@@ -41,78 +49,110 @@ main :: proc() {
 		orui.begin(ctx, width, height)
 
 		{orui.container(
-				"container",
+				orui.id("container"),
 				{
 					layout = .Flex,
 					direction = .TopToBottom,
 					position = {.Absolute, {0, 0}},
 					width = orui.fixed(width),
 					height = orui.fixed(height),
-					background_color = rl.BEIGE,
+					background_color = {30, 30, 30, 255},
 					padding = orui.padding(16),
-					gap = 8,
+					gap = 16,
 				},
 			)
 
 			{orui.container(
-					"top bar",
+					orui.id("top bar"),
 					{
 						layout = .Flex,
 						direction = .LeftToRight,
 						width = orui.grow(),
 						height = orui.fixed(100),
-						background_color = {80, 180, 50, 255},
+						background_color = {50, 50, 50, 255},
 						padding = orui.padding(8),
+						gap = 8,
 					},
-				)}
+				)
+
+				for i in 0 ..< 5 {
+					orui.label(
+						orui.id(fmt.tprintf("top bar label %v", i)),
+						fmt.tprintf("Button %v", i),
+						{
+							font = &default_font,
+							font_size = 20,
+							letter_spacing = 1,
+							color = rl.WHITE,
+							padding = orui.padding(10),
+							width = orui.grow(),
+							height = orui.grow(),
+						},
+						button_background,
+					)
+				}
+			}
 
 			{orui.container(
-					"main section",
+					orui.id("main section"),
 					{
 						layout = .Flex,
 						direction = .LeftToRight,
 						width = orui.grow(),
 						height = orui.grow(),
-						gap = 5,
-						background_color = {200, 200, 80, 255},
+						gap = 16,
 					},
 				)
 
 				{orui.container(
-						"sidebar",
+						orui.id("sidebar"),
 						{
-							layout           = .Flex,
-							direction        = .TopToBottom,
-							width            = orui.fixed(200),
-							height           = orui.grow(),
-							background_color = {50, 80, 200, 255},
-							// padding = orui.padding(8),
-							margin           = orui.margin(6),
+							layout = .Flex,
+							direction = .TopToBottom,
+							width = orui.fixed(200),
+							height = orui.grow(),
+							background_color = {50, 50, 50, 255},
+							padding = orui.padding(8),
+							gap = 8,
 						},
-					)}
+					)
+
+					for i in 0 ..< 10 {
+						orui.label(
+							orui.id(fmt.tprintf("sidebar label %v", i)),
+							fmt.tprintf("Row %v", i),
+							{
+								font = &default_font,
+								font_size = 20,
+								letter_spacing = 1,
+								color = rl.WHITE,
+								padding = orui.padding(10),
+								width = orui.grow(),
+							},
+							button_background,
+						)
+					}
+				}
 
 				{orui.container(
-						"content",
+						orui.id("content"),
 						{
 							layout = .Flex,
 							direction = .TopToBottom,
 							width = orui.grow(),
 							height = orui.grow(),
-							background_color = {200, 50, 80, 255},
+							background_color = {50, 50, 50, 255},
 							padding = orui.padding(8),
-							margin = orui.margin(7),
-							gap = 5,
+							gap = 8,
 						},
 					)
 
 					{orui.container(
-							"fit content",
+							orui.id("fit content"),
 							{
 								layout = .Flex,
 								direction = .LeftToRight,
-								width = orui.fit(),
-								height = orui.fit(),
-								background_color = {0, 100, 0, 255},
+								background_color = {70, 70, 70, 255},
 								padding = orui.padding(10),
 								margin = orui.margin(25),
 								gap = 10,
@@ -120,54 +160,69 @@ main :: proc() {
 						)
 
 						{orui.container(
-								"box a",
+								orui.id("box a"),
 								{
 									layout = .Flex,
 									direction = .TopToBottom,
-									width = orui.fit(),
+									width = orui.fixed(200),
 									height = orui.fixed(200),
-									background_color = {100, 100, 200, 255},
+									background_color = {60, 100, 200, 255},
 									margin = orui.margin(20),
 								},
 							)
 
 							orui.label(
-								"label",
-								"Hello world! here is some more text and more text to see how it looks",
+								orui.id("button"),
+								"Hello world!",
 								{
 									font = &default_font,
 									font_size = 20,
 									color = rl.WHITE,
-									background_color = rl.BLACK,
 									padding = orui.padding(10),
 									margin = orui.margin(5),
 									width = orui.grow(),
 								},
+								button_background,
 							)
 						}
 
 						{orui.container(
-								"box b",
+								orui.id("box b"),
 								{
 									width = orui.fixed(200),
 									height = orui.fixed(200),
-									background_color = {100, 200, 100, 255},
+									background_color = {100, 200, 60, 255},
 									margin = orui.margin(20),
 								},
 							)}
 
 						{orui.container(
-								"box c",
+								orui.id("box c"),
 								{
 									position = {.Relative, {100, 100}},
 									width = orui.fixed(200),
 									height = orui.fixed(200),
-									background_color = {200, 100, 100, 255},
+									background_color = {200, 60, 100, 255},
 									margin = orui.margin(20),
 								},
 							)}
 					}
 				}
+			}
+
+			if orui.active("button") {
+				orui.label(
+					orui.id("clicked"),
+					"Clicked!",
+					{
+						font = &default_font,
+						font_size = 20,
+						color = rl.BLACK,
+						background_color = rl.WHITE,
+						padding = {10, 40, 10, 40},
+						position = {.Absolute, rl.GetMousePosition() - {0, 50}},
+					},
+				)
 			}
 		}
 		orui.end()

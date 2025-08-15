@@ -5,10 +5,10 @@ import rl "vendor:raylib"
 Id :: distinct int
 
 Edges :: struct {
-	left:   f32,
-	right:  f32,
 	top:    f32,
+	right:  f32,
 	bottom: f32,
+	left:   f32,
 }
 
 SizeType :: enum {
@@ -163,7 +163,7 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.vertical_alignment = config.vertical_alignment
 }
 
-id :: proc(str: string) -> Id {
+to_id :: proc(str: string) -> Id {
 	return hash_string(str, 0)
 }
 

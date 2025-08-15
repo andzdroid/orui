@@ -23,12 +23,13 @@ render_element :: proc(ctx: ^Context, index: int) {
 	if element.has_text {
 		x := element._position.x + element.padding.left
 		y := element._position.y + element.padding.top
+		letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 		rl.DrawTextEx(
 			element.font^,
-			strings.unsafe_string_to_cstring(element.text),
+			strings.clone_to_cstring(element.text, context.temp_allocator),
 			{x, y},
 			element.font_size,
-			element.letter_spacing,
+			letter_spacing,
 			element.color,
 		)
 	}
