@@ -81,7 +81,7 @@ _end_with_context :: proc(ctx: ^Context) {
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
 
-	text_wrap_pass(ctx)
+	wrap_text(ctx)
 	propagate_heights(ctx)
 
 	fit_heights(ctx, 0)
@@ -89,7 +89,7 @@ _end_with_context :: proc(ctx: ^Context) {
 
 	cross_axis_finalize(ctx)
 	sort_roots_by_z(ctx)
-	position_pass(ctx)
+	compute_layout(ctx, 0)
 	render(ctx)
 
 	handle_input_state(ctx)
@@ -164,13 +164,17 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 	}
 
 	end_element()
+	// return true if clicked? clicked is not the same as active
 	return true
 }
 
 hovered :: proc {
 	_hovered,
+	_hovered_id,
 }
 
+// Whether the mouse is over the current element.
+// Should only be used inside an element declaration.
 _hovered :: proc() -> bool {
 	ctx := current_context
 	if ctx.current == 0 {
@@ -256,8 +260,17 @@ collect_hovered :: proc(ctx: ^Context, index: int, position: rl.Vector2, mouse_d
 		ctx.hover_count += 1
 
 		if mouse_down {
-			ctx.active[ctx.active_count] = element.id
-			ctx.active_count += 1
+			already_active := false
+			for i := 0; i < ctx.active_prev_count; i += 1 {
+				if ctx.active_prev[i] == element.id {
+					already_active = true
+					break
+				}
+			}
+			if rl.IsMouseButtonPressed(.LEFT) || already_active {
+				ctx.active[ctx.active_count] = element.id
+				ctx.active_count += 1
+			}
 		}
 	}
 

@@ -75,17 +75,34 @@ main :: proc() {
 					},
 				)
 
-				for i in 0 ..< 5 {
+				for i in 0 ..< 4 {
 					orui.label(
 						orui.id(fmt.tprintf("top bar label %v", i)),
 						fmt.tprintf("Button %v", i),
 						{
 							font = &default_font,
-							font_size = 20,
-							letter_spacing = 1,
+							font_size = 14,
 							color = rl.WHITE,
 							padding = orui.padding(10),
 							width = orui.grow(),
+							height = orui.grow(),
+						},
+						button_background,
+					)
+				}
+
+				{orui.container(orui.id("gap1"), {width = orui.grow(5), height = orui.grow()})}
+
+				for i in 0 ..< 4 {
+					orui.label(
+						orui.id(fmt.tprintf("top bar label2 %v", i)),
+						fmt.tprintf("Button %v", i),
+						{
+							font = &default_font,
+							font_size = 14,
+							color = rl.WHITE,
+							padding = orui.padding(10),
+							width = orui.fit(),
 							height = orui.grow(),
 						},
 						button_background,
@@ -117,14 +134,30 @@ main :: proc() {
 						},
 					)
 
-					for i in 0 ..< 10 {
+					for i in 0 ..< 5 {
 						orui.label(
 							orui.id(fmt.tprintf("sidebar label %v", i)),
 							fmt.tprintf("Row %v", i),
 							{
 								font = &default_font,
 								font_size = 20,
-								letter_spacing = 1,
+								color = rl.WHITE,
+								padding = orui.padding(10),
+								width = orui.grow(),
+							},
+							button_background,
+						)
+					}
+
+					{orui.container(orui.id("gap"), {width = orui.grow(), height = orui.grow()})}
+
+					for i in 0 ..< 5 {
+						orui.label(
+							orui.id(fmt.tprintf("bottom label %v", i)),
+							fmt.tprintf("Button %v", i),
+							{
+								font = &default_font,
+								font_size = 20,
 								color = rl.WHITE,
 								padding = orui.padding(10),
 								width = orui.grow(),

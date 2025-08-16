@@ -22,7 +22,7 @@ measure_text_width :: proc(
 	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
 	measured := rl.MeasureTextEx(
 		font^,
-		strings.unsafe_string_to_cstring(text),
+		strings.clone_to_cstring(text, context.temp_allocator),
 		font_size,
 		letter_spacing,
 	)
@@ -114,6 +114,8 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 		}
 		element._size.x = max_child + x_padding(element)
 	}
+
+	apply_width_contraints(ctx, element)
 }
 
 // Set percent widths and grow widths.
@@ -125,6 +127,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 		if definite {
 			element._size.x = percent_width * element.width.value
 		}
+		apply_width_contraints(ctx, element)
 	}
 
 	if element.layout == .Flex {
@@ -159,7 +162,8 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 				}
 
 				child_element._size.x = base
-				sum_with_margins += base + x_margin(child_element)
+				apply_width_contraints(ctx, child_element)
+				sum_with_margins += child_element._size.x + x_margin(child_element)
 				child_count += 1
 				child = child_element.next
 			}
@@ -175,6 +179,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 						if weight <= 0 {weight = 1}
 						add := remaining * (weight / total_weight)
 						child_element._size.x += add
+						apply_width_contraints(ctx, child_element)
 					}
 					child = child_element.next
 				}
@@ -199,6 +204,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 					child_element._size.x = element_inner_width - x_margin(child_element)
 				}
 
+				apply_width_contraints(ctx, child_element)
 				child = child_element.next
 			}
 		}
@@ -211,7 +217,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 	}
 }
 
-text_wrap_pass :: proc(ctx: ^Context) {}
+wrap_text :: proc(ctx: ^Context) {}
 propagate_heights :: proc(ctx: ^Context) {}
 
 // Set fixed heights and fit heights.
@@ -289,6 +295,8 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 		}
 		element._size.y = max_child + y_padding(element)
 	}
+
+	apply_height_contraints(ctx, element)
 }
 
 // Set percent heights and grow heights.
@@ -300,6 +308,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 		if definite {
 			element._size.y = percent_height * element.height.value
 		}
+		apply_height_contraints(ctx, element)
 	}
 
 	if element.layout == .Flex {
@@ -334,7 +343,8 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 				}
 
 				child_element._size.y = base
-				sum_with_margins += base + y_margin(child_element)
+				apply_height_contraints(ctx, child_element)
+				sum_with_margins += child_element._size.y + y_margin(child_element)
 				child_count += 1
 				child = child_element.next
 			}
@@ -350,6 +360,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 						if weight <= 0 {weight = 1}
 						add := remaining * (weight / total_weight)
 						child_element._size.y += add
+						apply_height_contraints(ctx, child_element)
 					}
 					child = child_element.next
 				}
@@ -374,6 +385,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 					child_element._size.y = element_inner_height - y_margin(child_element)
 				}
 
+				apply_height_contraints(ctx, child_element)
 				child = child_element.next
 			}
 		}
@@ -387,3 +399,73 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 }
 
 cross_axis_finalize :: proc(ctx: ^Context) {}
+
+apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
+	if element.layout != .Flex {
+		return
+	}
+
+	min := max(element.width.min, x_padding(element))
+
+	apply_max := false
+	max: f32 = 0
+
+	parent_width, parent_definite := parent_inner_width(ctx, element)
+	if parent_definite {
+		max = parent_width - x_margin(element)
+		apply_max = true
+	}
+
+	if element.width.max > 0 {
+		if apply_max {
+			if element.width.max < max {
+				max = element.width.max
+			}
+		} else {
+			max = element.width.max
+			apply_max = true
+		}
+	}
+
+	if element._size.x < min {
+		element._size.x = min
+	}
+	if apply_max && element._size.x > max {
+		element._size.x = max
+	}
+}
+
+apply_height_contraints :: proc(ctx: ^Context, element: ^Element) {
+	if element.layout != .Flex {
+		return
+	}
+
+	min := max(element.height.min, y_padding(element))
+
+	apply_max := false
+	max: f32 = 0
+
+	parent_height, parent_definite := parent_inner_height(ctx, element)
+	if parent_definite {
+		max = parent_height - y_margin(element)
+		apply_max = true
+	}
+
+	if element.height.max > 0 {
+		if apply_max {
+			if element.height.max < max {
+				max = element.height.max
+			}
+		} else {
+			max = element.height.max
+			apply_max = true
+		}
+	}
+
+	if element._size.y < min {
+		element._size.y = min
+	}
+	if apply_max && element._size.y > max {
+		element._size.y = max
+	}
+}

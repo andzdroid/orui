@@ -2,10 +2,6 @@ package orui
 
 sort_roots_by_z :: proc(ctx: ^Context) {}
 
-position_pass :: proc(ctx: ^Context) {
-	compute_layout(ctx, 0)
-}
-
 compute_layout :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 	compute_element_position(ctx, element)
