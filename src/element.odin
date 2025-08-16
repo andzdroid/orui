@@ -37,10 +37,13 @@ Position :: struct {
 }
 
 Layout :: enum {
+	// Does not layout children
 	None,
+	// Layout children next to each other
 	Flex,
 }
 
+// Only used for Flex layout
 LayoutDirection :: enum {
 	LeftToRight,
 	TopToBottom,
@@ -58,78 +61,87 @@ VerticalAlignment :: enum {
 	Bottom,
 }
 
+TextAlignment :: struct {
+	horizontal: HorizontalAlignment,
+	vertical:   VerticalAlignment,
+}
+
 ElementConfig :: struct {
-	user_data:            rawptr,
+	user_data:        rawptr,
 
 	// layout
-	layout:               Layout,
-	direction:            LayoutDirection,
-	position:             Position,
-	width:                Size,
-	height:               Size,
-	padding:              Edges,
-	margin:               Edges,
-	gap:                  f32,
+	layout:           Layout,
+	direction:        LayoutDirection,
+	position:         Position,
+	width:            Size,
+	height:           Size,
+	padding:          Edges,
+	margin:           Edges,
+	gap:              f32,
+	// overflow?
 
 	// style
-	background_color:     rl.Color,
+	background_color: rl.Color,
+	// TODO: border, border color, corner radius
 
 	// text
-	has_text:             bool,
-	text:                 string,
-	font:                 ^rl.Font,
-	font_size:            f32,
-	color:                rl.Color,
-	letter_spacing:       f32,
-	line_height:          f32,
+	has_text:         bool,
+	text:             string,
+	font:             ^rl.Font,
+	font_size:        f32,
+	color:            rl.Color,
+	letter_spacing:   f32,
+	line_height:      f32,
 
 	// text layout
-	wrap:                 bool,
-	horizontal_alignment: HorizontalAlignment,
-	vertical_alignment:   VerticalAlignment,
-	// TODO: overflow?
+	text_align:       TextAlignment,
 }
 
 Element :: struct {
-	id:                   Id,
-	user_data:            rawptr,
+	id:               Id,
+	user_data:        rawptr,
 
 	// layout
-	layout:               Layout,
-	direction:            LayoutDirection,
-	position:             Position,
-	width:                Size,
-	height:               Size,
-	padding:              Edges,
-	margin:               Edges,
-	gap:                  f32,
+	layout:           Layout,
+	direction:        LayoutDirection,
+	position:         Position,
+	width:            Size,
+	height:           Size,
+	padding:          Edges,
+	margin:           Edges,
+	gap:              f32,
 
 	// style
-	background_color:     rl.Color,
+	background_color: rl.Color,
 
 	// text
-	has_text:             bool,
-	text:                 string,
-	font:                 ^rl.Font,
-	font_size:            f32,
-	color:                rl.Color,
-	letter_spacing:       f32,
-	line_height:          f32,
+	has_text:         bool,
+	text:             string,
+	font:             ^rl.Font,
+	font_size:        f32,
+	color:            rl.Color,
+	letter_spacing:   f32,
+	line_height:      f32,
 
 	// text layout
-	wrap:                 bool,
-	horizontal_alignment: HorizontalAlignment,
-	vertical_alignment:   VerticalAlignment,
+	text_align:       TextAlignment,
 
 	// internal
-	_position:            rl.Vector2,
-	_size:                rl.Vector2, // border box size
-	_measured_size:       rl.Vector2,
-	_line_count:          int,
-	parent:               int,
-	children:             int,
-	next:                 int,
-	children_count:       int,
+	_position:        rl.Vector2,
+	_size:            rl.Vector2, // border box size
+	_measured_size:   rl.Vector2,
+	_line_count:      int,
+	_lines:           [32]TextLine,
+	parent:           int,
+	children:         int,
+	next:             int,
+	children_count:   int,
+}
+
+TextLine :: struct {
+	start_index: int,
+	end_index:   int,
+	width:       f32,
 }
 
 configure_element :: proc(element: ^Element, config: ElementConfig) {
@@ -158,9 +170,7 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.line_height = config.line_height
 
 	// text layout
-	element.wrap = config.wrap
-	element.horizontal_alignment = config.horizontal_alignment
-	element.vertical_alignment = config.vertical_alignment
+	element.text_align = config.text_align
 }
 
 to_id :: proc(str: string) -> Id {

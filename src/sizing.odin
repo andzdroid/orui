@@ -29,7 +29,7 @@ measure_text_width :: proc(
 	return measured.x
 }
 
-measure_text_height :: proc(text: string, font_size: f32, line_height_multiplier: f32) -> f32 {
+measure_text_height :: proc(font_size: f32, line_height_multiplier: f32) -> f32 {
 	line_height := line_height_multiplier > 0 ? line_height_multiplier : 1
 	return font_size * line_height
 }
@@ -217,8 +217,122 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 	}
 }
 
-wrap_text :: proc(ctx: ^Context) {}
-propagate_heights :: proc(ctx: ^Context) {}
+wrap_text :: proc(ctx: ^Context) {
+	for i in 0 ..< ctx.element_count {
+		element := &ctx.elements[i]
+		if !element.has_text {
+			continue
+		}
+
+		text := element.text
+		text_len := len(text)
+
+		inner_available: f32 = 0
+		width_definite := false
+
+		if element._size.x > 0 {
+			inner_available = inner_width(element)
+			width_definite = true
+		} else if element.width.type == .Percent {
+			parent_inner, parent_definite := parent_inner_width(ctx, element)
+			if parent_definite {
+				inner_available = parent_inner * element.width.value - x_padding(element)
+				if inner_available < 0 {
+					inner_available = 0
+				}
+				width_definite = true
+			}
+		}
+
+		space_width := measure_text_width(
+			" ",
+			element.font,
+			element.font_size,
+			element.letter_spacing,
+		)
+
+		line_count := 1
+		current_line_width: f32 = 0
+		max_line_width: f32 = 0
+
+		// scan text
+		index := 0
+		for index < text_len {
+			if text[index] == '\n' {
+				if current_line_width > max_line_width {
+					max_line_width = current_line_width
+				}
+				current_line_width = 0
+				line_count += 1
+				index += 1
+
+				// Skip spaces at start of line
+				for index < text_len && text[index] == ' ' {
+					index += 1
+				}
+				continue
+			}
+
+			// check next word
+			word_start := index
+			for index < text_len && text[index] != ' ' && text[index] != '\n' {
+				index += 1
+			}
+			word := text[word_start:index]
+			if len(word) > 0 {
+				word_width := measure_text_width(
+					word,
+					element.font,
+					element.font_size,
+					element.letter_spacing,
+				)
+				if current_line_width == 0 {
+					current_line_width = word_width
+				} else {
+					next_width := current_line_width + space_width + word_width
+					if !width_definite || next_width <= inner_available {
+						current_line_width = next_width
+					} else {
+						if current_line_width > max_line_width {
+							max_line_width = current_line_width
+						}
+						current_line_width = word_width
+						line_count += 1
+					}
+				}
+			}
+
+			for index < text_len && text[index] == ' ' {
+				index += 1
+			}
+		}
+
+		if current_line_width > max_line_width {
+			max_line_width = current_line_width
+		}
+
+		element._line_count = line_count
+		element._measured_size.x = max_line_width
+
+		if element.height.type != .Fixed {
+			if element.height.type == .Percent {
+				_, parent_definite := parent_inner_height(ctx, element)
+				if !parent_definite {
+					line_height_px := measure_text_height(element.font_size, element.line_height)
+					element._size.y = line_height_px * f32(line_count) + y_padding(element)
+				}
+			} else {
+				line_height_px := measure_text_height(element.font_size, element.line_height)
+				element._size.y = line_height_px * f32(line_count) + y_padding(element)
+			}
+		}
+
+		if element.width.type == .Fit {
+			element._size.x = max_line_width + x_padding(element)
+			apply_width_contraints(ctx, element)
+		}
+	}
+}
 
 // Set fixed heights and fit heights.
 fit_heights :: proc(ctx: ^Context, index: int) {
@@ -229,8 +343,9 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	}
 
 	if (element.height.type == .Fit || element.height.type == .Grow) && element.has_text {
-		text_height := measure_text_height(element.text, element.font_size, element.line_height)
-		element._size.y = text_height + y_padding(element)
+		lines := element._line_count > 0 ? element._line_count : 1
+		line_height_px := measure_text_height(element.font_size, element.line_height)
+		element._size.y = line_height_px * f32(lines) + y_padding(element)
 	}
 
 	child := element.children
@@ -397,8 +512,6 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 		child = ctx.elements[child].next
 	}
 }
-
-cross_axis_finalize :: proc(ctx: ^Context) {}
 
 apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
 	if element.layout != .Flex {

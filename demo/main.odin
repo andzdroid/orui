@@ -30,7 +30,7 @@ main :: proc() {
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
-	rl.SetTargetFPS(60)
+	rl.SetTargetFPS(120)
 
 	ctx := new(orui.Context)
 	defer free(ctx)
@@ -186,38 +186,26 @@ main :: proc() {
 								layout = .Flex,
 								direction = .LeftToRight,
 								background_color = {70, 70, 70, 255},
+								width = orui.grow(),
 								padding = orui.padding(10),
 								margin = orui.margin(25),
 								gap = 10,
 							},
 						)
 
-						{orui.container(
-								orui.id("box a"),
-								{
-									layout = .Flex,
-									direction = .TopToBottom,
-									width = orui.fixed(200),
-									height = orui.fixed(200),
-									background_color = {60, 100, 200, 255},
-									margin = orui.margin(20),
-								},
-							)
-
-							orui.label(
-								orui.id("button"),
-								"Hello world!",
-								{
-									font = &default_font,
-									font_size = 20,
-									color = rl.WHITE,
-									padding = orui.padding(10),
-									margin = orui.margin(5),
-									width = orui.grow(),
-								},
-								button_background,
-							)
-						}
+						orui.label(
+							orui.id("button"),
+							"Hello world! this is some very very long text that should wrap while the container should fit the height",
+							{
+								font = &default_font,
+								font_size = 20,
+								color = rl.WHITE,
+								background_color = {30, 30, 30, 255},
+								padding = orui.padding(10),
+								margin = orui.margin(5),
+								width = orui.percent(0.3),
+							},
+						)
 
 						{orui.container(
 								orui.id("box b"),
@@ -259,6 +247,8 @@ main :: proc() {
 			}
 		}
 		orui.end()
+
+		rl.DrawFPS(10, 10)
 
 		rl.EndDrawing()
 		// break

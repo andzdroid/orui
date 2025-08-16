@@ -1,13 +1,5 @@
 package orui
 
-main_size :: proc(e: ^Element) -> f32 {
-	return e.direction == .LeftToRight ? e._size.x : e._size.y
-}
-
-cross_size :: proc(e: ^Element) -> f32 {
-	return e.direction == .LeftToRight ? e._size.y : e._size.x
-}
-
 x_padding :: proc(e: ^Element) -> f32 {
 	return e.padding.left + e.padding.right
 }

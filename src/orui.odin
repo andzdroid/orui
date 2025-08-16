@@ -82,12 +82,10 @@ _end_with_context :: proc(ctx: ^Context) {
 	distribute_widths(ctx, 0)
 
 	wrap_text(ctx)
-	propagate_heights(ctx)
 
 	fit_heights(ctx, 0)
 	distribute_heights(ctx, 0)
 
-	cross_axis_finalize(ctx)
 	sort_roots_by_z(ctx)
 	compute_layout(ctx, 0)
 	render(ctx)
