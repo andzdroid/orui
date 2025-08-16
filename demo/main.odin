@@ -86,6 +86,7 @@ main :: proc() {
 							padding = orui.padding(10),
 							width = orui.grow(),
 							height = orui.grow(),
+							align = {.End, .End},
 						},
 						button_background,
 					)
@@ -144,6 +145,7 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = orui.padding(10),
 								width = orui.grow(),
+								align = {.Center, .Start},
 							},
 							button_background,
 						)
@@ -204,6 +206,7 @@ main :: proc() {
 								padding = orui.padding(10),
 								margin = orui.margin(5),
 								width = orui.percent(0.3),
+								align = {.Center, .Start},
 							},
 						)
 

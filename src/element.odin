@@ -49,23 +49,27 @@ LayoutDirection :: enum {
 	TopToBottom,
 }
 
-HorizontalAlignment :: enum {
-	Left,
+MainAlignment :: enum {
+	Start,
+	End,
 	Center,
-	Right,
+	SpaceBetween,
+	SpaceAround,
+	SpaceEvenly,
 }
 
-VerticalAlignment :: enum {
-	Top,
+CrossAlignment :: enum {
+	Start,
+	End,
 	Center,
-	Bottom,
+	Stretch,
 }
 
-TextAlignment :: struct {
-	horizontal: HorizontalAlignment,
-	vertical:   VerticalAlignment,
+ContentAlignment :: enum {
+	Start,
+	Center,
+	End,
 }
-
 ElementConfig :: struct {
 	user_data:        rawptr,
 
@@ -78,6 +82,8 @@ ElementConfig :: struct {
 	padding:          Edges,
 	margin:           Edges,
 	gap:              f32,
+	align_main:       MainAlignment,
+	align_cross:      CrossAlignment,
 	// overflow?
 
 	// style
@@ -93,12 +99,16 @@ ElementConfig :: struct {
 	letter_spacing:   f32,
 	line_height:      f32,
 
-	// text layout
-	text_align:       TextAlignment,
+	// content layout
+	align:            [2]ContentAlignment,
 }
 
 Element :: struct {
 	id:               Id,
+	parent:           int,
+	children:         int,
+	next:             int,
+	children_count:   int,
 	user_data:        rawptr,
 
 	// layout
@@ -110,6 +120,8 @@ Element :: struct {
 	padding:          Edges,
 	margin:           Edges,
 	gap:              f32,
+	align_main:       MainAlignment,
+	align_cross:      CrossAlignment,
 
 	// style
 	background_color: rl.Color,
@@ -123,25 +135,15 @@ Element :: struct {
 	letter_spacing:   f32,
 	line_height:      f32,
 
-	// text layout
-	text_align:       TextAlignment,
+	// content layout
+	align:            [2]ContentAlignment,
 
 	// internal
 	_position:        rl.Vector2,
 	_size:            rl.Vector2, // border box size
 	_measured_size:   rl.Vector2,
 	_line_count:      int,
-	_lines:           [32]TextLine,
-	parent:           int,
-	children:         int,
-	next:             int,
-	children_count:   int,
-}
-
-TextLine :: struct {
-	start_index: int,
-	end_index:   int,
-	width:       f32,
+	_text_offset:     rl.Vector2,
 }
 
 configure_element :: proc(element: ^Element, config: ElementConfig) {
@@ -156,6 +158,8 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.padding = config.padding
 	element.margin = config.margin
 	element.gap = config.gap
+	element.align_main = config.align_main
+	element.align_cross = config.align_cross
 
 	// style
 	element.background_color = config.background_color
@@ -169,8 +173,8 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
 
-	// text layout
-	element.text_align = config.text_align
+	// content layout
+	element.align = config.align
 }
 
 to_id :: proc(str: string) -> Id {

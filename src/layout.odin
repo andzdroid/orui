@@ -21,7 +21,6 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	if element.layout == .Flex {
-		// log.infof("layout flex children of %v", element)
 		child := element.children
 		x := element.padding.left
 		y := element.padding.top
