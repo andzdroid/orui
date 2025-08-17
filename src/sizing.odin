@@ -19,14 +19,25 @@ measure_text_width :: proc(
 	if len(text) == 0 {
 		return 0
 	}
+
+	width: f32 = 0
+	count := 0
+	for codepoint in text {
+		index := codepoint - 32
+		count += 1
+
+		if codepoint != '\n' {
+			if font.glyphs[index].advanceX > 0 {
+				width += f32(font.glyphs[index].advanceX)
+			} else {
+				width += font.recs[index].width + f32(font.glyphs[index].offsetX)
+			}
+		}
+	}
+
+	scale := font_size / f32(font.baseSize)
 	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
-	measured := rl.MeasureTextEx(
-		font^,
-		strings.clone_to_cstring(text, context.temp_allocator),
-		font_size,
-		letter_spacing,
-	)
-	return measured.x
+	return width * scale + letter_spacing * f32(count - 1)
 }
 
 measure_text_height :: proc(font_size: f32, line_height_multiplier: f32) -> f32 {

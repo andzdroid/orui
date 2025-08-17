@@ -37,10 +37,10 @@ Position :: struct {
 }
 
 Layout :: enum {
-	// Does not layout children
-	None,
 	// Layout children next to each other
 	Flex,
+	// Does not layout children
+	None,
 }
 
 // Only used for Flex layout
@@ -62,7 +62,6 @@ CrossAlignment :: enum {
 	Start,
 	End,
 	Center,
-	Stretch,
 }
 
 ContentAlignment :: enum {

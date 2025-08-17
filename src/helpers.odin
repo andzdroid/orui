@@ -24,6 +24,14 @@ inner_height :: proc(e: ^Element) -> f32 {
 	return max(0, e._size.y - y_padding(e))
 }
 
+inner_main :: proc(e: ^Element) -> f32 {
+	if e.direction == .LeftToRight {
+		return inner_width(e)
+	} else {
+		return inner_height(e)
+	}
+}
+
 parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: bool) {
 	if e.parent == 0 {
 		root := &ctx.elements[0]

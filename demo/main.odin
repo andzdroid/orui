@@ -3,6 +3,7 @@ package demo
 import orui "../src"
 import "core:fmt"
 import "core:log"
+import "core:mem"
 import "core:os"
 import rl "vendor:raylib"
 
@@ -28,6 +29,23 @@ main :: proc() {
 		logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_allocator) : log.create_console_logger(allocator = logger_allocator)
 	context.logger = logger
 
+	default_allocator := context.allocator
+	tracking_allocator: mem.Tracking_Allocator
+	mem.tracking_allocator_init(&tracking_allocator, default_allocator)
+	context.allocator = mem.tracking_allocator(&tracking_allocator)
+
+	defer {
+		if len(tracking_allocator.allocation_map) > 0 {
+			log.errorf("%v allocations not freed", len(tracking_allocator.allocation_map))
+			for _, entry in tracking_allocator.allocation_map {
+				log.errorf(" - %v bytes at %v", entry.size, entry.location)
+			}
+		} else {
+			log.info("No allocations were leaked")
+		}
+		mem.tracking_allocator_destroy(&tracking_allocator)
+	}
+
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
 	rl.SetTargetFPS(120)
@@ -51,9 +69,7 @@ main :: proc() {
 		{orui.container(
 				orui.id("container"),
 				{
-					layout = .Flex,
 					direction = .TopToBottom,
-					position = {.Absolute, {0, 0}},
 					width = orui.fixed(width),
 					height = orui.fixed(height),
 					background_color = {30, 30, 30, 255},
@@ -65,73 +81,77 @@ main :: proc() {
 			{orui.container(
 					orui.id("top bar"),
 					{
-						layout = .Flex,
-						direction = .LeftToRight,
 						width = orui.grow(),
 						height = orui.fixed(100),
 						background_color = {50, 50, 50, 255},
 						padding = orui.padding(8),
-						gap = 8,
+						align_main = .SpaceBetween,
 					},
 				)
 
-				for i in 0 ..< 4 {
-					orui.label(
-						orui.id(fmt.tprintf("top bar label %v", i)),
-						fmt.tprintf("Button %v", i),
-						{
-							font = &default_font,
-							font_size = 14,
-							color = rl.WHITE,
-							padding = orui.padding(10),
-							width = orui.grow(),
-							height = orui.grow(),
-							align = {.End, .End},
-						},
-						button_background,
+				{orui.container(
+						orui.id("sidebar left"),
+						{height = orui.grow(), width = orui.grow(), gap = 8},
 					)
+					for i in 0 ..< 4 {
+						orui.label(
+							orui.id(fmt.tprintf("top bar label %v", i)),
+							fmt.tprintf("Button %v", i),
+							{
+								font = &default_font,
+								font_size = 14,
+								color = rl.WHITE,
+								padding = orui.padding(10),
+								width = orui.fit(),
+								height = orui.grow(),
+								align = {.End, .End},
+							},
+							button_background,
+						)
+					}
 				}
 
-				{orui.container(orui.id("gap1"), {width = orui.grow(5), height = orui.grow()})}
-
-				for i in 0 ..< 4 {
-					orui.label(
-						orui.id(fmt.tprintf("top bar label2 %v", i)),
-						fmt.tprintf("Button %v", i),
+				{orui.container(
+						orui.id("sidebar right"),
 						{
-							font = &default_font,
-							font_size = 14,
-							color = rl.WHITE,
-							padding = orui.padding(10),
-							width = orui.fit(),
 							height = orui.grow(),
+							width = orui.grow(),
+							gap = 8,
+							align_main = .End,
+							align_cross = .End,
 						},
-						button_background,
 					)
+					for i in 0 ..< 4 {
+						orui.label(
+							orui.id(fmt.tprintf("top bar label2 %v", i)),
+							fmt.tprintf("Button %v", i),
+							{
+								font = &default_font,
+								font_size = 14,
+								color = rl.WHITE,
+								padding = orui.padding(10),
+							},
+							button_background,
+						)
+					}
 				}
 			}
 
 			{orui.container(
 					orui.id("main section"),
-					{
-						layout = .Flex,
-						direction = .LeftToRight,
-						width = orui.grow(),
-						height = orui.grow(),
-						gap = 16,
-					},
+					{width = orui.grow(), height = orui.grow(), gap = 16},
 				)
 
 				{orui.container(
 						orui.id("sidebar"),
 						{
-							layout = .Flex,
 							direction = .TopToBottom,
 							width = orui.fixed(200),
 							height = orui.grow(),
 							background_color = {50, 50, 50, 255},
 							padding = orui.padding(8),
 							gap = 8,
+							align_cross = .Center,
 						},
 					)
 
@@ -162,7 +182,6 @@ main :: proc() {
 								font_size = 20,
 								color = rl.WHITE,
 								padding = orui.padding(10),
-								width = orui.grow(),
 							},
 							button_background,
 						)
@@ -172,7 +191,6 @@ main :: proc() {
 				{orui.container(
 						orui.id("content"),
 						{
-							layout = .Flex,
 							direction = .TopToBottom,
 							width = orui.grow(),
 							height = orui.grow(),
@@ -258,6 +276,4 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
-
-	orui.print(ctx)
 }
