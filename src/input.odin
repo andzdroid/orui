@@ -5,9 +5,10 @@ import rl "vendor:raylib"
 @(private)
 handle_input_state :: proc(ctx: ^Context) {
 	position := rl.GetMousePosition()
+	mouse_down := rl.IsMouseButtonDown(.LEFT)
 	ctx.hover_count = 0
 	ctx.active_count = 0
-	collect_hovered(ctx, 0, position, rl.IsMouseButtonPressed(.LEFT))
+	collect_hovered(ctx, 0, position, mouse_down)
 }
 
 @(private)

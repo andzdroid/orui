@@ -1,5 +1,6 @@
 package orui
 
+import "core:fmt"
 import "core:log"
 import rl "vendor:raylib"
 
@@ -191,9 +192,11 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 		modifier(element)
 	}
 
+	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
+
 	end_element()
-	// return true if clicked? clicked is not the same as active
-	return true
+
+	return rl.IsMouseButtonReleased(.LEFT) && active()
 }
 
 hovered :: proc {

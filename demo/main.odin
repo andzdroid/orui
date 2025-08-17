@@ -7,6 +7,13 @@ import "core:mem"
 import "core:os"
 import rl "vendor:raylib"
 
+labels :: [?]string {
+	"Hello world! Click me!",
+	"Hello world! This is a very long label that should wrap across multiple lines of text, and the containing box should increase in height to fit the text. Click me again!",
+	"This is a label",
+	"This is another label",
+}
+
 button_background :: proc(element: ^orui.Element) {
 	element.background_color =
 		orui.active() && orui.hovered() ? {190, 90, 50, 255} : orui.hovered() ? {200, 110, 70, 255} : {200, 100, 60, 255}
@@ -56,6 +63,9 @@ main :: proc() {
 	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
 
 	default_font := rl.GetFontDefault()
+
+	label_index := 0
+	labels := labels
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -212,20 +222,22 @@ main :: proc() {
 							},
 						)
 
-						orui.label(
+						if orui.label(
 							orui.id("button"),
-							"Hello world! this is some very very long text that should wrap while the container should fit the height",
+							labels[label_index],
 							{
 								font = &default_font,
 								font_size = 20,
 								color = rl.WHITE,
-								background_color = {30, 30, 30, 255},
+								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {30, 30, 30, 255},
 								padding = orui.padding(10),
 								margin = orui.margin(5),
 								width = orui.percent(0.3),
 								align = {.Center, .Start},
 							},
-						)
+						) {
+							label_index = (label_index + 1) % len(labels)
+						}
 
 						{orui.container(
 								orui.id("box b"),
@@ -253,8 +265,8 @@ main :: proc() {
 
 			if orui.active("button") {
 				orui.label(
-					orui.id("clicked"),
-					"Clicked!",
+					orui.id("button active"),
+					"button active!",
 					{
 						font = &default_font,
 						font_size = 20,
