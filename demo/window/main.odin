@@ -1,29 +1,9 @@
 package demo
 
 import orui "../../src"
-import "core:fmt"
-import "core:log"
-import "core:mem"
-import "core:os"
 import rl "vendor:raylib"
 
 main :: proc() {
-	mode: int = 0
-	when ODIN_OS == .Linux || ODIN_OS == .Darwin {
-		mode = os.S_IRUSR | os.S_IWUSR | os.S_IRGRP | os.S_IROTH
-	}
-
-	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR), mode)
-	if logh_err == os.ERROR_NONE {
-		os.stdout = logh
-		os.stderr = logh
-	}
-
-	logger_allocator := context.allocator
-	logger :=
-		logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_allocator) : log.create_console_logger(allocator = logger_allocator)
-	context.logger = logger
-
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
 
@@ -31,8 +11,6 @@ main :: proc() {
 
 	ctx := new(orui.Context)
 	defer free(ctx)
-
-	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -152,13 +130,7 @@ main :: proc() {
 		orui.end()
 
 		rl.EndDrawing()
-		// break
 	}
 
 	rl.CloseWindow()
-
-	for i in 0 ..< ctx.element_count {
-		element := &ctx.elements[i]
-		fmt.printf("element %v: %v\n", i, element)
-	}
 }
