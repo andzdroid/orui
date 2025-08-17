@@ -281,6 +281,21 @@ _active_id :: proc(id: string) -> bool {
 	return false
 }
 
+clicked :: proc {
+	_clicked,
+	_clicked_id,
+}
+
+@(private)
+_clicked :: proc() -> bool {
+	return rl.IsMouseButtonReleased(.LEFT) && active()
+}
+
+@(private)
+_clicked_id :: proc(id: string) -> bool {
+	return rl.IsMouseButtonReleased(.LEFT) && active(id)
+}
+
 padding :: proc(p: f32) -> Edges {
 	return {p, p, p, p}
 }

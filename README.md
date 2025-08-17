@@ -147,6 +147,24 @@ if orui.active("label") {
 }
 ```
 
+### clicked()
+
+Returns true if the element has been clicked. A click is only triggered if the element was both hovered and active when the mouse was released. This means dragging the mouse off an element will cancel the click.
+
+```odin
+orui.label(orui.id("label"), "Test", {
+  background_color = orui.clicked() ? rl.RED : rl.BLACK
+})
+```
+
+Same as the above two functions, you can ask about a specific element by passing in the ID:
+
+```odin
+if orui.clicked("label") {
+  // label was clicked
+}
+```
+
 ## Element config
 
 The element functions take an element config where you can set any of these fields:
