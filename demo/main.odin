@@ -52,7 +52,6 @@ main :: proc() {
 
 	ctx := new(orui.Context)
 	defer free(ctx)
-	orui.init(ctx)
 
 	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
 

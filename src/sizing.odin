@@ -10,6 +10,7 @@ Content box: border box - padding
 Margin box: border box + margin
 */
 
+@(private)
 measure_text_width :: proc(
 	text: string,
 	font: ^rl.Font,
@@ -40,11 +41,13 @@ measure_text_width :: proc(
 	return width * scale + letter_spacing * f32(count - 1)
 }
 
+@(private)
 measure_text_height :: proc(font_size: f32, line_height_multiplier: f32) -> f32 {
 	line_height := line_height_multiplier > 0 ? line_height_multiplier : 1
 	return font_size * line_height
 }
 
+@(private)
 // Set fixed widths and fit widths.
 fit_widths :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
@@ -129,6 +132,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	apply_width_contraints(ctx, element)
 }
 
+@(private)
 // Set percent widths and grow widths.
 distribute_widths :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
@@ -228,6 +232,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+@(private)
 wrap_text :: proc(ctx: ^Context) {
 	for i in 0 ..< ctx.element_count {
 		element := &ctx.elements[i]
@@ -345,6 +350,7 @@ wrap_text :: proc(ctx: ^Context) {
 	}
 }
 
+@(private)
 // Set fixed heights and fit heights.
 fit_heights :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
@@ -425,6 +431,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	apply_height_contraints(ctx, element)
 }
 
+@(private)
 // Set percent heights and grow heights.
 distribute_heights :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
@@ -524,6 +531,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+@(private)
 apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
 	if element.layout != .Flex {
 		return
@@ -559,6 +567,7 @@ apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
 	}
 }
 
+@(private)
 apply_height_contraints :: proc(ctx: ^Context, element: ^Element) {
 	if element.layout != .Flex {
 		return

@@ -27,20 +27,25 @@ Context :: struct {
 	active_prev_count: int,
 }
 
-init :: proc(ctx: ^Context) {
-}
-
+// Begin UI declaration.
+// Resets UI state and sets the current UI context.
+//
+// Must be closed with end().
+// begin() and end() pairs must not be interleaved or nested.
 begin :: proc {
 	begin_f32,
 	begin_i32,
 }
+@(private)
 begin_f32 :: proc(ctx: ^Context, width: f32, height: f32) {
 	_begin(ctx, width, height)
 }
+@(private)
 begin_i32 :: proc(ctx: ^Context, width: i32, height: i32) {
 	_begin(ctx, f32(width), f32(height))
 }
 
+@(private)
 _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	current_context = ctx
 
@@ -67,16 +72,20 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.active_count = 0
 }
 
+// Ends UI declaration.
+// Renders the declared UI.
 end :: proc {
 	_end,
 	_end_with_context,
 }
 
+@(private)
 _end :: proc() {
 	ctx := current_context
 	_end_with_context(ctx)
 }
 
+@(private)
 _end_with_context :: proc(ctx: ^Context) {
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
@@ -93,6 +102,11 @@ _end_with_context :: proc(ctx: ^Context) {
 	handle_input_state(ctx)
 }
 
+
+// Declares an open element with the given ID.
+// All elements should be declared with this function.
+//
+// This should not be used outside of element declarations. Use to_id() instead.
 id :: proc(str: string) -> Id {
 	id := to_id(str)
 	ctx := current_context
@@ -100,6 +114,10 @@ id :: proc(str: string) -> Id {
 	return id
 }
 
+// Begins an element with the given ID.
+// Any elements declared after this will be added as children of this element.
+//
+// Must be closed with end_element().
 begin_element :: proc(id: Id) -> ^Element {
 	ctx := current_context
 	assert(ctx.current_id == id, "id mismatch. id() should only be called in element declarations")
@@ -128,6 +146,7 @@ begin_element :: proc(id: Id) -> ^Element {
 	return element
 }
 
+// Closes the current element.
 end_element :: proc() {
 	ctx := current_context
 	element := &ctx.elements[ctx.current]
@@ -140,6 +159,7 @@ end_element :: proc() {
 ElementModifier :: proc(element: ^Element)
 
 @(deferred_none = end_element)
+// The basic building block of the UI.
 container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
@@ -149,6 +169,7 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 	return true
 }
 
+// This container does not close automatically at the end of the scope.
 _container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
@@ -158,6 +179,8 @@ _container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) 
 	return true
 }
 
+// A label is a text element that can be use to display text.
+// This element cannot have children.
 label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
@@ -178,6 +201,7 @@ hovered :: proc {
 	_hovered_id,
 }
 
+@(private)
 // Whether the mouse is over the current element.
 // Should only be used inside an element declaration.
 _hovered :: proc() -> bool {
@@ -195,6 +219,8 @@ _hovered :: proc() -> bool {
 	return false
 }
 
+@(private)
+// Whether the mouse is over the element with the given ID.
 _hovered_id :: proc(id: string) -> bool {
 	ctx := current_context
 	if ctx.current == 0 {
@@ -211,11 +237,14 @@ _hovered_id :: proc(id: string) -> bool {
 	return false
 }
 
+// Whether an element is active (mouse down).
 active :: proc {
 	_active,
 	_active_id,
 }
 
+@(private)
+// Whether the current declared element is active (mouse down).
 _active :: proc() -> bool {
 	ctx := current_context
 	if ctx.current == 0 {
@@ -231,6 +260,8 @@ _active :: proc() -> bool {
 	return false
 }
 
+@(private)
+// Whether the specified element is active (mouse down).
 _active_id :: proc(id: string) -> bool {
 	ctx := current_context
 	if ctx.current == 0 {
@@ -259,9 +290,11 @@ fixed :: proc {
 	fixed_f32,
 	fixed_i32,
 }
+@(private)
 fixed_f32 :: proc(value: f32) -> Size {
 	return {.Fixed, value, 0, 0}
 }
+@(private)
 fixed_i32 :: proc(value: i32) -> Size {
 	return {.Fixed, f32(value), 0, 0}
 }
@@ -276,12 +309,4 @@ fit :: proc() -> Size {
 
 grow :: proc(base: f32 = 0) -> Size {
 	return {.Grow, base, 0, 0}
-}
-
-width :: proc(element: ^Element, value: Size) {
-	element.width = value
-}
-
-height :: proc(element: ^Element, value: Size) {
-	element.height = value
 }

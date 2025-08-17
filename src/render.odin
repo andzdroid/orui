@@ -3,10 +3,12 @@ package orui
 import "core:strings"
 import rl "vendor:raylib"
 
+@(private)
 render :: proc(ctx: ^Context) {
 	render_element(ctx, 0)
 }
 
+@(private)
 render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
@@ -31,6 +33,7 @@ render_element :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+@(private)
 render_wrapped_text :: proc(element: ^Element) {
 	text := element.text
 	text_len := len(text)
@@ -128,6 +131,7 @@ render_wrapped_text :: proc(element: ^Element) {
 	}
 }
 
+@(private)
 render_line :: proc(
 	element: ^Element,
 	text: string,
@@ -150,6 +154,7 @@ render_line :: proc(
 	)
 }
 
+@(private)
 calculate_text_offset :: proc(element: ^Element) -> f32 {
 	content_height := inner_height(element)
 
@@ -174,6 +179,7 @@ calculate_text_offset :: proc(element: ^Element) -> f32 {
 }
 
 
+@(private)
 calculate_line_offset :: proc(element: ^Element, line_width: f32, available_width: f32) -> f32 {
 	switch element.align.x {
 	case .Start:

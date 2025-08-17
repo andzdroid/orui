@@ -1,7 +1,9 @@
 package orui
 
+@(private)
 sort_roots_by_z :: proc(ctx: ^Context) {}
 
+@(private)
 compute_layout :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 	compute_element_position(ctx, element)
@@ -13,6 +15,7 @@ compute_layout :: proc(ctx: ^Context, index: int) {
 	}
 }
 
+@(private)
 compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 	parent := &ctx.elements[element.parent]
 
@@ -72,6 +75,7 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 	}
 }
 
+@(private)
 content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
 	size: f32 = 0
 	count := 0
@@ -94,11 +98,13 @@ content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
 }
 
 
+@(private)
 MainAxisOffset :: struct {
 	initial: f32,
 	between: f32,
 }
 
+@(private)
 main_offset :: proc(
 	alignment: MainAlignment,
 	available_space: f32,
@@ -132,6 +138,7 @@ main_offset :: proc(
 	return {}
 }
 
+@(private)
 cross_offset :: proc(parent: ^Element, child: ^Element) -> f32 {
 	if parent.direction == .LeftToRight {
 		available_height := inner_height(parent)

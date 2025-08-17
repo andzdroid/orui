@@ -145,6 +145,7 @@ Element :: struct {
 	_text_offset:     rl.Vector2,
 }
 
+@(private)
 configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.user_data = config.user_data
 
