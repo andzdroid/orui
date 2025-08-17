@@ -2,7 +2,31 @@
 
 orui is an immediate mode UI library for odin and raylib, with support for flex layouts.
 
+It is meant for building user-facing UIs using familiar concepts from CSS.
+
 ![](demo/flex/screenshot.png)
+
+Features:
+
+- Flex layout
+- Flex justify and align
+- Flex basis
+- Flex child gap
+- Padding, margin
+- Text
+  - Line height
+  - Letter spacing
+  - Wrapping
+  - Alignment
+
+To do:
+
+- Render images (textures)
+- Rounded corners
+- Borders
+- Z-ordering (maybe)
+- Grids (maybe)
+- Scroll views
 
 ## Usage
 

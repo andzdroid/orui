@@ -81,7 +81,7 @@ render_wrapped_text :: proc(element: ^Element) {
 				if line_width == 0 {
 					line_width = word_width
 				} else {
-					next_width := line_width + space_width + word_width
+					next_width := line_width + space_width + (2 * letter_spacing) + word_width
 					if next_width <= inner_width {
 						line_width = next_width
 					} else {

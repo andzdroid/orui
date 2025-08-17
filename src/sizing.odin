@@ -243,6 +243,7 @@ wrap_text :: proc(ctx: ^Context) {
 		text := element.text
 		text_len := len(text)
 
+		letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 		inner_available: f32 = 0
 		width_definite := false
 
@@ -260,12 +261,7 @@ wrap_text :: proc(ctx: ^Context) {
 			}
 		}
 
-		space_width := measure_text_width(
-			" ",
-			element.font,
-			element.font_size,
-			element.letter_spacing,
-		)
+		space_width := measure_text_width(" ", element.font, element.font_size, letter_spacing)
 
 		line_count := 1
 		current_line_width: f32 = 0
@@ -300,12 +296,13 @@ wrap_text :: proc(ctx: ^Context) {
 					word,
 					element.font,
 					element.font_size,
-					element.letter_spacing,
+					letter_spacing,
 				)
 				if current_line_width == 0 {
 					current_line_width = word_width
 				} else {
-					next_width := current_line_width + space_width + word_width
+					next_width :=
+						current_line_width + space_width + (2 * letter_spacing) + word_width
 					if !width_definite || next_width <= inner_available {
 						current_line_width = next_width
 					} else {
