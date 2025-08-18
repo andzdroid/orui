@@ -385,6 +385,8 @@ If the alpha is 0, nothing is drawn. Default border color is invisible.
 
 The radius of each corner. Will be applied to both backgrounds and borders.
 
+Does not apply to content (labels, images).
+
 ```odin
 Corners :: struct {
 	top_left:     f32,
@@ -438,33 +440,33 @@ Config helpers can be used in the element config as a shortcut for common values
 
 ```odin
 orui.container(orui.id("container"), {
-  // equal padding on all sides, equivalent to {5, 5, 5, 5}
-  padding = orui.padding(5),
+	// equal padding on all sides, equivalent to {5, 5, 5, 5}
+	padding = orui.padding(5),
 	// horizontal padding of 10, vertical padding of 5, equivalent to {5, 10, 5, 10}
 	padding = orui.padding(10, 5),
 
-  // equal margin on all sides, equivalent to {5, 5, 5, 5}
-  margin = orui.margin(5),
+	// equal margin on all sides, equivalent to {5, 5, 5, 5}
+	margin = orui.margin(5),
 	// horizontal margin of 10, vertical margin of 5, equivalent to {5, 10, 5, 10}
 	margin = orui.margin(10, 5),
 
-  // equal border width on all sides, equivalent to {2, 2, 2, 2}
+	// equal border width on all sides, equivalent to {2, 2, 2, 2}
 	border = orui.border(2),
 
 	// equal radius on all corners, equivalent to {5, 5, 5, 5}
 	corner_radius = orui.corner(5),
 
-  // fixed pixel size, equivalent to {.Fixed, 500, 0, 0}
-  width/height = orui.fixed(500),
+	// fixed pixel size, equivalent to {.Fixed, 500, 0, 0}
+	width/height = orui.fixed(500),
 
-  // percent size, equivalent to {.Percent, 0.5, 0, 0}
-  width/height = orui.percent(0.5),
+	// percent size, equivalent to {.Percent, 0.5, 0, 0}
+	width/height = orui.percent(0.5),
 
-  // fit size, equivalent to {.Fit, 0, 0, 0}
-  width/height = orui.fit(),
+	// fit size, equivalent to {.Fit, 0, 0, 0}
+	width/height = orui.fit(),
 
-  // grow size, equivalent to {.Grow, weight, 0, 0}. Weight is optional
-  width/height = orui.grow(weight),
+	// grow size, equivalent to {.Grow, weight, 0, 0}. Weight is optional
+	width/height = orui.grow(weight),
 })
 ```
 
