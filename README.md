@@ -1,10 +1,13 @@
 # orui
 
+![](icon.png)
+
 orui is an immediate mode UI library for odin and raylib, with support for flex layouts.
 
 It is meant for building user-facing UIs using familiar concepts from CSS.
 
 ![](demo/flex/screenshot.png)
+![](demo/window/screenshot.png)
 
 Features:
 
@@ -13,17 +16,18 @@ Features:
 - Flex justify and align
 - Flex child gap
 - Padding, margin
+- Borders
+- Rounded corners
+- Images (textures)
 - Text
   - Line height
   - Letter spacing
   - Wrapping
   - Alignment
-- Borders
-- Rounded corners
 
 To do:
 
-- Render images (textures)
+- Texture fit (fill, contain, cover, none, scale-down)
 - Z-ordering (maybe)
 - Grids (maybe)
 - Scroll views (maybe)
@@ -39,11 +43,15 @@ ctx := new(orui.Context)
 In your render loop:
 
 ```odin
-orui.begin(ctx, width, height)
+for !rl.WindowShouldClose() {
+	rl.BeginDrawing()
+	orui.begin(ctx, width, height)
 
-// Declare UI here
+	// Declare UI here
 
-orui.end() // The UI gets rendered here
+	orui.end() // The UI gets rendered here
+	rl.EndDrawing()
+}
 ```
 
 ## Declaring UI
@@ -135,6 +143,19 @@ if orui.label(orui.id("button"), "Button text", {
 }) {
   // handle button click
 }
+```
+
+### image
+
+Display an image. Takes a pointer to a raylib Texture2D.
+
+This element does not need the surrounding curly braces because it cannot hold child elements.
+
+```odin
+orui.image(orui.id("image"), &texture, {
+	color = rl.WHITE, // optional tint
+	texture_source = rl.Rectangle{}, // optional, draw part of the texture
+})
 ```
 
 ## Other functions

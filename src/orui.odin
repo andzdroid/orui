@@ -199,6 +199,28 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 	return rl.IsMouseButtonReleased(.LEFT) && active()
 }
 
+// An image is an element that displays a texture.
+// This element cannot have children.
+image :: proc(
+	id: Id,
+	texture: ^rl.Texture2D,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+) -> bool {
+	element := begin_element(id)
+	configure_element(element, config)
+	element.has_texture = true
+	element.texture = texture
+
+	for modifier in modifiers {
+		modifier(element)
+	}
+
+	end_element()
+
+	return rl.IsMouseButtonReleased(.LEFT) && active()
+}
+
 hovered :: proc {
 	_hovered,
 	_hovered_id,

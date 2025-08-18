@@ -12,6 +12,9 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
+	close_icon := rl.LoadTexture("close.png")
+	defer rl.UnloadTexture(close_icon)
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
@@ -50,17 +53,28 @@ main :: proc() {
 						{
 							width = orui.grow(),
 							height = orui.fixed(32),
-							background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
+							background_color = {60, 60, 60, 255},
 							padding = {4, 8, 4, 8},
 							align_cross = .Center,
 							border = {0, 0, 1, 0},
 							border_color = {150, 150, 150, 255},
+							align_main = .SpaceBetween,
 						},
 					)
 					orui.label(
 						orui.id("title"),
 						"Window title",
 						{font = &default_font, font_size = 16, color = rl.WHITE},
+					)
+
+					orui.image(
+						orui.id("close icon"),
+						&close_icon,
+						{
+							width = orui.fixed(24),
+							height = orui.fixed(24),
+							color = orui.active() ? {220, 220, 220, 255} : orui.hovered() ? rl.WHITE : {200, 200, 200, 255},
+						},
 					)
 				}
 
@@ -110,9 +124,10 @@ main :: proc() {
 								font_size = 14,
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
-								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
+								background_color = orui.active() ? {100, 120, 100, 255} : orui.hovered() ? {120, 140, 120, 255} : {60, 80, 60, 255},
 								border = orui.border(1),
 								border_color = {100, 100, 100, 255},
+								corner_radius = orui.corner(4),
 							},
 						)
 						orui.label(
@@ -125,9 +140,10 @@ main :: proc() {
 								font_size = 14,
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
-								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
+								background_color = orui.active() ? {120, 100, 100, 255} : orui.hovered() ? {140, 120, 120, 255} : {80, 60, 60, 255},
 								border = orui.border(1),
 								border_color = {100, 100, 100, 255},
+								corner_radius = orui.corner(4),
 							},
 						)
 					}

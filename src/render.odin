@@ -5,6 +5,7 @@ import "core:strings"
 import rl "vendor:raylib"
 
 CORNER_SEGMENTS :: 16
+MISSING_COLOR :: rl.Color{0, 0, 0, 0}
 
 @(private)
 render :: proc(ctx: ^Context) {
@@ -25,6 +26,10 @@ render_element :: proc(ctx: ^Context, index: int) {
 
 	if element.has_text {
 		render_wrapped_text(element)
+	}
+
+	if element.has_texture {
+		render_texture(element)
 	}
 
 	child := element.children
@@ -268,6 +273,28 @@ render_rounded_border :: proc(element: ^Element) {
 			color,
 		)
 	}
+}
+
+@(private)
+render_texture :: proc(element: ^Element) {
+	source := element.texture_source
+	if source.width == 0 && source.height == 0 {
+		source = {0, 0, f32(element.texture^.width), f32(element.texture^.height)}
+	}
+
+	color := element.color
+	if color == MISSING_COLOR {
+		color = rl.WHITE
+	}
+
+	rl.DrawTexturePro(
+		element.texture^,
+		source,
+		{element._position.x, element._position.y, element._size.x, element._size.y},
+		{},
+		0,
+		color,
+	)
 }
 
 @(private)

@@ -107,6 +107,11 @@ ElementConfig :: struct {
 	letter_spacing:   f32,
 	line_height:      f32,
 
+	// texture
+	has_texture:      bool,
+	texture:          ^rl.Texture2D,
+	texture_source:   rl.Rectangle,
+
 	// content layout
 	align:            [2]ContentAlignment,
 }
@@ -145,6 +150,11 @@ Element :: struct {
 	color:            rl.Color,
 	letter_spacing:   f32,
 	line_height:      f32,
+
+	// texture
+	has_texture:      bool,
+	texture:          ^rl.Texture2D,
+	texture_source:   rl.Rectangle,
 
 	// content layout
 	align:            [2]ContentAlignment,
@@ -187,6 +197,11 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.color = config.color
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
+
+	// texture
+	element.has_texture = config.has_texture
+	element.texture = config.texture
+	element.texture_source = config.texture_source
 
 	// content layout
 	element.align = config.align

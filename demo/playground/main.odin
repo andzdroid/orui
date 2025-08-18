@@ -67,6 +67,9 @@ main :: proc() {
 
 	default_font := rl.GetFontDefault()
 
+	texture := rl.LoadTexture("icon.png")
+	defer rl.UnloadTexture(texture)
+
 	label_index := 0
 	labels := labels
 
@@ -261,10 +264,20 @@ main :: proc() {
 									position = {.Relative, {100, 100}},
 									width = orui.fixed(200),
 									height = orui.fixed(200),
-									background_color = {200, 60, 100, 255},
+									background_color = {20, 30, 60, 255},
 									margin = orui.margin(20),
+									align_main = .Center,
+									align_cross = .Center,
+									corner_radius = orui.corner(10),
 								},
-							)}
+							)
+
+							orui.image(
+								orui.id("image"),
+								&texture,
+								{width = orui.fixed(50), height = orui.fixed(50)},
+							)
+						}
 					}
 				}
 			}
