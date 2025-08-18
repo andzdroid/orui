@@ -9,8 +9,8 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 Features:
 
 - Flex layout
+- Flex fit (shrink) and grow
 - Flex justify and align
-- Flex basis
 - Flex child gap
 - Padding, margin
 - Text
@@ -48,18 +48,50 @@ orui.end() // The UI gets rendered here
 
 ## Declaring UI
 
-### container
+### element
 
-A container is the basic building block element for holding child elements. You can think of it like a div element in HTML.
+`element` is the basic building block of orui. It can be used to build anything that orui can render.
+
+All elements declared after will be attached as children, until `end_element()` is called:
 
 ```odin
-{
-  orui.container(orui.id("element ID"), config)
-  // declare children inside curly brackets
+orui.element(orui.id("container"), config)
+
+// children declared here
+
+orui.end_element()
+```
+
+You can use this to build your own elements:
+
+```odin
+my_element :: proc(id: string) {
+  orui.element(orui.id(id), {...})
+  orui.label(...)
+  orui.end_element()
+}
+
+@(deferred_none=orui.end_element)
+my_container :: proc(id: string) {
+  orui.element(orui.id(id), {...})
+}
+
+{my_container("test")
+  my_element("element 1")
 }
 ```
 
-The surrounding curly brackets are important! All elements inside will be children of the container. The container 'ends' when it goes out of scope at the end of the curly braces.
+### container
+
+`container` is exactly like `element` except it automatically ends the element when it goes out of scope.
+
+This means you can use curly braces to define the scope of the container:
+
+```odin
+{orui.container(orui.id("element ID"), config)
+  // declare children inside curly brackets
+}
+```
 
 Or if you prefer another style:
 ```odin
@@ -80,37 +112,6 @@ Make sure containers always have their own scope. In the following example, labe
 }
 ```
 
-#### _container
-
-You can also use `_container` if you prefer to explicitly end containers. This variant of the container does not automatically close the element when it goes out of scope. You **must** end the element manually with `end_element()`:
-
-```odin
-orui._container(orui.id("container"), config)
-
-// ...
-
-orui.end_element()
-```
-
-This can be useful when building your own elements:
-
-```odin
-my_element :: proc(id: string) {
-  orui._container(orui.id(id), {...})
-  // children
-  orui.end_element()
-}
-
-@(deferred_none=orui.end_element)
-my_container :: proc(id: string) {
-  orui._container(orui.id(id), {...})
-}
-
-{my_container("test")
-  my_element("element 1")
-}
-```
-
 ### label
 
 A label element displays text. The text will be wrapped if it's too long.
@@ -120,10 +121,13 @@ Make sure you define the font and font size in the element config.
 This element does not need the surrounding curly braces because it cannot hold child elements.
 
 ```odin
-orui.label(orui.id("label"), "Hello world!", config)
+orui.label(orui.id("label"), "Hello world!", {
+	font = &your_font,
+	font_size = 16,
+})
 ```
 
-A label element can also be used as a button:
+A label element can also be used as a button by changing its style when the user interacts with it:
 
 ```odin
 if orui.label(orui.id("button"), "Button text", {
@@ -287,6 +291,19 @@ Edges :: struct {
 }
 ```
 
+### border
+
+Define the border width for each side of the element.
+
+```odin
+Edges :: struct {
+	top:    f32,
+	right:  f32,
+	bottom: f32,
+	left:   f32,
+}
+```
+
 ### gap
 
 The space between child elements in pixels. Only used for flex elements.
@@ -324,9 +341,15 @@ CrossAlignment :: enum {
 
 ### background_color
 
-This is the background color of the element, given as a raylib Color.
+The background color of the element, given as a raylib Color.
 
 If the alpha is 0, nothing is drawn. Default background color is invisible.
+
+### border_color
+
+The color of the border, given as a raylib Color.
+
+If the alpha is 0, nothing is drawn. Default border color is invisible.
 
 ### has_text and text
 
@@ -374,9 +397,16 @@ Config helpers can be used in the element config as a shortcut for common values
 orui.container(orui.id("container"), {
   // equal padding on all sides, equivalent to {5, 5, 5, 5}
   padding = orui.padding(5),
+	// horizontal padding of 10, vertical padding of 5, equivalent to {5, 10, 5, 10}
+	padding = orui.padding(10, 5),
 
   // equal margin on all sides, equivalent to {5, 5, 5, 5}
   margin = orui.margin(5),
+	// horizontal margin of 10, vertical margin of 5, equivalent to {5, 10, 5, 10}
+	margin = orui.margin(10, 5),
+
+  // equal border width on all sides, equivalent to {2, 2, 2, 2}
+	border = orui.border(2),
 
   // fixed pixel size, equivalent to {.Fixed, 500, 0, 0}
   width/height = orui.fixed(500),
@@ -387,8 +417,8 @@ orui.container(orui.id("container"), {
   // fit size, equivalent to {.Fit, 0, 0, 0}
   width/height = orui.fit(),
 
-  // grow size, equivalent to {.Grow, basis, 0, 0}. Basis is optional
-  width/height = orui.grow(basis),
+  // grow size, equivalent to {.Grow, weight, 0, 0}. Weight is optional
+  width/height = orui.grow(weight),
 })
 ```
 

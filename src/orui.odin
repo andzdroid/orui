@@ -107,6 +107,7 @@ _end_with_context :: proc(ctx: ^Context) {
 // Declares an open element with the given ID.
 // All elements should be declared with this function.
 //
+// You should NOT cache the result of this function, always call it inside an element declaration.
 // This should not be used outside of element declarations. Use to_id() instead.
 id :: proc(str: string) -> Id {
 	id := to_id(str)
@@ -159,9 +160,7 @@ end_element :: proc() {
 
 ElementModifier :: proc(element: ^Element)
 
-@(deferred_none = end_element)
-// The basic building block of the UI.
-container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
 	for modifier in modifiers {
@@ -170,8 +169,9 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 	return true
 }
 
-// This container does not close automatically at the end of the scope.
-_container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+@(deferred_none = end_element)
+// The basic building block of the UI.
+container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element := begin_element(id)
 	configure_element(element, config)
 	for modifier in modifiers {
@@ -296,12 +296,38 @@ _clicked_id :: proc(id: string) -> bool {
 	return rl.IsMouseButtonReleased(.LEFT) && active(id)
 }
 
-padding :: proc(p: f32) -> Edges {
+padding :: proc {
+	padding_all,
+	padding_axis,
+}
+
+@(private)
+padding_all :: proc(p: f32) -> Edges {
 	return {p, p, p, p}
 }
 
-margin :: proc(m: f32) -> Edges {
+@(private)
+padding_axis :: proc(x: f32, y: f32) -> Edges {
+	return {y, x, y, x}
+}
+
+margin :: proc {
+	margin_all,
+	margin_axis,
+}
+
+@(private)
+margin_all :: proc(m: f32) -> Edges {
 	return {m, m, m, m}
+}
+
+@(private)
+margin_axis :: proc(x: f32, y: f32) -> Edges {
+	return {y, x, y, x}
+}
+
+border :: proc(b: f32) -> Edges {
+	return {b, b, b, b}
 }
 
 fixed :: proc {

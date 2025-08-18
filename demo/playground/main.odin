@@ -1,6 +1,6 @@
 package demo
 
-import orui "../src"
+import orui "../../src"
 import "core:fmt"
 import "core:log"
 import "core:mem"
@@ -14,9 +14,12 @@ labels :: [?]string {
 	"This is another label",
 }
 
-button_background :: proc(element: ^orui.Element) {
+button_style :: proc(element: ^orui.Element) {
 	element.background_color =
 		orui.active() && orui.hovered() ? {190, 90, 50, 255} : orui.hovered() ? {200, 110, 70, 255} : {200, 100, 60, 255}
+	element.color = rl.WHITE
+	element.border = orui.border(4)
+	element.border_color = orui.hovered() ? {200, 200, 200, 255} : {150, 150, 150, 255}
 }
 
 main :: proc() {
@@ -115,7 +118,7 @@ main :: proc() {
 								height = orui.grow(),
 								align = {.End, .End},
 							},
-							button_background,
+							button_style,
 						)
 					}
 				}
@@ -140,7 +143,7 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = orui.padding(10),
 							},
-							button_background,
+							button_style,
 						)
 					}
 				}
@@ -174,9 +177,9 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = orui.padding(10),
 								width = orui.grow(),
-								align = {.Center, .Start},
+								align = {.Center, .Center},
 							},
-							button_background,
+							button_style,
 						)
 					}
 
@@ -191,8 +194,9 @@ main :: proc() {
 								font_size = 20,
 								color = rl.WHITE,
 								padding = orui.padding(10),
+								align = {.Center, .Center},
 							},
-							button_background,
+							button_style,
 						)
 					}
 				}

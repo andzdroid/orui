@@ -40,6 +40,8 @@ main :: proc() {
 						width = orui.percent(0.5),
 						height = orui.percent(0.5),
 						background_color = {30, 30, 30, 255},
+						border = orui.border(1),
+						border_color = {100, 100, 100, 255},
 					},
 				)
 
@@ -51,6 +53,8 @@ main :: proc() {
 							background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
 							padding = {4, 8, 4, 8},
 							align_cross = .Center,
+							border = {0, 0, 1, 0},
+							border_color = {150, 150, 150, 255},
 						},
 					)
 					orui.label(
@@ -107,6 +111,8 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
 								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
+								border = orui.border(1),
+								border_color = {100, 100, 100, 255},
 							},
 						)
 						orui.label(
@@ -120,6 +126,8 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
 								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255},
+								border = orui.border(1),
+								border_color = {100, 100, 100, 255},
 							},
 						)
 					}

@@ -21,13 +21,23 @@ y_margin :: proc(e: ^Element) -> f32 {
 }
 
 @(private)
+x_border :: proc(e: ^Element) -> f32 {
+	return e.border.left + e.border.right
+}
+
+@(private)
+y_border :: proc(e: ^Element) -> f32 {
+	return e.border.top + e.border.bottom
+}
+
+@(private)
 inner_width :: proc(e: ^Element) -> f32 {
-	return max(0, e._size.x - x_padding(e))
+	return max(0, e._size.x - x_padding(e) - x_border(e))
 }
 
 @(private)
 inner_height :: proc(e: ^Element) -> f32 {
-	return max(0, e._size.y - y_padding(e))
+	return max(0, e._size.y - y_padding(e) - y_border(e))
 }
 
 @(private)

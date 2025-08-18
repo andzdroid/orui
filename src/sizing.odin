@@ -63,7 +63,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 			element.font_size,
 			element.letter_spacing,
 		)
-		element._size.x = text_width + x_padding(element)
+		element._size.x = text_width + x_padding(element) + x_border(element)
 	}
 
 	child := element.children
@@ -103,7 +103,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 			child = child_element.next
 		}
 		gaps := element.gap * f32(max(child_count - 1, 0))
-		element._size.x = sum + gaps + x_padding(element)
+		element._size.x = sum + gaps + x_padding(element) + x_border(element)
 	} else {
 		// max of child widths
 		max_child: f32 = 0
@@ -126,7 +126,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 			}
 			child = child_element.next
 		}
-		element._size.x = max_child + x_padding(element)
+		element._size.x = max_child + x_padding(element) + x_border(element)
 	}
 
 	apply_width_contraints(ctx, element)
@@ -253,7 +253,8 @@ wrap_text :: proc(ctx: ^Context) {
 		} else if element.width.type == .Percent {
 			parent_inner, parent_definite := parent_inner_width(ctx, element)
 			if parent_definite {
-				inner_available = parent_inner * element.width.value - x_padding(element)
+				inner_available =
+					parent_inner * element.width.value - x_padding(element) - x_border(element)
 				if inner_available < 0 {
 					inner_available = 0
 				}
@@ -332,16 +333,18 @@ wrap_text :: proc(ctx: ^Context) {
 				_, parent_definite := parent_inner_height(ctx, element)
 				if !parent_definite {
 					line_height_px := measure_text_height(element.font_size, element.line_height)
-					element._size.y = line_height_px * f32(line_count) + y_padding(element)
+					element._size.y =
+						line_height_px * f32(line_count) + y_padding(element) + y_border(element)
 				}
 			} else {
 				line_height_px := measure_text_height(element.font_size, element.line_height)
-				element._size.y = line_height_px * f32(line_count) + y_padding(element)
+				element._size.y =
+					line_height_px * f32(line_count) + y_padding(element) + y_border(element)
 			}
 		}
 
 		if element.width.type == .Fit {
-			element._size.x = max_line_width + x_padding(element)
+			element._size.x = max_line_width + x_padding(element) + x_border(element)
 			apply_width_contraints(ctx, element)
 		}
 	}
@@ -359,7 +362,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	if (element.height.type == .Fit || element.height.type == .Grow) && element.has_text {
 		lines := element._line_count > 0 ? element._line_count : 1
 		line_height_px := measure_text_height(element.font_size, element.line_height)
-		element._size.y = line_height_px * f32(lines) + y_padding(element)
+		element._size.y = line_height_px * f32(lines) + y_padding(element) + y_border(element)
 	}
 
 	child := element.children
@@ -399,7 +402,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 			child = child_element.next
 		}
 		gap := element.gap * f32(max(child_count - 1, 0))
-		element._size.y = sum + gap + y_padding(element)
+		element._size.y = sum + gap + y_padding(element) + y_border(element)
 	} else {
 		// max of child heights
 		max_child: f32 = 0
@@ -422,7 +425,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 			}
 			child = child_element.next
 		}
-		element._size.y = max_child + y_padding(element)
+		element._size.y = max_child + y_padding(element) + y_border(element)
 	}
 
 	apply_height_contraints(ctx, element)
@@ -534,7 +537,7 @@ apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	min := max(element.width.min, x_padding(element))
+	min := max(element.width.min, x_padding(element) + x_border(element))
 
 	apply_max := false
 	max: f32 = 0
@@ -570,7 +573,7 @@ apply_height_contraints :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	min := max(element.height.min, y_padding(element))
+	min := max(element.height.min, y_padding(element) + y_border(element))
 
 	apply_max := false
 	max: f32 = 0

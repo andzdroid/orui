@@ -80,6 +80,7 @@ ElementConfig :: struct {
 	height:           Size,
 	padding:          Edges,
 	margin:           Edges,
+	border:           Edges,
 	gap:              f32,
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
@@ -87,7 +88,8 @@ ElementConfig :: struct {
 
 	// style
 	background_color: rl.Color,
-	// TODO: border, border color, corner radius
+	border_color:     rl.Color,
+	// TODO: corner radius
 
 	// text
 	has_text:         bool,
@@ -118,12 +120,14 @@ Element :: struct {
 	height:           Size,
 	padding:          Edges,
 	margin:           Edges,
+	border:           Edges,
 	gap:              f32,
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
 
 	// style
 	background_color: rl.Color,
+	border_color:     rl.Color,
 
 	// text
 	has_text:         bool,
@@ -157,12 +161,14 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.height = config.height
 	element.padding = config.padding
 	element.margin = config.margin
+	element.border = config.border
 	element.gap = config.gap
 	element.align_main = config.align_main
 	element.align_cross = config.align_cross
 
 	// style
 	element.background_color = config.background_color
+	element.border_color = config.border_color
 
 	// text
 	element.has_text = config.has_text

@@ -30,8 +30,8 @@ compute_element_position :: proc(ctx: ^Context, element: ^Element) {
 		main_axis_offset := main_offset(element.align_main, available_space, child_count)
 
 		child := element.children
-		x := element.padding.left + main_axis_offset.initial
-		y := element.padding.top + main_axis_offset.initial
+		x := element.padding.left + element.border.left + main_axis_offset.initial
+		y := element.padding.top + element.border.top + main_axis_offset.initial
 		index := 0
 		for child != 0 {
 			child_element := &ctx.elements[child]
@@ -143,26 +143,28 @@ cross_offset :: proc(parent: ^Element, child: ^Element) -> f32 {
 	if parent.direction == .LeftToRight {
 		available_height := inner_height(parent)
 		child_height := child._size.y + y_margin(child)
+		parent_offset := parent.padding.top + parent.border.top
 
 		switch parent.align_cross {
 		case .Start:
-			return parent.padding.top + child.margin.top
+			return parent_offset + child.margin.top
 		case .End:
-			return parent.padding.top + available_height - child_height + child.margin.top
+			return parent_offset + available_height - child_height + child.margin.top
 		case .Center:
-			return parent.padding.top + (available_height - child_height) / 2 + child.margin.top
+			return parent_offset + (available_height - child_height) / 2 + child.margin.top
 		}
 	} else {
 		available_width := inner_width(parent)
 		child_width := child._size.x + x_margin(child)
+		parent_offset := parent.padding.left + parent.border.left
 
 		switch parent.align_cross {
 		case .Start:
-			return parent.padding.left + child.margin.left
+			return parent_offset + child.margin.left
 		case .End:
-			return parent.padding.left + available_width - child_width + child.margin.left
+			return parent_offset + available_width - child_width + child.margin.left
 		case .Center:
-			return parent.padding.left + (available_width - child_width) / 2 + child.margin.left
+			return parent_offset + (available_width - child_width) / 2 + child.margin.left
 		}
 	}
 	return 0

@@ -22,6 +22,10 @@ render_element :: proc(ctx: ^Context, index: int) {
 		)
 	}
 
+	if element.border_color.a > 0 {
+		render_border(element)
+	}
+
 	if element.has_text {
 		render_wrapped_text(element)
 	}
@@ -34,6 +38,62 @@ render_element :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
+render_border :: proc(element: ^Element) {
+	if element.border.top == element.border.left &&
+	   element.border.left == element.border.right &&
+	   element.border.right == element.border.bottom {
+		rl.DrawRectangleLinesEx(
+			{element._position.x, element._position.y, element._size.x, element._size.y},
+			element.border.top,
+			element.border_color,
+		)
+	} else {
+		if element.border.top > 0 {
+			rl.DrawRectanglePro(
+				{element._position.x, element._position.y, element._size.x, element.border.top},
+				{0, 0},
+				0,
+				element.border_color,
+			)
+		}
+		if element.border.right > 0 {
+			rl.DrawRectanglePro(
+				{
+					element._position.x + element._size.x - element.border.right,
+					element._position.y,
+					element.border.right,
+					element._size.y,
+				},
+				{0, 0},
+				0,
+				element.border_color,
+			)
+		}
+		if element.border.bottom > 0 {
+			rl.DrawRectanglePro(
+				{
+					element._position.x,
+					element._position.y + element._size.y - element.border.bottom,
+					element._size.x,
+					element.border.bottom,
+				},
+				{0, 0},
+				0,
+				element.border_color,
+			)
+		}
+		if element.border.left > 0 {
+			rl.DrawRectanglePro(
+				{element._position.x, element._position.y, element.border.left, element._size.y},
+				{0, 0},
+				0,
+				element.border_color,
+			)
+		}
+	}
+}
+
+@(private)
 render_wrapped_text :: proc(element: ^Element) {
 	text := element.text
 	text_len := len(text)
@@ -42,8 +102,8 @@ render_wrapped_text :: proc(element: ^Element) {
 	}
 
 	y_offset := calculate_text_offset(element)
-	x_start := element._position.x + element.padding.left
-	y_start := element._position.y + element.padding.top + y_offset
+	x_start := element._position.x + element.padding.left + element.border.left
+	y_start := element._position.y + element.padding.top + element.border.top + y_offset
 	line_height := measure_text_height(element.font_size, element.line_height)
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	space_width := measure_text_width(" ", element.font, element.font_size, letter_spacing)
@@ -115,7 +175,7 @@ render_wrapped_text :: proc(element: ^Element) {
 					element.font_size,
 					letter_spacing,
 				)
-				render_line(
+				render_text_line(
 					element,
 					text[line_start:trim_end],
 					actual_width,
@@ -132,7 +192,7 @@ render_wrapped_text :: proc(element: ^Element) {
 }
 
 @(private)
-render_line :: proc(
+render_text_line :: proc(
 	element: ^Element,
 	text: string,
 	line_width: f32,
