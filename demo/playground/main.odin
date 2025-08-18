@@ -102,7 +102,7 @@ main :: proc() {
 				)
 
 				{orui.container(
-						orui.id("sidebar left"),
+						orui.id("top bar left"),
 						{height = orui.grow(), width = orui.grow(), gap = 8},
 					)
 					for i in 0 ..< 4 {
@@ -117,6 +117,7 @@ main :: proc() {
 								width = orui.fit(),
 								height = orui.grow(),
 								align = {.End, .End},
+								corner_radius = orui.corner(8),
 							},
 							button_style,
 						)
@@ -124,7 +125,7 @@ main :: proc() {
 				}
 
 				{orui.container(
-						orui.id("sidebar right"),
+						orui.id("top bar right"),
 						{
 							height = orui.grow(),
 							width = orui.grow(),
@@ -208,8 +209,9 @@ main :: proc() {
 							width = orui.grow(),
 							height = orui.grow(),
 							background_color = {50, 50, 50, 255},
-							padding = orui.padding(8),
+							padding = orui.padding(16),
 							gap = 8,
+							corner_radius = orui.corner(16),
 						},
 					)
 

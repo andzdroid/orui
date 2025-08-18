@@ -18,15 +18,15 @@ Features:
   - Letter spacing
   - Wrapping
   - Alignment
+- Borders
+- Rounded corners
 
 To do:
 
 - Render images (textures)
-- Rounded corners
-- Borders
 - Z-ordering (maybe)
 - Grids (maybe)
-- Scroll views
+- Scroll views (maybe)
 
 ## Usage
 
@@ -351,6 +351,19 @@ The color of the border, given as a raylib Color.
 
 If the alpha is 0, nothing is drawn. Default border color is invisible.
 
+### corner_radius
+
+The radius of each corner. Will be applied to both backgrounds and borders.
+
+```odin
+Corners :: struct {
+	top_left:     f32,
+	top_right:    f32,
+	bottom_right: f32,
+	bottom_left:  f32,
+}
+```
+
 ### has_text and text
 
 If `text` is set, `has_text` should be set to true. The label element does this automatically.
@@ -407,6 +420,9 @@ orui.container(orui.id("container"), {
 
   // equal border width on all sides, equivalent to {2, 2, 2, 2}
 	border = orui.border(2),
+
+	// equal radius on all corners, equivalent to {5, 5, 5, 5}
+	corner_radius = orui.corner(5),
 
   // fixed pixel size, equivalent to {.Fixed, 500, 0, 0}
   width/height = orui.fixed(500),

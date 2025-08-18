@@ -330,6 +330,10 @@ border :: proc(b: f32) -> Edges {
 	return {b, b, b, b}
 }
 
+corner :: proc(r: f32) -> Corners {
+	return {r, r, r, r}
+}
+
 fixed :: proc {
 	fixed_f32,
 	fixed_i32,

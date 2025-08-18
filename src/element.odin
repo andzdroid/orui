@@ -11,6 +11,13 @@ Edges :: struct {
 	left:   f32,
 }
 
+Corners :: struct {
+	top_left:     f32,
+	top_right:    f32,
+	bottom_right: f32,
+	bottom_left:  f32,
+}
+
 SizeType :: enum {
 	Fit,
 	Grow,
@@ -89,7 +96,7 @@ ElementConfig :: struct {
 	// style
 	background_color: rl.Color,
 	border_color:     rl.Color,
-	// TODO: corner radius
+	corner_radius:    Corners,
 
 	// text
 	has_text:         bool,
@@ -128,6 +135,7 @@ Element :: struct {
 	// style
 	background_color: rl.Color,
 	border_color:     rl.Color,
+	corner_radius:    Corners,
 
 	// text
 	has_text:         bool,
@@ -169,6 +177,7 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	// style
 	element.background_color = config.background_color
 	element.border_color = config.border_color
+	element.corner_radius = config.corner_radius
 
 	// text
 	element.has_text = config.has_text
