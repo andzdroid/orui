@@ -6,6 +6,8 @@ orui is an immediate mode UI library for odin and raylib, with support for flex 
 
 It is meant for building user-facing UIs using familiar concepts from CSS.
 
+orui is a work in progress.
+
 ![](demo/flex/screenshot.png)
 ![](demo/window/screenshot.png)
 
@@ -91,9 +93,9 @@ my_container :: proc(id: string) {
 
 ### container
 
-`container` is exactly like `element` except it automatically ends the element when it goes out of scope.
+`container` is exactly like `element` except it automatically ends the element when it goes out of scope. You should not manually call `end_element()` for containers.
 
-This means you can use curly braces to define the scope of the container:
+This means you must use curly braces to define the scope of the container:
 
 ```odin
 {orui.container(orui.id("element ID"), config)
@@ -234,6 +236,8 @@ ElementConfig :: struct {
 
 	// style
 	background_color: rl.Color,
+	border_color:     rl.Color,
+	corner_radius:    Corners,
 
 	// text
 	has_text:         bool,
@@ -243,6 +247,11 @@ ElementConfig :: struct {
 	color:            rl.Color,
 	letter_spacing:   f32,
 	line_height:      f32,
+
+	// texture
+	has_texture:      bool,
+	texture:          ^rl.Texture2D,
+	texture_source:   rl.Rectangle,
 
 	// content layout
 	align:            [2]ContentAlignment,
