@@ -34,6 +34,22 @@ To do:
 - Grids (maybe)
 - Scroll views (maybe)
 
+## Table of Contents
+
+- [Usage](#usage)
+- [Declaring UI](#declaring-ui)
+  - [element](#element)
+  - [container](#container)
+  - [label](#label)
+  - [image](#image)
+- [Other functions](#other-functions)
+  - [hovered()](#hovered)
+  - [active()](#active)
+  - [clicked()](#clicked)
+- [Element config](#element-config)
+  - [Config helpers](#config-helpers)
+  - [Config modifiers](#config-modifiers)
+
 ## Usage
 
 Allocate the orui Context up front:
