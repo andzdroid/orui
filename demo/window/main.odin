@@ -1,27 +1,9 @@
 package demo
 
 import orui "../../src"
-import "core:log"
-import "core:os"
 import rl "vendor:raylib"
 
 main :: proc() {
-	mode: int = 0
-	when ODIN_OS == .Linux || ODIN_OS == .Darwin {
-		mode = os.S_IRUSR | os.S_IWUSR | os.S_IRGRP | os.S_IROTH
-	}
-
-	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR), mode)
-	if logh_err == os.ERROR_NONE {
-		os.stdout = logh
-		os.stderr = logh
-	}
-
-	logger_allocator := context.allocator
-	logger :=
-		logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_allocator) : log.create_console_logger(allocator = logger_allocator)
-	context.logger = logger
-
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
 

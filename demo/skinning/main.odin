@@ -20,9 +20,9 @@ button_style :: proc(skin: Skin) -> proc(element: ^orui.Element) {
 
 dark_button_style :: proc(element: ^orui.Element) {
 	element.background_color =
-		orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {60, 60, 60, 255}
+		orui.active() ? {100, 100, 120, 255} : orui.hovered() ? {120, 120, 140, 255} : {60, 60, 80, 255}
 	element.border = orui.border(1)
-	element.border_color = {100, 100, 100, 255}
+	element.border_color = {100, 100, 120, 255}
 	element.corner_radius = orui.corner(4)
 	element.color = rl.WHITE
 }
@@ -47,9 +47,9 @@ window_style :: proc(skin: Skin) -> proc(element: ^orui.Element) {
 }
 
 dark_window_style :: proc(element: ^orui.Element) {
-	element.background_color = {30, 30, 30, 255}
+	element.background_color = {30, 30, 50, 255}
 	element.border = orui.border(1)
-	element.border_color = {100, 100, 100, 255}
+	element.border_color = {100, 100, 120, 255}
 	element.corner_radius = orui.corner(4)
 }
 
@@ -133,7 +133,7 @@ main :: proc() {
 						{
 							width = orui.grow(),
 							height = orui.fixed(32),
-							background_color = skin == .Dark ? {60, 60, 60, 255} : {220, 190, 150, 255},
+							background_color = skin == .Dark ? {60, 60, 100, 255} : {220, 190, 150, 255},
 							padding = {4, 8, 4, 8},
 							align_cross = .Center,
 							border = {0, 0, 1, 0},

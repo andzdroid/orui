@@ -8,8 +8,10 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 
 orui is a work in progress.
 
-![](demo/flex/screenshot.png)
-![](demo/window/screenshot.png)
+<img src="demo/flex/screenshot.png" width="40%" />
+<img src="demo/window/screenshot.png" width="40.5%" />
+<img src="demo/skinning/screenshot1.png" width="39%" />
+<img src="demo/skinning/screenshot2.png" width="41%" />
 
 Features:
 
@@ -17,6 +19,7 @@ Features:
 - Flex fit (shrink) and grow
 - Flex justify and align
 - Flex child gap
+- Absolute and relative positioning
 - Padding, margin
 - Borders
 - Rounded corners
@@ -30,6 +33,7 @@ Features:
 To do:
 
 - Texture fit (fill, contain, cover, none, scale-down)
+- 9-slice scaling
 - Z-ordering (maybe)
 - Grids (maybe)
 - Scroll views (maybe)
