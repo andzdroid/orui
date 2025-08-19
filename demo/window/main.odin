@@ -27,10 +27,8 @@ main :: proc() {
 				orui.id("container"),
 				{
 					direction = .TopToBottom,
-					width = orui.fixed(width),
-					height = orui.fixed(height),
-					padding = orui.padding(16),
-					gap = 16,
+					width = orui.grow(),
+					height = orui.grow(),
 					align_main = .Center,
 					align_cross = .Center,
 				},
@@ -40,8 +38,8 @@ main :: proc() {
 					orui.id("window"),
 					{
 						direction = .TopToBottom,
-						width = orui.percent(0.5),
-						height = orui.percent(0.5),
+						width = orui.percent(0.4),
+						height = orui.percent(0.4),
 						background_color = {30, 30, 30, 255},
 						border = orui.border(1),
 						border_color = {100, 100, 100, 255},
