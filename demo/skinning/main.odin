@@ -60,6 +60,21 @@ light_window_style :: proc(element: ^orui.Element) {
 	element.corner_radius = orui.corner(4)
 }
 
+button :: proc(id: string, label: string, font: ^rl.Font, skin: Skin) -> bool {
+	return orui.label(
+		orui.id(id),
+		label,
+		{
+			width = orui.fit(),
+			height = orui.fit(),
+			font = font,
+			font_size = 14,
+			padding = {10, 20, 10, 20},
+		},
+		button_style(skin),
+	)
+}
+
 main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
@@ -100,18 +115,7 @@ main :: proc() {
 					},
 				)
 
-				if orui.label(
-					orui.id("toggle button"),
-					"Toggle skin",
-					{
-						width = orui.fit(),
-						font = &default_font,
-						font_size = 16,
-						padding = orui.padding(16, 8),
-					},
-					button_style(skin),
-				) {
-					// button clicked, toggle skin
+				if button("toggle button", "Toggle skin", &default_font, skin) {
 					skin = skin == .Dark ? .Light : .Dark
 				}
 			}
@@ -188,30 +192,8 @@ main :: proc() {
 								gap = 16,
 							},
 						)
-						orui.label(
-							orui.id("ok button"),
-							"Confirm",
-							{
-								width = orui.fit(),
-								height = orui.fit(),
-								font = &default_font,
-								font_size = 14,
-								padding = {10, 20, 10, 20},
-							},
-							button_style(skin),
-						)
-						orui.label(
-							orui.id("cancel button"),
-							"Cancel",
-							{
-								width = orui.fit(),
-								height = orui.fit(),
-								font = &default_font,
-								font_size = 14,
-								padding = {10, 20, 10, 20},
-							},
-							button_style(skin),
-						)
+						button("ok button", "Confirm", &default_font, skin)
+						button("cancel button", "Cancel", &default_font, skin)
 					}
 				}
 			}
