@@ -248,10 +248,6 @@ _hovered :: proc() -> bool {
 // Whether the mouse is over the element with the given ID.
 _hovered_id :: proc(id: string) -> bool {
 	ctx := current_context
-	if ctx.current == 0 {
-		return false
-	}
-
 	id := to_id(id)
 	for i := 0; i < ctx.hover_prev_count; i += 1 {
 		if ctx.hover_prev[i] == id {
@@ -289,10 +285,6 @@ _active :: proc() -> bool {
 // Whether the specified element is active (mouse down).
 _active_id :: proc(id: string) -> bool {
 	ctx := current_context
-	if ctx.current == 0 {
-		return false
-	}
-
 	id := to_id(id)
 	for i := 0; i < ctx.active_prev_count; i += 1 {
 		if ctx.active_prev[i] == id {
@@ -324,11 +316,13 @@ padding :: proc {
 }
 
 @(private)
+// Equal padding on all sides.
 padding_all :: proc(p: f32) -> Edges {
 	return {p, p, p, p}
 }
 
 @(private)
+// Padding on the x and y axis.
 padding_axis :: proc(x: f32, y: f32) -> Edges {
 	return {y, x, y, x}
 }
@@ -339,19 +333,23 @@ margin :: proc {
 }
 
 @(private)
+// Equal margin on all sides.
 margin_all :: proc(m: f32) -> Edges {
 	return {m, m, m, m}
 }
 
 @(private)
+// Margin on the x and y axis.
 margin_axis :: proc(x: f32, y: f32) -> Edges {
 	return {y, x, y, x}
 }
 
+// Equal border width on all sides.
 border :: proc(b: f32) -> Edges {
 	return {b, b, b, b}
 }
 
+// Equal corner radius on all sides.
 corner :: proc(r: f32) -> Corners {
 	return {r, r, r, r}
 }
