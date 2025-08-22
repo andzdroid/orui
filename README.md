@@ -8,8 +8,9 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 
 orui is a work in progress.
 
-<img src="demo/flex/screenshot.png" width="40%" /><img src="demo/window/screenshot.png" width="40.5%" />
-<img src="demo/skinning/screenshot1.png" width="40%" /><img src="demo/skinning/screenshot2.png" width="40%" />
+<img src="demo/flex/screenshot.png" width="45%" /><img src="demo/window/screenshot.png" width="45%" />
+<img src="demo/skinning/screenshot1.png" width="45%" /><img src="demo/skinning/screenshot2.png" width="45%" />
+<img src="demo/widgets/screenshot.png" width="45%">
 
 Features:
 
@@ -35,6 +36,7 @@ To do:
 - Z-ordering (maybe)
 - Grids (maybe)
 - Scroll views (maybe)
+- Text inputs and other widgets (maybe)
 
 ## Table of Contents
 

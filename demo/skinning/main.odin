@@ -29,7 +29,7 @@ dark_button_style :: proc(element: ^orui.Element) {
 
 light_button_style :: proc(element: ^orui.Element) {
 	element.background_color =
-		orui.active() ? {180, 150, 130, 255} : orui.hovered() ? {200, 170, 150, 255} : {220, 190, 170, 255}
+		orui.active() ? {200, 170, 150, 255} : orui.hovered() ? {220, 190, 170, 255} : {210, 180, 160, 255}
 	element.border = orui.border(1)
 	element.border_color = {100, 100, 100, 255}
 	element.corner_radius = orui.corner(4)
