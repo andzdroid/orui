@@ -91,12 +91,11 @@ _end_with_context :: proc(ctx: ^Context) {
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
 
-	wrap_text(ctx)
+	wrap(ctx)
 
 	fit_heights(ctx, 0)
 	distribute_heights(ctx, 0)
 
-	sort_roots_by_z(ctx)
 	compute_layout(ctx, 0)
 	render(ctx)
 

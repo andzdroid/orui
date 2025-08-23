@@ -31,6 +31,7 @@ Features:
 
 To do:
 
+- Flex wrap
 - Texture fit (fill, contain, cover, none, scale-down)
 - 9-slice scaling
 - Z-ordering (maybe)

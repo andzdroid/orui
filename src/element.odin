@@ -46,6 +46,8 @@ Position :: struct {
 Layout :: enum {
 	// Layout children next to each other
 	Flex,
+	// Layout children in columns and rows
+	Grid,
 	// Does not layout children
 	None,
 }
