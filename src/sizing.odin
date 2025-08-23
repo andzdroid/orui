@@ -1,6 +1,5 @@
 package orui
 
-import "core:log"
 import "core:strings"
 import rl "vendor:raylib"
 
@@ -265,64 +264,59 @@ wrap_text :: proc(ctx: ^Context) {
 		space_width := measure_text_width(" ", element.font, element.font_size, letter_spacing)
 
 		line_count := 1
-		current_line_width: f32 = 0
+		line_width: f32 = 0
 		max_line_width: f32 = 0
 
 		// scan text
 		index := 0
 		for index < text_len {
 			if text[index] == '\n' {
-				if current_line_width > max_line_width {
-					max_line_width = current_line_width
-				}
-				current_line_width = 0
+				line_width = 0
 				line_count += 1
 				index += 1
-
-				// Skip spaces at start of line
-				for index < text_len && text[index] == ' ' {
-					index += 1
-				}
 				continue
 			}
 
-			// check next word
 			word_start := index
-			for index < text_len && text[index] != ' ' && text[index] != '\n' {
-				index += 1
-			}
-			word := text[word_start:index]
-			if len(word) > 0 {
+			for index < text_len && text[index] != '\n' {
+				for index < text_len && text[index] != ' ' {
+					index += 1
+				}
+
+				word := text[word_start:index]
 				word_width := measure_text_width(
 					word,
 					element.font,
 					element.font_size,
 					letter_spacing,
 				)
-				if current_line_width == 0 {
-					current_line_width = word_width
-				} else {
-					next_width :=
-						current_line_width + space_width + (2 * letter_spacing) + word_width
-					if !width_definite || next_width <= inner_available {
-						current_line_width = next_width
-					} else {
-						if current_line_width > max_line_width {
-							max_line_width = current_line_width
-						}
-						current_line_width = word_width
-						line_count += 1
-					}
+
+				next_width := line_width + word_width
+				if line_width > 0 {
+					next_width += letter_spacing
 				}
-			}
 
-			for index < text_len && text[index] == ' ' {
+				if !width_definite ||
+				   next_width <= inner_available ||
+				   abs(next_width - inner_available) < 0.0001 {
+					line_width = next_width
+					if line_width > max_line_width {
+						max_line_width = line_width
+					}
+					word_start = index
+					index += 1
+					continue
+				}
+
+				// handle first word of a new line
+				line_width = word_width
+				if line_width > max_line_width {
+					max_line_width = line_width
+				}
+				word_start = index
 				index += 1
+				line_count += 1
 			}
-		}
-
-		if current_line_width > max_line_width {
-			max_line_width = current_line_width
 		}
 
 		element._line_count = line_count

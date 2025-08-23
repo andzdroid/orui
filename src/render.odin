@@ -1,6 +1,5 @@
 package orui
 
-import "core:log"
 import "core:strings"
 import rl "vendor:raylib"
 
@@ -310,63 +309,58 @@ render_wrapped_text :: proc(element: ^Element) {
 	y_start := element._position.y + element.padding.top + element.border.top + y_offset
 	line_height := measure_text_height(element.font_size, element.line_height)
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	space_width := measure_text_width(" ", element.font, element.font_size, letter_spacing)
 	inner_width := inner_width(element)
 
 	y := y_start
 	index := 0
 	for index < text_len {
+		if text[index] == '\n' {
+			y += line_height
+			index += 1
+			continue
+		}
+
 		line_start := index
 		line_width: f32 = 0
 
-		// skip leading spaces
-		// TODO: remove this, leading spaces should be rendered
-		// needs changes to word wrapping logic?
 		for index < text_len && text[index] == ' ' {
 			index += 1
 		}
 		line_start = index
 
+		word_start := index
 		for index < text_len && text[index] != '\n' {
-			word_start := index
-			for index < text_len && text[index] != ' ' && text[index] != '\n' {
+			for index < text_len && text[index] != ' ' {
 				index += 1
 			}
 
-			if word_start < index {
-				word := text[word_start:index]
-				word_width := measure_text_width(
-					word,
-					element.font,
-					element.font_size,
-					letter_spacing,
-				)
+			word := text[word_start:index]
+			word_width := measure_text_width(word, element.font, element.font_size, letter_spacing)
 
-				if line_width == 0 {
-					line_width = word_width
-				} else {
-					next_width := line_width + space_width + (2 * letter_spacing) + word_width
-					if next_width <= inner_width {
-						line_width = next_width
-					} else {
-						index = word_start
-						break
-					}
-				}
+			next_width := line_width + word_width
+			if line_width > 0 {
+				next_width += letter_spacing
 			}
 
-			for index < text_len && text[index] == ' ' {
+			if next_width <= inner_width || abs(next_width - inner_width) < 0.0001 {
+				line_width = next_width
+				word_start = index
 				index += 1
+				continue
 			}
+
+			index = word_start
+			break
 		}
 
-		line_end := index
+		line_end := min(index, text_len)
 
-		if index < text_len && text[index] == '\n' {
-			index += 1
+		if line_start == line_end {
+			break
 		}
 
 		if line_start < line_end {
+			// trim trailing spaces
 			trim_end := line_end
 			for trim_end > line_start && text[trim_end - 1] == ' ' {
 				trim_end -= 1

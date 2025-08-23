@@ -15,7 +15,6 @@ button_style :: proc(element: ^orui.Element) {
 }
 
 dropdown_option_style :: proc(element: ^orui.Element) {
-	element.height = orui.fixed(36)
 	element.width = orui.grow()
 	element.font_size = 16
 	element.background_color =
@@ -184,7 +183,7 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 		if orui.label(
 			orui.id("dropdown button"),
 			value^ == 0 ? "Dropdown: Option 1" : value^ == 1 ? "Dropdown: Option 2" : "Dropdown: Option 3",
-			{font = font, font_size = 16, height = orui.fixed(36), width = orui.grow()},
+			{font = font, font_size = 16, width = orui.grow()},
 			button_style,
 		) {
 			open_state^ = !open_state^
