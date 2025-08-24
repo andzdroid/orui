@@ -56,7 +56,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		element._size.x = max_child + x_padding(element) + x_border(element)
 	}
 
-	apply_width_contraints(ctx, element)
+	flex_clamp_width(ctx, element)
 }
 
 @(private)
@@ -94,7 +94,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 			}
 
 			child_element._size.x = base
-			apply_width_contraints(ctx, child_element)
+			flex_clamp_width(ctx, child_element)
 			sum_with_margins += child_element._size.x + x_margin(child_element)
 			child_count += 1
 			child = child_element.next
@@ -111,7 +111,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 					if weight <= 0 {weight = 1}
 					add := remaining * (weight / total_weight)
 					child_element._size.x += add
-					apply_width_contraints(ctx, child_element)
+					flex_clamp_width(ctx, child_element)
 				}
 				child = child_element.next
 			}
@@ -137,7 +137,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 				child_element._size.x = element_inner_width - x_margin(child_element)
 			}
 
-			apply_width_contraints(ctx, child_element)
+			flex_clamp_width(ctx, child_element)
 			child = child_element.next
 		}
 	}
@@ -199,7 +199,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		element._size.y = max_child + y_padding(element) + y_border(element)
 	}
 
-	apply_height_contraints(ctx, element)
+	flex_clamp_height(ctx, element)
 }
 
 @(private)
@@ -237,7 +237,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 			}
 
 			child_element._size.y = base
-			apply_height_contraints(ctx, child_element)
+			flex_clamp_height(ctx, child_element)
 			sum_with_margins += child_element._size.y + y_margin(child_element)
 			child_count += 1
 			child = child_element.next
@@ -254,7 +254,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 					if weight <= 0 {weight = 1}
 					add := remaining * (weight / total_weight)
 					child_element._size.y += add
-					apply_height_contraints(ctx, child_element)
+					flex_clamp_height(ctx, child_element)
 				}
 				child = child_element.next
 			}
@@ -280,14 +280,14 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 				child_element._size.y = element_inner_height - y_margin(child_element)
 			}
 
-			apply_height_contraints(ctx, child_element)
+			flex_clamp_height(ctx, child_element)
 			child = child_element.next
 		}
 	}
 }
 
 @(private)
-apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
+flex_clamp_width :: proc(ctx: ^Context, element: ^Element) {
 	if element.layout != .Flex {
 		return
 	}
@@ -323,7 +323,7 @@ apply_width_contraints :: proc(ctx: ^Context, element: ^Element) {
 }
 
 @(private)
-apply_height_contraints :: proc(ctx: ^Context, element: ^Element) {
+flex_clamp_height :: proc(ctx: ^Context, element: ^Element) {
 	if element.layout != .Flex {
 		return
 	}

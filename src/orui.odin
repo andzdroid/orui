@@ -5,6 +5,7 @@ import "core:log"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
+MAX_GRID_TRACKS :: 12
 
 current_context: ^Context = nil
 

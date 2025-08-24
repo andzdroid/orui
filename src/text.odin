@@ -128,7 +128,6 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	element._line_count = line_count
-	element._measured_size.x = max_line_width
 
 	if element.height.type != .Fixed {
 		if element.height.type == .Percent {
@@ -147,7 +146,7 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 
 	if element.width.type == .Fit {
 		element._size.x = max_line_width + x_padding(element) + x_border(element)
-		apply_width_contraints(ctx, element)
+		flex_clamp_width(ctx, element)
 	}
 }
 

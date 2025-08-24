@@ -39,5 +39,7 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 	if element.layout == .Flex {
 		flex_compute_position(ctx, element)
+	} else if element.layout == .Grid {
+		grid_compute_position(ctx, element)
 	}
 }

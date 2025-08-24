@@ -93,7 +93,16 @@ ElementConfig :: struct {
 	gap:              f32,
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
-	// overflow?
+
+	// grid
+	cols:             int,
+	col_sizes:        []Size,
+	rows:             int,
+	row_sizes:        []Size,
+	col_gap:          f32,
+	row_gap:          f32,
+	col_span:         int,
+	row_span:         int,
 
 	// style
 	background_color: rl.Color,
@@ -119,54 +128,68 @@ ElementConfig :: struct {
 }
 
 Element :: struct {
-	id:               Id,
-	parent:           int,
-	children:         int,
-	next:             int,
-	children_count:   int,
-	user_data:        rawptr,
+	id:                Id,
+	parent:            int,
+	children:          int,
+	next:              int,
+	children_count:    int,
+	user_data:         rawptr,
 
 	// layout
-	layout:           Layout,
-	direction:        LayoutDirection,
-	position:         Position,
-	width:            Size,
-	height:           Size,
-	padding:          Edges,
-	margin:           Edges,
-	border:           Edges,
-	gap:              f32,
-	align_main:       MainAlignment,
-	align_cross:      CrossAlignment,
+	layout:            Layout,
+	direction:         LayoutDirection,
+	position:          Position,
+	width:             Size,
+	height:            Size,
+	padding:           Edges,
+	margin:            Edges,
+	border:            Edges,
+	gap:               f32,
+	align_main:        MainAlignment,
+	align_cross:       CrossAlignment,
+
+	// grid
+	cols:              int,
+	col_sizes:         [MAX_GRID_TRACKS]Size,
+	rows:              int,
+	row_sizes:         [MAX_GRID_TRACKS]Size,
+	col_gap:           f32,
+	row_gap:           f32,
+	col_span:          int,
+	row_span:          int,
 
 	// style
-	background_color: rl.Color,
-	border_color:     rl.Color,
-	corner_radius:    Corners,
+	background_color:  rl.Color,
+	border_color:      rl.Color,
+	corner_radius:     Corners,
 
 	// text
-	has_text:         bool,
-	text:             string,
-	font:             ^rl.Font,
-	font_size:        f32,
-	color:            rl.Color,
-	letter_spacing:   f32,
-	line_height:      f32,
+	has_text:          bool,
+	text:              string,
+	font:              ^rl.Font,
+	font_size:         f32,
+	color:             rl.Color,
+	letter_spacing:    f32,
+	line_height:       f32,
 
 	// texture
-	has_texture:      bool,
-	texture:          ^rl.Texture2D,
-	texture_source:   rl.Rectangle,
+	has_texture:       bool,
+	texture:           ^rl.Texture2D,
+	texture_source:    rl.Rectangle,
 
 	// content layout
-	align:            [2]ContentAlignment,
+	align:             [2]ContentAlignment,
 
 	// internal
-	_position:        rl.Vector2,
-	_size:            rl.Vector2, // border box size
-	_measured_size:   rl.Vector2,
-	_line_count:      int,
-	_text_offset:     rl.Vector2,
+	_position:         rl.Vector2,
+	_size:             rl.Vector2, // border box size
+	_line_count:       int,
+	_grid_col_index:   int,
+	_grid_row_index:   int,
+	_grid_row_sizes:   [MAX_GRID_TRACKS]f32,
+	_grid_col_sizes:   [MAX_GRID_TRACKS]f32,
+	_grid_row_offsets: [MAX_GRID_TRACKS]f32,
+	_grid_col_offsets: [MAX_GRID_TRACKS]f32,
 }
 
 @(private)
@@ -185,6 +208,44 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.gap = config.gap
 	element.align_main = config.align_main
 	element.align_cross = config.align_cross
+
+	// grid
+	element.cols = config.cols
+	{
+		provided := len(config.col_sizes)
+		copy_count := provided
+		if copy_count > MAX_GRID_TRACKS {copy_count = MAX_GRID_TRACKS}
+		for i in 0 ..< copy_count {
+			element.col_sizes[i] = config.col_sizes[i]
+		}
+		last := Size{}
+		if provided > 0 {
+			last = config.col_sizes[provided - 1]
+		}
+		for i in copy_count ..< MAX_GRID_TRACKS {
+			element.col_sizes[i] = last
+		}
+	}
+	element.rows = config.rows
+	{
+		provided := len(config.row_sizes)
+		copy_count := provided
+		if copy_count > MAX_GRID_TRACKS {copy_count = MAX_GRID_TRACKS}
+		for i in 0 ..< copy_count {
+			element.row_sizes[i] = config.row_sizes[i]
+		}
+		last := Size{}
+		if provided > 0 {
+			last = config.row_sizes[provided - 1]
+		}
+		for i in copy_count ..< MAX_GRID_TRACKS {
+			element.row_sizes[i] = last
+		}
+	}
+	element.col_gap = config.col_gap
+	element.row_gap = config.row_gap
+	element.col_span = config.col_span
+	element.row_span = config.row_span
 
 	// style
 	element.background_color = config.background_color

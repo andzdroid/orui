@@ -22,6 +22,18 @@ button_style :: proc(element: ^orui.Element) {
 	element.border_color = orui.hovered() ? {200, 200, 200, 255} : {150, 150, 150, 255}
 }
 
+grid_cell_style :: proc(element: ^orui.Element) {
+	element.width = orui.grow()
+	element.height = orui.grow()
+	element.background_color = {30, 30, 60, 255}
+	element.font_size = 16
+	element.color = rl.WHITE
+	element.border = orui.border(1)
+	element.border_color = orui.hovered() ? {200, 200, 200, 255} : {150, 150, 150, 255}
+	element.align = {.Center, .Center}
+	element.corner_radius = orui.corner(8)
+}
+
 main :: proc() {
 	mode: int = 0
 	when ODIN_OS == .Linux || ODIN_OS == .Darwin {
@@ -252,7 +264,7 @@ main :: proc() {
 								orui.id("box b"),
 								{
 									width = orui.fixed(200),
-									height = orui.fixed(200),
+									height = orui.fixed(100),
 									background_color = {100, 200, 60, 255},
 									margin = orui.margin(20),
 								},
@@ -261,9 +273,9 @@ main :: proc() {
 						{orui.container(
 								orui.id("box c"),
 								{
-									position = {.Relative, {100, 100}},
+									position = {.Relative, {0, -50}},
 									width = orui.fixed(200),
-									height = orui.fixed(200),
+									height = orui.fixed(100),
 									background_color = {20, 30, 60, 255},
 									margin = orui.margin(20),
 									align_main = .Center,
@@ -278,6 +290,59 @@ main :: proc() {
 								{width = orui.fixed(50), height = orui.fixed(50)},
 							)
 						}
+					}
+
+					{orui.container(
+							orui.id("grid container"),
+							{
+								width = orui.grow(),
+								height = orui.grow(),
+								layout = .Grid,
+								cols = 3,
+								rows = 3,
+								col_sizes = []orui.Size{orui.grow()},
+								row_sizes = []orui.Size{orui.grow()},
+								gap = 4,
+								background_color = {20, 20, 20, 255},
+								padding = orui.padding(4),
+							},
+						)
+
+						orui.label(
+							orui.id("grid 1"),
+							"Grid cell 1",
+							{font = &default_font},
+							grid_cell_style,
+						)
+
+						orui.label(
+							orui.id("grid 2"),
+							"Grid cell 2",
+							{font = &default_font},
+							grid_cell_style,
+						)
+
+						orui.label(
+							orui.id("grid 3"),
+							"Grid cell 3",
+							{font = &default_font, row_span = 2},
+							grid_cell_style,
+						)
+
+						orui.label(
+							orui.id("grid 4"),
+							"Grid cell 4",
+							{font = &default_font, col_span = 3},
+							grid_cell_style,
+						)
+
+						orui.label(
+							orui.id("grid 5"),
+							"Grid cell 5",
+							{font = &default_font, col_span = 2},
+							grid_cell_style,
+						)
+
 					}
 				}
 			}

@@ -46,11 +46,13 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 		if definite {
 			element._size.x = percent_width * element.width.value
 		}
-		apply_width_contraints(ctx, element)
+		flex_clamp_width(ctx, element)
 	}
 
 	if element.layout == .Flex {
 		flex_distribute_widths(ctx, element)
+	} else if element.layout == .Grid {
+		grid_distribute_widths(ctx, element)
 	}
 
 	child := element.children
@@ -108,11 +110,13 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 		if definite {
 			element._size.y = percent_height * element.height.value
 		}
-		apply_height_contraints(ctx, element)
+		flex_clamp_height(ctx, element)
 	}
 
 	if element.layout == .Flex {
 		flex_distribute_heights(ctx, element)
+	} else if element.layout == .Grid {
+		grid_distribute_heights(ctx, element)
 	}
 
 	child := element.children

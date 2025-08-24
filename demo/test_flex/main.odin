@@ -51,7 +51,8 @@ row :: proc(
 				{
 					width = orui.fixed(100),
 					height = orui.percent(0.7),
-					background_color = orui.hovered() ? {150, 150, 200, 255} : {120, 120, 120, 255},
+					background_color = {90, 120, 150, 255},
+					corner_radius = orui.corner(9),
 				},
 			)
 		}

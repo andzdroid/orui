@@ -8,16 +8,23 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 
 orui is a work in progress.
 
-<img src="demo/test_flex/screenshot.png" width="45%" /><img src="demo/window/screenshot.png" width="45%" />
+<img src="demo/test_flex/screenshot.png" width="45%" /><img src="demo/test_grid/screenshot.png" width="45%" />
 <img src="demo/skinning/screenshot1.png" width="45%" /><img src="demo/skinning/screenshot2.png" width="45%" />
-<img src="demo/widgets/screenshot.png" width="45%">
+<img src="demo/window/screenshot.png" width="45%" /><img src="demo/widgets/screenshot.png" width="45%">
 
 Features:
 
 - Flex layout
-- Flex fit (shrink) and grow
-- Flex justify and align
-- Flex child gap
+	- Fit (shrink) and grow
+	- Justify and align
+	- Child gap
+- Grid layout
+	- Auto rows/columns
+	- Fixed rows/columns
+	- Flow direction
+	- Column/row gaps
+	- Column/row spans
+	- Column/row sizes
 - Absolute and relative positioning
 - Padding, margin
 - Borders
@@ -31,13 +38,14 @@ Features:
 
 To do:
 
+- Grid justify/align
 - Flex wrap
 - Texture fit (fill, contain, cover, none, scale-down)
 - 9-slice scaling
 - Z-ordering (maybe)
-- Grids (maybe)
 - Scroll views (maybe)
 - Text inputs and other widgets (maybe)
+- Grid row/column start (maybe)
 
 ## Table of Contents
 
@@ -255,6 +263,16 @@ ElementConfig :: struct {
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
 
+	// grid
+	cols:             int,
+	col_sizes:        []Size,
+	rows:             int,
+	row_sizes:        []Size,
+	col_gap:          f32,
+	row_gap:          f32,
+	col_span:         int,
+	row_span:         int,
+
 	// style
 	background_color: rl.Color,
 	border_color:     rl.Color,
@@ -283,6 +301,7 @@ ElementConfig :: struct {
 ```odin
 Layout :: enum {
 	Flex,  // Default. Automatically positions children.
+	Grid,  // Position children within a grid with fixed number of columns and/or rows.
 	None,  // Does not affect children positioning.
 }
 ```
@@ -389,6 +408,40 @@ CrossAlignment :: enum {
 	Center,  // Center the children
 }
 ```
+
+### cols, rows
+
+Set the number of columns and rows for a grid layout. Only used if the layout is set to `.Grid`.
+
+Both are optional but usually you want to set at least one of these.
+
+The maximum number of columns/rows is 12. This is a constant defined as `MAX_GRID_TRACKS` in `orui.odin`. You can adjust this if needed but it will affect memory usage significantly. Before changing this, remember that grid cells can contain flex layouts and grids inside them as well.
+
+### col_sizes, row_sizes
+
+Defines the size of each column (width) and row (height). This is passed in as a slice of Size structs.
+
+The slice length does not need to match your grid size. Any columns or rows that don't have a defined size will use the size of the last column/row.
+
+This means if you want equal widths for all columns/rows, you only need to set the first column's size. For example:
+
+```odin
+orui.container(orui.id("grid"), {
+	layout = .Grid,
+	cols = 5,
+	rows = 5,
+	col_sizes = []{orui.grow()},
+	row_sizes = []{orui.percent(50)},
+})
+```
+
+### col_gap, row_gap
+
+Set the gap between columns and rows. If missing, defaults to the `gap` option.
+
+### col_span, row_span
+
+Set a cell to span multiple rows and columns.
 
 ### background_color
 
