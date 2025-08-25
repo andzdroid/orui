@@ -7,7 +7,8 @@ import rl "vendor:raylib"
 MAX_ELEMENTS :: 8192
 MAX_GRID_TRACKS :: 12
 
-current_context: ^Context = nil
+@(thread_local)
+current_context: ^Context
 
 Context :: struct {
 	elements:          [MAX_ELEMENTS]Element,

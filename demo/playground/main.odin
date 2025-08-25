@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:log"
 import "core:mem"
 import "core:os"
+import "core:time"
 import rl "vendor:raylib"
 
 labels :: [?]string {
@@ -15,8 +16,9 @@ labels :: [?]string {
 }
 
 button_style :: proc(element: ^orui.Element) {
+	color := rl.Color{200, 100, 60, 255}
 	element.background_color =
-		orui.active() && orui.hovered() ? {190, 90, 50, 255} : orui.hovered() ? {200, 110, 70, 255} : {200, 100, 60, 255}
+		orui.active() ? rl.ColorBrightness(color, -0.1) : orui.hovered() ? rl.ColorBrightness(color, 0.1) : color
 	element.color = rl.WHITE
 	element.border = orui.border(4)
 	element.border_color = orui.hovered() ? {200, 200, 200, 255} : {150, 150, 150, 255}
@@ -85,10 +87,14 @@ main :: proc() {
 	label_index := 0
 	labels := labels
 
+	elapsed1 := time.Duration(0)
+	elapsed2 := time.Duration(0)
+	iterations := 0
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
 
+		start_time := time.now()
 		width := rl.GetScreenWidth()
 		height := rl.GetScreenHeight()
 		orui.begin(ctx, width, height)
@@ -362,13 +368,21 @@ main :: proc() {
 				)
 			}
 		}
+		elapsed1 += time.since(start_time)
+
+		start_time = time.now()
 		orui.end()
+		elapsed2 += time.since(start_time)
+		iterations += 1
 
 		rl.DrawFPS(10, 10)
 
 		rl.EndDrawing()
+
 		// break
 	}
 
+	log.infof("elapsed 1: %v", elapsed1 / time.Duration(iterations))
+	log.infof("elapsed 2: %v", elapsed2 / time.Duration(iterations))
 	rl.CloseWindow()
 }
