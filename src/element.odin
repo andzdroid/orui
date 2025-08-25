@@ -105,6 +105,7 @@ ElementConfig :: struct {
 	row_span:         int,
 
 	// style
+	color:            rl.Color,
 	background_color: rl.Color,
 	border_color:     rl.Color,
 	corner_radius:    Corners,
@@ -114,7 +115,6 @@ ElementConfig :: struct {
 	text:             string,
 	font:             ^rl.Font,
 	font_size:        f32,
-	color:            rl.Color,
 	letter_spacing:   f32,
 	line_height:      f32,
 
@@ -159,6 +159,7 @@ Element :: struct {
 	row_span:          int,
 
 	// style
+	color:             rl.Color,
 	background_color:  rl.Color,
 	border_color:      rl.Color,
 	corner_radius:     Corners,
@@ -168,7 +169,6 @@ Element :: struct {
 	text:              string,
 	font:              ^rl.Font,
 	font_size:         f32,
-	color:             rl.Color,
 	letter_spacing:    f32,
 	line_height:       f32,
 
@@ -248,6 +248,7 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.row_span = config.row_span
 
 	// style
+	element.color = config.color
 	element.background_color = config.background_color
 	element.border_color = config.border_color
 	element.corner_radius = config.corner_radius
@@ -257,7 +258,6 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 	element.text = config.text
 	element.font = config.font
 	element.font_size = config.font_size
-	element.color = config.color
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
 

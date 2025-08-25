@@ -274,6 +274,7 @@ ElementConfig :: struct {
 	row_span:         int,
 
 	// style
+	color:            rl.Color,
 	background_color: rl.Color,
 	border_color:     rl.Color,
 	corner_radius:    Corners,
@@ -283,7 +284,6 @@ ElementConfig :: struct {
 	text:             string,
 	font:             ^rl.Font,
 	font_size:        f32,
-	color:            rl.Color,
 	letter_spacing:   f32,
 	line_height:      f32,
 
@@ -321,7 +321,7 @@ LayoutDirection :: enum {
 
 ```odin
 PositionType :: enum {
-	Auto,      // Default. Positioned by flex parent. Don't use this if parent is not flex.
+	Auto,      // Default. Positioned by flex/grid parent. Don't use this if parent is not flex or grid.
 	Absolute,  // Unaffected by parent position or place in UI tree.
 	Relative,  // Positioned relative to its parent's position.
 }
@@ -376,7 +376,7 @@ Edges :: struct {
 
 ### gap
 
-The space between child elements in pixels. Only used for flex elements.
+The space between child elements in pixels. Only used for elements with a flex or grid layout.
 
 ### align_main
 
@@ -443,6 +443,10 @@ Set the gap between columns and rows. If missing, defaults to the `gap` option.
 
 Set a cell to span multiple rows and columns.
 
+### color
+
+Foreground color given as a raylib Color. Used for text color if there is text, and texture tint if there is a texture.
+
 ### background_color
 
 The background color of the element, given as a raylib Color.
@@ -483,10 +487,6 @@ This is a raylib Font pointer. orui does not manage your fonts for you. It's up 
 ### font_size
 
 Font size in pixels.
-
-### color
-
-Color of the text, given as a raylib Color.
 
 ### letter_spacing and line_height
 
