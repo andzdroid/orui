@@ -227,8 +227,8 @@ main :: proc() {
 						orui.id("content"),
 						{
 							direction = .TopToBottom,
-							width = orui.grow(),
-							height = orui.grow(),
+							width = orui.fit(),
+							height = orui.fit(),
 							background_color = {50, 50, 50, 255},
 							padding = orui.padding(16),
 							gap = 8,

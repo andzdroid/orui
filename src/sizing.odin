@@ -25,6 +25,10 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 		element._size.x = text_width + x_padding(element) + x_border(element)
 	}
 
+	if element.layout == .Grid {
+		grid_auto_place(ctx, element)
+	}
+
 	child := element.children
 	for child != 0 {
 		fit_widths(ctx, child)
@@ -33,6 +37,9 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 
 	if element.layout == .Flex {
 		flex_fit_width(ctx, element)
+	} else if element.layout == .Grid {
+		grid_fit_columns(ctx, element)
+		grid_fit_width(ctx, element)
 	}
 }
 
@@ -52,6 +59,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 	if element.layout == .Flex {
 		flex_distribute_widths(ctx, element)
 	} else if element.layout == .Grid {
+		grid_distribute_columns(ctx, element)
 		grid_distribute_widths(ctx, element)
 	}
 
@@ -97,6 +105,9 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 
 	if element.layout == .Flex {
 		flex_fit_height(ctx, element)
+	} else if element.layout == .Grid {
+		grid_fit_rows(ctx, element)
+		grid_fit_height(ctx, element)
 	}
 }
 
@@ -116,6 +127,7 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 	if element.layout == .Flex {
 		flex_distribute_heights(ctx, element)
 	} else if element.layout == .Grid {
+		grid_distribute_rows(ctx, element)
 		grid_distribute_heights(ctx, element)
 	}
 

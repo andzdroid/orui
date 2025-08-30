@@ -65,7 +65,6 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 	if element.direction == .LeftToRight {
 		// sum child widths, then distribute remaining space according to weight
 		element_inner_width := inner_width(element)
-		has_definite := element._size.x > 0
 
 		sum_with_margins: f32 = 0
 		total_weight: f32 = 0
@@ -119,7 +118,6 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 	} else {
 		// set percent and grow widths of children according to parent width
 		element_inner_width := inner_width(element)
-		has_definite := element._size.x > 0
 
 		child := element.children
 		for child != 0 {
@@ -208,7 +206,6 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 	if element.direction == .TopToBottom {
 		// sum child heights, then distribute remaining space according to weight
 		element_inner_height := inner_height(element)
-		has_definite := element._size.y > 0
 
 		sum_with_margins: f32 = 0
 		total_weight: f32 = 0
@@ -262,7 +259,6 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 	} else {
 		// set percent and grow heights of children according to parent height
 		element_inner_height := inner_height(element)
-		has_definite := element._size.y > 0
 
 		child := element.children
 		for child != 0 {

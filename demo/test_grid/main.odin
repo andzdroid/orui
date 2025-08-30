@@ -10,7 +10,7 @@ import rl "vendor:raylib"
 default_font: rl.Font
 
 cell_style :: proc(element: ^orui.Element) {
-	element.width = orui.grow()
+	// element.width = orui.grow()
 	element.height = orui.grow()
 	element.font = &default_font
 	element.font_size = 32
@@ -20,6 +20,7 @@ cell_style :: proc(element: ^orui.Element) {
 	element.align = {.Center, .Center}
 	element.border = orui.border(1)
 	element.border_color = rl.WHITE
+	element.padding = orui.padding(20)
 }
 
 main :: proc() {
@@ -58,30 +59,59 @@ main :: proc() {
 		orui.begin(ctx, width, height)
 
 		{orui.container(
-				orui.id("container"),
+				orui.id("flex container"),
 				{
-					layout = .Grid,
-					direction = .LeftToRight,
-					width = orui.fixed(width),
-					height = orui.fixed(height),
-					padding = orui.padding(16),
-					col_sizes = []orui.Size{orui.grow()},
-					row_sizes = []orui.Size{orui.grow()},
-					row_gap = 4,
-					col_gap = 16,
+					layout = .Flex,
+					direction = .TopToBottom,
+					width = orui.grow(),
+					height = orui.fit(),
+					background_color = rl.BEIGE,
 				},
 			)
+			{orui.container(
+					orui.id("container"),
+					{
+						layout = .Grid,
+						direction = .LeftToRight,
+						width = orui.grow(),
+						height = orui.grow(),
+						padding = orui.padding(16),
+						cols = 3,
+						rows = 3,
+						col_sizes = []orui.Size{orui.grow()},
+						row_sizes = []orui.Size{orui.grow()},
+						row_gap = 4,
+						col_gap = 16,
+					},
+				)
 
-			orui.label(orui.id("label 1"), "Row span 2", {row_span = 2}, cell_style)
-			orui.label(orui.id("label 2"), "Column span 2", {col_span = 2}, cell_style)
-			orui.label(orui.id("label 3"), "Cell", {}, cell_style)
-			orui.label(orui.id("label 4"), "Column span 3", {col_span = 3}, cell_style)
-			orui.label(orui.id("label 5"), "Cell", {}, cell_style)
+				orui.label(
+					orui.id("label 1"),
+					"Row span 2",
+					{row_span = 2, width = orui.grow()},
+					cell_style,
+				)
+				orui.label(
+					orui.id("label 2"),
+					"Column span 2",
+					{col_span = 2, width = orui.grow()},
+					cell_style,
+				)
+				orui.label(orui.id("label 3"), "Cell", {width = orui.fit()}, cell_style)
+				orui.label(
+					orui.id("label 4"),
+					"Column span 3",
+					{col_span = 3, width = orui.grow()},
+					cell_style,
+				)
+				orui.label(orui.id("label 5"), "Cell", {width = orui.grow()}, cell_style)
+			}
 		}
 
 		orui.end()
 
 		rl.EndDrawing()
+		// break
 	}
 
 	rl.CloseWindow()
