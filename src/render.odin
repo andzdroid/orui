@@ -8,12 +8,16 @@ MISSING_COLOR :: rl.Color{0, 0, 0, 0}
 
 @(private)
 render :: proc(ctx: ^Context) {
+	ctx.sorted_count = 0
 	render_element(ctx, 0)
 }
 
 @(private)
 render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
+
+	ctx.sorted[ctx.sorted_count] = index
+	ctx.sorted_count += 1
 
 	if element.background_color.a > 0 {
 		render_background(element)

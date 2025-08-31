@@ -294,6 +294,11 @@ ElementConfig :: struct {
 
 	// content layout
 	align:            [2]ContentAlignment,
+
+	// input
+	disabled:         InheritedBool,
+	block:            InheritedBool,
+	capture:          InheritedBool,
 }
 ```
 
@@ -505,6 +510,24 @@ ContentAlignment :: enum {
 	Start,   // Align left/top
 	Center,  // Align center
 	End,     // Align right/bottom
+}
+```
+
+### disabled, block, capture
+
+These are mouse input options. If omitted, the element will inherit the values from its parent element.
+
+Disabled: whether the element can be interacted with. If disabled, it won't ever receive the hovered or active states. Default value is False.
+
+Block: whether the element will consume mouse interactions, block elements below it from receiving them. Default value is True.
+
+Consume: whether the element will consume interactions once they are activated. Recommended to be set to True for things like sliders and draggable windows. Default value is False.
+
+```odin
+InheritedBool :: enum {
+	Inherit,
+	False,
+	True,
 }
 ```
 

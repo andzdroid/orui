@@ -78,6 +78,13 @@ ContentAlignment :: enum {
 	Center,
 	End,
 }
+
+InheritedBool :: enum {
+	Inherit,
+	False,
+	True,
+}
+
 ElementConfig :: struct {
 	user_data:        rawptr,
 
@@ -125,6 +132,11 @@ ElementConfig :: struct {
 
 	// content layout
 	align:            [2]ContentAlignment,
+
+	// input
+	disabled:         InheritedBool,
+	block:            InheritedBool,
+	capture:          InheritedBool,
 }
 
 Element :: struct {
@@ -180,6 +192,11 @@ Element :: struct {
 	// content layout
 	align:             [2]ContentAlignment,
 
+	// input
+	disabled:          InheritedBool,
+	block:             InheritedBool,
+	capture:           InheritedBool,
+
 	// internal
 	_position:         rl.Vector2,
 	_size:             rl.Vector2, // border box size
@@ -193,7 +210,7 @@ Element :: struct {
 }
 
 @(private)
-configure_element :: proc(element: ^Element, config: ElementConfig) {
+configure_element :: proc(element: ^Element, parent: Element, config: ElementConfig) {
 	element.user_data = config.user_data
 
 	// layout
@@ -268,6 +285,11 @@ configure_element :: proc(element: ^Element, config: ElementConfig) {
 
 	// content layout
 	element.align = config.align
+
+	// input
+	element.disabled = config.disabled == .Inherit ? parent.disabled : config.disabled
+	element.block = config.block == .Inherit ? parent.block : config.block
+	element.capture = config.capture == .Inherit ? parent.capture : config.capture
 }
 
 to_id :: proc(str: string) -> Id {

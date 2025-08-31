@@ -20,6 +20,9 @@ Context :: struct {
 	parent:            int,
 
 	// input state
+	sorted:            [MAX_ELEMENTS]int,
+	sorted_count:      int,
+	pointer_capture:   int,
 	hover:             [MAX_ELEMENTS]Id,
 	hover_count:       int,
 	active:            [MAX_ELEMENTS]Id,
@@ -55,10 +58,13 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.element_count = 0
 
 	ctx.elements[0] = {
-		id     = to_id("root"),
-		width  = fixed(width),
-		height = fixed(height),
-		_size  = {width, height},
+		id       = to_id("root"),
+		width    = fixed(width),
+		height   = fixed(height),
+		_size    = {width, height},
+		disabled = .False,
+		block    = .True,
+		capture  = .False,
 	}
 	ctx.element_count += 1
 
@@ -121,7 +127,7 @@ id :: proc(str: string) -> Id {
 // Any elements declared after this will be added as children of this element.
 //
 // Must be closed with end_element().
-begin_element :: proc(id: Id) -> ^Element {
+begin_element :: proc(id: Id) -> (^Element, ^Element) {
 	ctx := current_context
 	assert(ctx.current_id == id, "id mismatch. id() should only be called in element declarations")
 	parent_index := ctx.current
@@ -146,7 +152,7 @@ begin_element :: proc(id: Id) -> ^Element {
 	}
 	parent.children_count += 1
 
-	return element
+	return element, parent
 }
 
 // Closes the current element.
@@ -162,8 +168,8 @@ end_element :: proc() {
 ElementModifier :: proc(element: ^Element)
 
 element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
-	element := begin_element(id)
-	configure_element(element, config)
+	element, parent := begin_element(id)
+	configure_element(element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)
 	}
@@ -173,8 +179,8 @@ element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> 
 @(deferred_none = end_element)
 // The basic building block of the UI.
 container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
-	element := begin_element(id)
-	configure_element(element, config)
+	element, parent := begin_element(id)
+	configure_element(element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)
 	}
@@ -184,8 +190,8 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 // A label is a text element that can be use to display text.
 // This element cannot have children.
 label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
-	element := begin_element(id)
-	configure_element(element, config)
+	element, parent := begin_element(id)
+	configure_element(element, parent^, config)
 	element.has_text = true
 	element.text = text
 
@@ -208,8 +214,8 @@ image :: proc(
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
 ) -> bool {
-	element := begin_element(id)
-	configure_element(element, config)
+	element, parent := begin_element(id)
+	configure_element(element, parent^, config)
 	element.has_texture = true
 	element.texture = texture
 
