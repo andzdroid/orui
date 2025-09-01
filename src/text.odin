@@ -243,12 +243,11 @@ render_wrapped_text :: proc(element: ^Element) {
 // Vertical offset
 calculate_text_offset :: proc(element: ^Element) -> f32 {
 	content_height := inner_height(element)
-
 	line_height := measure_text_height(element.font_size, element.line_height)
-	text_height := line_height * f32(element._line_count)
+	line_count := element._line_count > 0 ? element._line_count : 1
+	text_height := line_height * f32(line_count)
 
 	offset: f32 = 0
-
 	switch element.align.y {
 	case .Start:
 	case .Center:
@@ -256,12 +255,7 @@ calculate_text_offset :: proc(element: ^Element) -> f32 {
 	case .End:
 		offset = (content_height - text_height)
 	}
-
-	if offset < 0 {
-		offset = 0
-	}
-
-	return offset
+	return max(0, offset)
 }
 
 @(private)

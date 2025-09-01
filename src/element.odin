@@ -85,6 +85,13 @@ InheritedBool :: enum {
 	True,
 }
 
+Overflow :: enum {
+	Visible,
+	// Hidden,
+	Wrap,
+	// Scroll,
+}
+
 ElementConfig :: struct {
 	user_data:        rawptr,
 
@@ -100,6 +107,7 @@ ElementConfig :: struct {
 	gap:              f32,
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
+	overflow:         Overflow,
 
 	// grid
 	cols:             int,
@@ -159,6 +167,7 @@ Element :: struct {
 	gap:               f32,
 	align_main:        MainAlignment,
 	align_cross:       CrossAlignment,
+	overflow:          Overflow,
 
 	// grid
 	cols:              int,
@@ -225,6 +234,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.gap = config.gap
 	element.align_main = config.align_main
 	element.align_cross = config.align_cross
+	element.overflow = config.overflow
 
 	// grid
 	element.cols = config.cols

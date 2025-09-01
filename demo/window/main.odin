@@ -129,6 +129,7 @@ main :: proc() {
 								color = rl.WHITE,
 								padding = orui.padding(16),
 								align = {.Start, .Start},
+								overflow = .Wrap,
 							},
 						)
 

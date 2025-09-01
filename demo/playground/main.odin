@@ -129,15 +129,16 @@ main :: proc() {
 					for i in 0 ..< 4 {
 						orui.label(
 							orui.id(fmt.tprintf("top bar label %v", i)),
-							fmt.tprintf("Button %v", i),
+							fmt.tprintf("%v", i),
 							{
 								font = &default_font,
 								font_size = 14,
 								color = rl.WHITE,
 								padding = orui.padding(10),
-								width = orui.fit(),
+								width = orui.fixed(100),
 								height = orui.grow(),
 								align = {.End, .End},
+								overflow = .Wrap,
 								corner_radius = orui.corner(8),
 							},
 							button_style,
@@ -200,6 +201,7 @@ main :: proc() {
 								padding = orui.padding(10),
 								width = orui.grow(),
 								align = {.Center, .Center},
+								overflow = .Wrap,
 							},
 							button_style,
 						)
@@ -227,7 +229,7 @@ main :: proc() {
 						orui.id("content"),
 						{
 							direction = .TopToBottom,
-							width = orui.fit(),
+							width = orui.grow(),
 							height = orui.fit(),
 							background_color = {50, 50, 50, 255},
 							padding = orui.padding(16),
@@ -261,6 +263,7 @@ main :: proc() {
 								margin = orui.margin(5),
 								width = orui.percent(0.3),
 								align = {.Center, .Start},
+								overflow = .Wrap,
 							},
 						) {
 							label_index = (label_index + 1) % len(labels)

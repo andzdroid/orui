@@ -64,7 +64,7 @@ main :: proc() {
 					layout = .Flex,
 					direction = .TopToBottom,
 					width = orui.grow(),
-					height = orui.fit(),
+					height = orui.grow(),
 					background_color = rl.BEIGE,
 				},
 			)
@@ -78,7 +78,7 @@ main :: proc() {
 						padding = orui.padding(16),
 						cols = 3,
 						rows = 3,
-						col_sizes = []orui.Size{orui.grow()},
+						col_sizes = []orui.Size{orui.fixed(300), orui.grow()},
 						row_sizes = []orui.Size{orui.grow()},
 						row_gap = 4,
 						col_gap = 16,

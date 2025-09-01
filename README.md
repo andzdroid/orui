@@ -29,6 +29,7 @@ Features:
 - Padding, margin
 - Borders
 - Rounded corners
+- Overflow
 - Images (textures)
 - Text
   - Line height
@@ -262,6 +263,7 @@ ElementConfig :: struct {
 	gap:              f32,
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
+	overflow:         Overflow,
 
 	// grid
 	cols:             int,
@@ -411,6 +413,20 @@ CrossAlignment :: enum {
 	Start,   // Align children to beginning of element
 	End,     // Align children to end of element
 	Center,  // Center the children
+}
+```
+
+### overflow
+
+Control how an element handles its content overflowing its size.
+
+- **Visible**: content will overflow the container
+- **Wrap**: overflowing content will wrap horizontally, may still overflow vertically
+
+```odin
+Overflow :: enum {
+	Visible,
+	Wrap,
 }
 ```
 

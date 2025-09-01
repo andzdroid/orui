@@ -54,6 +54,7 @@ tooltip :: proc(font: ^rl.Font) {
 					border = orui.border(1),
 					border_color = {100, 100, 160, 255},
 					corner_radius = orui.corner(4),
+					overflow = .Wrap,
 				},
 			)
 		}
@@ -72,7 +73,7 @@ tooltip2 :: proc(font: ^rl.Font) {
 
 		if orui.hovered("tooltip button 2") {
 			orui.label(
-				orui.id("tooltip content"),
+				orui.id("tooltip content 2"),
 				"This tooltip follows the mouse position!",
 				{
 					position = {.Absolute, {f32(rl.GetMouseX() + 5), f32(rl.GetMouseY()) - 50}},
@@ -85,6 +86,7 @@ tooltip2 :: proc(font: ^rl.Font) {
 					border = orui.border(1),
 					border_color = {100, 100, 160, 255},
 					corner_radius = orui.corner(4),
+					overflow = .Wrap,
 				},
 			)
 		}

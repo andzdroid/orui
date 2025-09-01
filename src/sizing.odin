@@ -74,6 +74,10 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 wrap :: proc(ctx: ^Context) {
 	for i in 0 ..< ctx.element_count {
 		element := &ctx.elements[i]
+		if element.overflow != .Wrap {
+			continue
+		}
+
 		if element.has_text {
 			wrap_text_element(ctx, element)
 		}

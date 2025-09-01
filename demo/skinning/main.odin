@@ -177,6 +177,7 @@ main :: proc() {
 							color = skin == .Dark ? rl.WHITE : rl.BLACK,
 							padding = orui.padding(16),
 							align = {.Start, .Start},
+							overflow = .Wrap,
 						},
 					)
 

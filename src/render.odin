@@ -1,5 +1,6 @@
 package orui
 
+import "core:log"
 import "core:strings"
 import rl "vendor:raylib"
 
@@ -19,6 +20,17 @@ render_element :: proc(ctx: ^Context, index: int) {
 	ctx.sorted[ctx.sorted_count] = index
 	ctx.sorted_count += 1
 
+	// TODO: nested scissor mode
+	// TODO: absolute elements should escape scissor mode
+	// if element.overflow == .Hidden {
+	// 	rl.BeginScissorMode(
+	// 		i32(element._position.x),
+	// 		i32(element._position.y),
+	// 		i32(element._size.x),
+	// 		i32(element._size.y),
+	// 	)
+	// }
+
 	if element.background_color.a > 0 {
 		render_background(element)
 	}
@@ -28,7 +40,11 @@ render_element :: proc(ctx: ^Context, index: int) {
 	}
 
 	if element.has_text {
-		render_wrapped_text(element)
+		if element.overflow == .Wrap {
+			render_wrapped_text(element)
+		} else {
+			render_text(element)
+		}
 	}
 
 	if element.has_texture {
@@ -40,6 +56,10 @@ render_element :: proc(ctx: ^Context, index: int) {
 		render_element(ctx, child)
 		child = ctx.elements[child].next
 	}
+
+	// if element.overflow == .Hidden {
+	// 	rl.EndScissorMode()
+	// }
 }
 
 @(private)
@@ -297,6 +317,23 @@ render_texture :: proc(element: ^Element) {
 		{},
 		0,
 		color,
+	)
+}
+
+@(private)
+render_text :: proc(element: ^Element) {
+	y_offset := calculate_text_offset(element)
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	line_width := measure_text_width(element.text, element.font, element.font_size, letter_spacing)
+	inner_width := inner_width(element)
+	render_text_line(
+		element,
+		element.text,
+		line_width,
+		element._position.x + element.padding.left + element.border.left,
+		element._position.y + element.padding.top + element.border.top + y_offset,
+		letter_spacing,
+		inner_width,
 	)
 }
 
