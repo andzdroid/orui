@@ -26,10 +26,8 @@ Features:
 	- Column/row spans
 	- Column/row sizes
 - Absolute and relative positioning
-- Padding, margin
-- Borders
-- Rounded corners
-- Overflow
+- Layers (z-index)
+- Padding, margin, borders, rounded corners, overflow
 - Images (textures)
 - Text
   - Line height
@@ -40,7 +38,6 @@ Features:
 To do:
 
 - Flex wrap
-- Z-index
 - Text inputs
 - Texture fit (fill, contain, cover, none, scale-down)
 - 9-slice scaling
@@ -267,6 +264,7 @@ ElementConfig :: struct {
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
 	overflow:         Overflow,
+	layer:             int,
 
 	// grid
 	cols:             int,
@@ -432,6 +430,14 @@ Overflow :: enum {
 	Visible,
 }
 ```
+
+### layer
+
+Layer controls the render order of elements. Set this to ensure an element renders on top of or below other elements.
+
+The root layer starts at layer 1. If you don't define the element's layer, it will be placed in the same layer as its parent.
+
+Elements in the same layer are drawn in the order in which the elements were declared.
 
 ### cols, rows
 

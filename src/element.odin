@@ -93,8 +93,6 @@ Overflow :: enum {
 }
 
 ElementConfig :: struct {
-	user_data:        rawptr,
-
 	// layout
 	layout:           Layout,
 	direction:        LayoutDirection,
@@ -108,6 +106,7 @@ ElementConfig :: struct {
 	align_main:       MainAlignment,
 	align_cross:      CrossAlignment,
 	overflow:         Overflow,
+	layer:            int,
 
 	// grid
 	cols:             int,
@@ -153,7 +152,6 @@ Element :: struct {
 	children:          int,
 	next:              int,
 	children_count:    int,
-	user_data:         rawptr,
 
 	// layout
 	layout:            Layout,
@@ -168,6 +166,7 @@ Element :: struct {
 	align_main:        MainAlignment,
 	align_cross:       CrossAlignment,
 	overflow:          Overflow,
+	layer:             int,
 
 	// grid
 	cols:              int,
@@ -209,6 +208,7 @@ Element :: struct {
 	// internal
 	_position:         rl.Vector2,
 	_size:             rl.Vector2, // border box size
+	_layer:            int,
 	_line_count:       int,
 	_grid_col_index:   int,
 	_grid_row_index:   int,
@@ -220,8 +220,6 @@ Element :: struct {
 
 @(private)
 configure_element :: proc(element: ^Element, parent: Element, config: ElementConfig) {
-	element.user_data = config.user_data
-
 	// layout
 	element.layout = config.layout
 	element.direction = config.direction
@@ -235,6 +233,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.align_main = config.align_main
 	element.align_cross = config.align_cross
 	element.overflow = config.overflow
+	element.layer = config.layer
 
 	// grid
 	element.cols = config.cols

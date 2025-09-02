@@ -70,9 +70,8 @@ main :: proc() {
 		mem.tracking_allocator_destroy(&tracking_allocator)
 	}
 
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
-	rl.SetTargetFPS(120)
 
 	ctx := new(orui.Context)
 	defer free(ctx)

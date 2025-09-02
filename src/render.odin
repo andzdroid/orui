@@ -10,26 +10,47 @@ MISSING_COLOR :: rl.Color{0, 0, 0, 0}
 @(private)
 render :: proc(ctx: ^Context) {
 	ctx.sorted_count = 0
-	render_element(ctx, 0)
+	collect_elements(ctx, 0, 0)
+	sort_elements(ctx)
+
+	for i := 0; i < ctx.sorted_count; i += 1 {
+		index := ctx.sorted[i]
+		render_element(ctx, index)
+	}
+}
+
+@(private = "file")
+collect_elements :: proc(ctx: ^Context, index: int, parent_layer: int) {
+	element := &ctx.elements[index]
+	element._layer = element.layer == 0 ? parent_layer : element.layer
+
+	ctx.sorted[ctx.sorted_count] = index
+	ctx.sorted_count += 1
+
+	child := ctx.elements[index].children
+	for child != 0 {
+		collect_elements(ctx, child, element._layer)
+		child = ctx.elements[child].next
+	}
+}
+
+@(private = "file")
+sort_elements :: proc(ctx: ^Context) {
+	for i := 1; i < ctx.sorted_count; i += 1 {
+		key := ctx.sorted[i]
+		layer := ctx.elements[key]._layer
+		j := i - 1
+		for j >= 0 && ctx.elements[ctx.sorted[j]]._layer > layer {
+			ctx.sorted[j + 1] = ctx.sorted[j]
+			j -= 1
+		}
+		ctx.sorted[j + 1] = key
+	}
 }
 
 @(private)
 render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
-
-	ctx.sorted[ctx.sorted_count] = index
-	ctx.sorted_count += 1
-
-	// TODO: nested scissor mode
-	// TODO: absolute elements should escape scissor mode
-	// if element.overflow == .Hidden {
-	// 	rl.BeginScissorMode(
-	// 		i32(element._position.x),
-	// 		i32(element._position.y),
-	// 		i32(element._size.x),
-	// 		i32(element._size.y),
-	// 	)
-	// }
 
 	if element.background_color.a > 0 {
 		render_background(element)
@@ -50,16 +71,6 @@ render_element :: proc(ctx: ^Context, index: int) {
 	if element.has_texture {
 		render_texture(element)
 	}
-
-	child := element.children
-	for child != 0 {
-		render_element(ctx, child)
-		child = ctx.elements[child].next
-	}
-
-	// if element.overflow == .Hidden {
-	// 	rl.EndScissorMode()
-	// }
 }
 
 @(private)

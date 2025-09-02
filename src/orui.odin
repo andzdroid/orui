@@ -62,6 +62,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 		width    = fixed(width),
 		height   = fixed(height),
 		_size    = {width, height},
+		layer    = 1,
 		disabled = .False,
 		block    = .True,
 		capture  = .False,

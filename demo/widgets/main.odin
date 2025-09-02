@@ -55,6 +55,7 @@ tooltip :: proc(font: ^rl.Font) {
 					border_color = {100, 100, 160, 255},
 					corner_radius = orui.corner(4),
 					overflow = .Wrap,
+					layer = 100,
 				},
 			)
 		}
@@ -87,6 +88,7 @@ tooltip2 :: proc(font: ^rl.Font) {
 					border_color = {100, 100, 160, 255},
 					corner_radius = orui.corner(4),
 					overflow = .Wrap,
+					layer = 100,
 				},
 			)
 		}
@@ -201,6 +203,7 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 						padding = orui.padding(4),
 						width = orui.fixed(250),
 						gap = 1,
+						layer = 100,
 					},
 				)
 
@@ -338,8 +341,8 @@ main :: proc() {
 			tooltip2(&default_font)
 			toggle_button(&default_font, &toggle_state)
 			toggle_button2(&default_font, &toggle_state2)
-			checkbox(&default_font, &checkbox_state)
 			dropdown_menu(&default_font, &dropdown_state, &dropdown_value)
+			checkbox(&default_font, &checkbox_state)
 		}
 
 		orui.end()
