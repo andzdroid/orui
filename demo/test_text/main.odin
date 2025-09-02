@@ -110,7 +110,7 @@ main :: proc() {
 					font = &default_font,
 					font_size = 16,
 					width = orui.fixed(200),
-					overflow = .Hidden,
+					overflow = .Visible,
 				},
 				button_style,
 			)

@@ -39,13 +39,14 @@ Features:
 
 To do:
 
-- Grid justify/align
 - Flex wrap
+- Z-index
+- Text inputs
 - Texture fit (fill, contain, cover, none, scale-down)
 - 9-slice scaling
-- Z-ordering (maybe)
+- Grid justify/align
 - Scroll views (maybe)
-- Text inputs and other widgets (maybe)
+- Other widgets (maybe)
 - Grid row/column start (maybe)
 
 ## Table of Contents
@@ -154,7 +155,9 @@ Make sure containers always have their own scope. In the following example, labe
 
 ### label
 
-A label element displays text. The text will be wrapped if it's too long.
+A label element displays text.
+
+Text will wrap by default. Set the `overflow` option if you want change this behaviour.
 
 Make sure you define the font and font size in the element config.
 
@@ -420,13 +423,13 @@ CrossAlignment :: enum {
 
 Control how an element handles its content overflowing its size.
 
-- **Visible**: content will overflow the container
-- **Wrap**: overflowing content will wrap horizontally, may still overflow vertically
+- **Wrap**: overflowing content will wrap around. This is the default.
+- **Visible**: content will overflow the container.
 
 ```odin
 Overflow :: enum {
-	Visible,
 	Wrap,
+	Visible,
 }
 ```
 
@@ -436,7 +439,7 @@ Set the number of columns and rows for a grid layout. Only used if the layout is
 
 Both are optional but usually you want to set at least one of these.
 
-The maximum number of columns/rows is 12. This is a constant defined as `MAX_GRID_TRACKS` in `orui.odin`. You can adjust this if needed but it will affect memory usage significantly. Before changing this, remember that grid cells can contain flex layouts and grids inside them as well.
+The maximum number of columns/rows is 12. This is a constant defined as `MAX_GRID_TRACKS` in `orui.odin`. You can adjust this if needed but it will affect memory usage significantly. Before changing this, remember that grid cells can contain flex layouts and grids inside them as well, and that can probably handle your use case.
 
 ### col_sizes, row_sizes
 
@@ -452,7 +455,7 @@ orui.container(orui.id("grid"), {
 	cols = 5,
 	rows = 5,
 	col_sizes = []{orui.grow()},
-	row_sizes = []{orui.percent(50)},
+	row_sizes = []{orui.fixed(250)},
 })
 ```
 
