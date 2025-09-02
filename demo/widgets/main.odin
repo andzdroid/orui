@@ -242,6 +242,62 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 	}
 }
 
+checkbox :: proc(font: ^rl.Font, checked_state: ^bool) {
+	{orui.container(
+			orui.id("checkbox container"),
+			{
+				direction = .LeftToRight,
+				gap = 8,
+				width = orui.fit(),
+				height = orui.fit(),
+				align_cross = .Center,
+			},
+		)
+
+		{orui.container(
+				orui.id("checkbox outer"),
+				{
+					width = orui.fixed(25),
+					height = orui.fixed(25),
+					background_color = rl.WHITE,
+					padding = orui.padding(5),
+					disabled = .True,
+					corner_radius = orui.corner(5),
+				},
+			)
+
+			{orui.container(
+					orui.id("checkbox inner"),
+					{
+						width = orui.grow(),
+						height = orui.grow(),
+						background_color = checked_state^ ? {200, 120, 120, 255} : orui.hovered("checkbox container") ? rl.LIGHTGRAY : {},
+						corner_radius = orui.corner(2),
+					},
+				)}
+		}
+
+		orui.label(
+			orui.id("checkbox label"),
+			"Checkbox",
+			{
+				font = font,
+				font_size = 16,
+				color = rl.BLACK,
+				width = orui.fit(),
+				height = orui.grow(),
+				align = {.Start, .Center},
+				padding = orui.padding(12, 0),
+				disabled = .True,
+			},
+		)
+	}
+
+	if orui.clicked("checkbox container") {
+		checked_state^ = !checked_state^
+	}
+}
+
 main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
@@ -255,6 +311,7 @@ main :: proc() {
 	toggle_state2 := 0
 	dropdown_state := false
 	dropdown_value := 0
+	checkbox_state := false
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -281,6 +338,7 @@ main :: proc() {
 			tooltip2(&default_font)
 			toggle_button(&default_font, &toggle_state)
 			toggle_button2(&default_font, &toggle_state2)
+			checkbox(&default_font, &checkbox_state)
 			dropdown_menu(&default_font, &dropdown_state, &dropdown_value)
 		}
 
