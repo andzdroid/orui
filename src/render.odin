@@ -324,7 +324,12 @@ render_texture :: proc(element: ^Element) {
 	rl.DrawTexturePro(
 		element.texture^,
 		source,
-		{element._position.x, element._position.y, element._size.x, element._size.y},
+		{
+			element._position.x + element.padding.left + element.border.left,
+			element._position.y + element.padding.top + element.border.top,
+			element._size.x - x_padding(element) - x_border(element),
+			element._size.y - y_padding(element) - y_border(element),
+		},
 		{},
 		0,
 		color,
