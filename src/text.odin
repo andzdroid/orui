@@ -246,28 +246,11 @@ calculate_text_offset :: proc(element: ^Element) -> f32 {
 	line_height := measure_text_height(element.font_size, element.line_height)
 	line_count := element._line_count > 0 ? element._line_count : 1
 	text_height := line_height * f32(line_count)
-
-	offset: f32 = 0
-	switch element.align.y {
-	case .Start:
-	case .Center:
-		offset = (content_height - text_height) / 2
-	case .End:
-		offset = (content_height - text_height)
-	}
-	return max(0, offset)
+	return calculate_alignment_offset(element.align.y, content_height, text_height)
 }
 
 @(private)
 // Horizontal offset
 calculate_line_offset :: proc(element: ^Element, line_width: f32, available_width: f32) -> f32 {
-	switch element.align.x {
-	case .Start:
-		return 0
-	case .Center:
-		return (available_width - line_width) / 2
-	case .End:
-		return available_width - line_width
-	}
-	return 0
+	return calculate_alignment_offset(element.align.x, available_width, line_width)
 }

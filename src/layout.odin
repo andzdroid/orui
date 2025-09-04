@@ -43,3 +43,20 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 		grid_compute_position(ctx, element)
 	}
 }
+
+@(private)
+calculate_alignment_offset :: proc(
+	alignment: ContentAlignment,
+	container_size: f32,
+	content_size: f32,
+) -> f32 {
+	switch alignment {
+	case .Start:
+		return 0
+	case .Center:
+		return (container_size - content_size) / 2
+	case .End:
+		return container_size - content_size
+	}
+	return 0
+}

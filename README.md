@@ -29,6 +29,8 @@ Features:
 - Layers (z-index)
 - Padding, margin, borders, rounded corners, overflow
 - Images (textures)
+  - Alignment
+	- Content fit (fill, contain, cover, none, scale-down)
 - Text
   - Line height
   - Letter spacing
@@ -39,7 +41,6 @@ To do:
 
 - Flex wrap
 - Text inputs
-- Texture fit (fill, contain, cover, none, scale-down)
 - 9-slice scaling
 - Grid justify/align
 - Scroll views (maybe)
@@ -294,6 +295,7 @@ ElementConfig :: struct {
 	has_texture:      bool,
 	texture:          ^rl.Texture2D,
 	texture_source:   rl.Rectangle,
+	texture_fit:      TextureFit,
 
 	// content layout
 	align:            [2]ContentAlignment,
@@ -524,9 +526,33 @@ Control the letter spacing and line height of the text.
 
 Default value is 1 for both.
 
+### has_texture and texture
+
+If `texture` is set, `has_texture` should be set to true. The image element does this automatically.
+
+`texture` is a raylib Texture2D pointer.
+
+### texture_source
+
+Set this to draw a portion of the texture instead of the whole texture.
+
+### texture_fit
+
+Controls how the texture resizes to fit its container.
+
+```odin
+TextureFit :: enum {
+	Fill,       // Image will be stretched or squashed to fill the container.
+	Contain,    // Keeps its aspect ratio, and resizes to fit the container.
+	Cover,      // Keeps its aspect ratio, and resizes to fill the container. Image may be clipped.
+	None,       // Image is not resized.
+	ScaleDown,  // Same as contain but only scales down, never up.
+}
+```
+
 ### align
 
-Controls how the content is aligned. Only relevant for elements with text. Does not affect children.
+Controls how the content is aligned. Only relevant for elements with an image or text. Does not affect children.
 
 An array of two alignment values. The first value is the horizontal alignment, second value is vertical alignment.
 

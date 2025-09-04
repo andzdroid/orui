@@ -321,19 +321,78 @@ render_texture :: proc(element: ^Element) {
 		color = rl.WHITE
 	}
 
-	rl.DrawTexturePro(
-		element.texture^,
-		source,
-		{
-			element._position.x + element.padding.left + element.border.left,
-			element._position.y + element.padding.top + element.border.top,
-			element._size.x - x_padding(element) - x_border(element),
-			element._size.y - y_padding(element) - y_border(element),
-		},
-		{},
-		0,
-		color,
+	container_x := element._position.x + element.padding.left + element.border.left
+	container_y := element._position.y + element.padding.top + element.border.top
+	container_width := element._size.x - x_padding(element) - x_border(element)
+	container_height := element._size.y - y_padding(element) - y_border(element)
+
+	dest: rl.Rectangle
+
+	switch element.texture_fit {
+	case .Fill:
+		dest = {container_x, container_y, container_width, container_height}
+	case .Contain:
+		source_aspect := source.width / source.height
+		container_aspect := container_width / container_height
+
+		if source_aspect > container_aspect {
+			// image is wider
+			dest.width = container_width
+			dest.height = container_width / source_aspect
+		} else {
+			// image is taller
+			dest.width = container_height * source_aspect
+			dest.height = container_height
+		}
+	case .Cover:
+		source_aspect := source.width / source.height
+		container_aspect := container_width / container_height
+
+		if source_aspect > container_aspect {
+			// image is wider
+			dest.width = container_height * source_aspect
+			dest.height = container_height
+		} else {
+			// image is taller
+			dest.width = container_width
+			dest.height = container_width / source_aspect
+		}
+	case .None:
+		dest.width = source.width
+		dest.height = source.height
+	case .ScaleDown:
+		// same as contain, but only scale down
+		source_aspect := source.width / source.height
+		container_aspect := container_width / container_height
+
+		if source.width <= container_width && source.height <= container_height {
+			dest.width = source.width
+			dest.height = source.height
+		} else {
+			if source_aspect > container_aspect {
+				// image is wider
+				dest.width = container_width
+				dest.height = container_width / source_aspect
+			} else {
+				// image is taller
+				dest.width = container_height * source_aspect
+				dest.height = container_height
+			}
+		}
+	}
+
+	dest.x = container_x + calculate_alignment_offset(element.align.x, container_width, dest.width)
+	dest.y =
+		container_y + calculate_alignment_offset(element.align.y, container_height, dest.height)
+
+	rl.BeginScissorMode(
+		i32(container_x),
+		i32(container_y),
+		i32(container_width),
+		i32(container_height),
 	)
+	rl.DrawTexturePro(element.texture^, source, dest, {}, 0, color)
+	rl.EndScissorMode()
 }
 
 @(private)

@@ -92,6 +92,14 @@ Overflow :: enum {
 	// Scroll,
 }
 
+TextureFit :: enum {
+	Fill,
+	Contain,
+	Cover,
+	None,
+	ScaleDown,
+}
+
 ElementConfig :: struct {
 	// layout
 	layout:           Layout,
@@ -136,6 +144,7 @@ ElementConfig :: struct {
 	has_texture:      bool,
 	texture:          ^rl.Texture2D,
 	texture_source:   rl.Rectangle,
+	texture_fit:      TextureFit,
 
 	// content layout
 	align:            [2]ContentAlignment,
@@ -196,6 +205,7 @@ Element :: struct {
 	has_texture:       bool,
 	texture:           ^rl.Texture2D,
 	texture_source:    rl.Rectangle,
+	texture_fit:       TextureFit,
 
 	// content layout
 	align:             [2]ContentAlignment,
@@ -291,6 +301,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.has_texture = config.has_texture
 	element.texture = config.texture
 	element.texture_source = config.texture_source
+	element.texture_fit = config.texture_fit
 
 	// content layout
 	element.align = config.align
