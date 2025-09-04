@@ -385,14 +385,38 @@ render_texture :: proc(element: ^Element) {
 	dest.y =
 		container_y + calculate_alignment_offset(element.align.y, container_height, dest.height)
 
-	rl.BeginScissorMode(
-		i32(container_x),
-		i32(container_y),
-		i32(container_width),
-		i32(container_height),
-	)
-	rl.DrawTexturePro(element.texture^, source, dest, {}, 0, color)
-	rl.EndScissorMode()
+	// clip image to container
+	// don't use scissor mode, it's sloooow
+	clamp_left := max(dest.x, container_x)
+	clamp_top := max(dest.y, container_y)
+	clamp_right := min(dest.x + dest.width, container_x + container_width)
+	clamp_bottom := min(dest.y + dest.height, container_y + container_height)
+
+	clip_left := clamp_left - dest.x
+	clip_top := clamp_top - dest.y
+	clip_right := (dest.x + dest.width) - clamp_right
+	clip_bottom := (dest.y + dest.height) - clamp_bottom
+
+	source_scale_x := source.width / dest.width
+	source_scale_y := source.height / dest.height
+
+	adjusted_source := rl.Rectangle {
+		source.x + clip_left * source_scale_x,
+		source.y + clip_top * source_scale_y,
+		source.width - (clip_left + clip_right) * source_scale_x,
+		source.height - (clip_top + clip_bottom) * source_scale_y,
+	}
+
+	adjusted_dest := rl.Rectangle {
+		clamp_left,
+		clamp_top,
+		clamp_right - clamp_left,
+		clamp_bottom - clamp_top,
+	}
+
+	if adjusted_dest.width > 0 && adjusted_dest.height > 0 {
+		rl.DrawTexturePro(element.texture^, adjusted_source, adjusted_dest, {}, 0, color)
+	}
 }
 
 @(private)

@@ -116,6 +116,7 @@ main :: proc() {
 					height = orui.fixed(50),
 					background_color = rl.BLACK,
 					texture_fit = .Cover,
+					align = {.Start, .Center},
 				},
 			)
 

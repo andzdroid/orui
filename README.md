@@ -30,7 +30,7 @@ Features:
 - Padding, margin, borders, rounded corners, overflow
 - Images (textures)
   - Alignment
-	- Content fit (fill, contain, cover, none, scale-down)
+  - Content fit (fill, contain, cover, none, scale-down)
 - Text
   - Line height
   - Letter spacing
