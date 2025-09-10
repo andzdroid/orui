@@ -1,5 +1,6 @@
 package orui
 
+import "core:hash"
 import rl "vendor:raylib"
 
 Id :: distinct int
@@ -390,23 +391,15 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.capture = config.capture == .Inherit ? parent.capture : config.capture
 }
 
-to_id :: proc(str: string) -> Id {
-	return hash_string(str, 0)
+to_id :: proc {
+	to_id_compiled,
+	to_id_runtime,
 }
 
-@(private)
-hash_string :: proc(str: string, seed: int) -> Id {
-	hash := seed
+to_id_compiled :: proc($S: string) -> Id {
+	return Id(#hash(S, "fnv32a"))
+}
 
-	for c in str {
-		hash += int(c)
-		hash += (hash << 10)
-		hash ~= (hash >> 6)
-	}
-
-	hash += (hash << 3)
-	hash ~= (hash >> 11)
-	hash += (hash << 15)
-
-	return Id(hash)
+to_id_runtime :: proc(str: string) -> Id {
+	return Id(hash.fnv32a(transmute([]u8)str))
 }

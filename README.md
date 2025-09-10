@@ -2,11 +2,11 @@
 
 ![](icon.png)
 
-orui is an immediate mode UI library for odin and raylib, with support for flex layouts.
+orui is an immediate mode UI library for odin and raylib, with support for flex and grid layouts.
 
 It is meant for building user-facing UIs using familiar concepts from CSS.
 
-orui is a work in progress.
+orui is a work in progress. **Requires odin 2025-09 release!**
 
 <img src="demo/test_flex.png" width="45%" /><img src="demo/test_grid.png" width="45%" />
 <img src="demo/skinning/screenshot1.png" width="45%" /><img src="demo/window/screenshot.png" width="45%" />
