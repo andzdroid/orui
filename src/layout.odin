@@ -16,14 +16,18 @@ compute_layout :: proc(ctx: ^Context, index: int) {
 compute_position :: proc(ctx: ^Context, element: ^Element) {
 	parent := &ctx.elements[element.parent]
 
+	if element.position.type == .Fixed {
+		element._position = element.position.value
+		apply_placement(element, &ctx.elements[0])
+	}
+
 	if element.position.type == .Absolute {
-		// absolute position is relative to the nearest parent with a relative or absolute position
+		// absolute position is relative to the nearest parent with a non-auto position
 		parent := element.parent
 		nearest := &ctx.elements[parent]
 		for parent != 0 {
 			parent_element := &ctx.elements[parent]
-			if parent_element.position.type == .Relative ||
-			   parent_element.position.type == .Absolute {
+			if parent_element.position.type != .Auto {
 				nearest = parent_element
 				break
 			}
@@ -32,8 +36,10 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 		if parent == 0 {
 			element._position = element.position.value
+			apply_placement(element, &ctx.elements[0])
 		} else {
 			element._position = nearest._position + element.position.value
+			apply_placement(element, nearest)
 		}
 	}
 
@@ -41,6 +47,11 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 		flex_compute_position(ctx, element)
 	} else if element.layout == .Grid {
 		grid_compute_position(ctx, element)
+	}
+
+	if element.position.type == .Relative {
+		element._position += element.position.value
+		apply_placement(element, parent)
 	}
 }
 
@@ -59,4 +70,11 @@ calculate_alignment_offset :: proc(
 		return container_size - content_size
 	}
 	return 0
+}
+
+@(private)
+apply_placement :: proc(element: ^Element, parent: ^Element) {
+	origin_offset := element.placement.origin * element._size
+	anchor_offset := element.placement.anchor * parent._size
+	element._position += anchor_offset - origin_offset
 }

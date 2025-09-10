@@ -25,7 +25,8 @@ Features:
 	- Column/row gaps
 	- Column/row spans
 	- Column/row sizes
-- Absolute and relative positioning
+- Absolute, relative and fixed positioning
+	- Anchor and origin
 - Layers (z-index)
 - Padding, margin, borders, rounded corners, overflow
 - Images (textures)
@@ -257,6 +258,7 @@ ElementConfig :: struct {
 	layout:           Layout,
 	direction:        LayoutDirection,
 	position:         Position,
+	placement:        Placement,
 	width:            Size,
 	height:           Size,
 	padding:          Edges,
@@ -331,13 +333,41 @@ LayoutDirection :: enum {
 
 ```odin
 PositionType :: enum {
-	Auto,      // Default. Positioned by flex/grid parent. Don't use this if parent is not flex or grid.
-	Absolute,  // Unaffected by parent position or place in UI tree.
-	Relative,  // Positioned relative to its parent's position.
+	// Default. Positioned by flex/grid parent. Don't use this if parent is not flex or grid.
+	Auto,
+	// Positioned relative to the closest ancestor with a non-auto position.
+	Absolute,
+	// Positioned relative to its parent's position.
+	// When used in a flex/grid container, it will be relative to its Auto position.
+	Relative,
+	// Positioned relative to the root element (the screen).
+	Fixed,
 }
+
 Position :: struct {
 	type:  PositionType,
 	value: rl.Vector2,
+}
+```
+
+### placement
+
+This only applies to non-auto positioned elements.
+
+This is useful when you want to align a particular side of an element to a particular side of its parent or anchor element (eg. tooltips, dropdowns).
+
+The anchor element of a relative element is its direct parent.
+
+The anchor element of an absolute element is the closest ancestor with a non-auto position.
+
+The anchor element of a fixed element is the root element.
+
+```odin
+Placement :: struct {
+	// The anchor is the point on the parent that the element will be placed relative to.
+	anchor: rl.Vector2,
+	// The origin is the point on the element that will be placed at the specified position.
+	origin: rl.Vector2,
 }
 ```
 
@@ -615,6 +645,10 @@ orui.container(orui.id("container"), {
 
 	// grow size, equivalent to {.Grow, weight, 0, 0}. Weight is optional
 	width/height = orui.grow(weight),
+
+  // anchor/origin, equivalent to {{0, 0}, {1, 1}}
+	// aligns the bottom right of the element to the top left of its parent
+	placement = orui.placement(.TopLeft, .BottomRight),
 })
 ```
 

@@ -386,3 +386,43 @@ fit :: proc() -> Size {
 grow :: proc(base: f32 = 0) -> Size {
 	return {.Grow, base, 0, 0}
 }
+
+AnchorPoint :: enum {
+	TopLeft,
+	TopRight,
+	Top,
+	Left,
+	Right,
+	Center,
+	BottomLeft,
+	BottomRight,
+	Bottom,
+}
+
+anchor_point :: proc(point: AnchorPoint) -> rl.Vector2 {
+	switch point {
+	case .TopLeft:
+		return {0, 0}
+	case .TopRight:
+		return {1, 0}
+	case .Top:
+		return {0.5, 0}
+	case .Left:
+		return {0, 0.5}
+	case .Right:
+		return {1, 0.5}
+	case .BottomLeft:
+		return {0, 1}
+	case .BottomRight:
+		return {1, 1}
+	case .Bottom:
+		return {0.5, 1}
+	case .Center:
+		return {0.5, 0.5}
+	}
+	return {0, 0}
+}
+
+placement :: proc(anchor: AnchorPoint, origin: AnchorPoint) -> Placement {
+	return {anchor_point(anchor), anchor_point(origin)}
+}

@@ -14,7 +14,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -37,7 +37,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -72,7 +72,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -123,7 +123,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		for child != 0 {
 			child_element := &ctx.elements[child]
 
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -155,7 +155,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -178,7 +178,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -213,7 +213,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -264,7 +264,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		for child != 0 {
 			child_element := &ctx.elements[child]
 
-			if child_element.position.type == .Absolute {
+			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
 			}
@@ -368,7 +368,7 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	for child != 0 {
 		child_element := &ctx.elements[child]
 
-		if child_element.position.type == .Absolute {
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
 		}
@@ -391,10 +391,6 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 		child_element._position = element._position + {x, y}
 
-		if child_element.position.type == .Relative {
-			child_element._position += child_element.position.value
-		}
-
 		if element.direction == .LeftToRight {
 			x += child_element._size.x + element.gap + child_element.margin.right
 		} else {
@@ -413,7 +409,7 @@ content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type != .Absolute {
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			count += 1
 			if element.direction == .LeftToRight {
 				size += child_element._size.x + x_margin(child_element)

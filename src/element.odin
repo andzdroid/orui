@@ -19,9 +19,15 @@ Corners :: struct {
 }
 
 SizeType :: enum {
+	// Element shrinks to fit its content.
+	// Only used by children of Flex and Grid layouts.
 	Fit,
+	// Element grows to fill available space.
+	// Only used by children of Flex and Grid layouts.
 	Grow,
+	// Element is a percentage of its parent's size.
 	Percent,
+	// Element is a fixed pixel size.
 	Fixed,
 }
 
@@ -33,14 +39,27 @@ Size :: struct {
 }
 
 PositionType :: enum {
+	// Default. Positioned by flex/grid parent. Don't use this if parent is not flex or grid.
 	Auto,
+	// Positioned relative to the closest ancestor with a non-auto position.
 	Absolute,
+	// Positioned relative to its parent's position.
+	// When used in a flex/grid container, it will be relative to its Auto position.
 	Relative,
+	// Positioned relative to the root element (the screen).
+	Fixed,
 }
 
 Position :: struct {
 	type:  PositionType,
 	value: rl.Vector2,
+}
+
+Placement :: struct {
+	// The anchor is the point on the parent that the element will be placed relative to.
+	anchor: rl.Vector2,
+	// The origin is the point on the element that will be placed at the specified position.
+	origin: rl.Vector2,
 }
 
 Layout :: enum {
@@ -101,57 +120,114 @@ TextureFit :: enum {
 }
 
 ElementConfig :: struct {
-	// layout
+	// Determines how child elements are sized and positioned.
 	layout:           Layout,
+	// Determines the direction of child elements for Grid and Flex layouts.
 	direction:        LayoutDirection,
+	// Position type of the element.
 	position:         Position,
+	// How the element is positioned relative to its parent or anchor element.
+	// Used for non-auto position types.
+	placement:        Placement,
+	// How the element width is sized.
 	width:            Size,
+	// How the element height is sized.
 	height:           Size,
+	// Padding in pixels.
+	// Padding is the space inside the element's border.
 	padding:          Edges,
+	// Margin in pixels.
+	// Margin is the space outside the element's border.
 	margin:           Edges,
+	// Border width in pixels.
 	border:           Edges,
+	// Gap between child elements in pixels.
+	// Only used for Flex and Grid layouts.
 	gap:              f32,
+	// How child elements are aligned along the main axis.
 	align_main:       MainAlignment,
+	// How child elements are aligned along the cross axis.
 	align_cross:      CrossAlignment,
+	// How the element handles its content overflowing its size.
 	overflow:         Overflow,
+	// Control the render order of the element.
+	// Inherited from parent by default.
 	layer:            int,
 
-	// grid
+	// Number of columns.
+	// Only used for Grid layout.
 	cols:             int,
+	// Size of each column.
+	// If the size of a column is not provided, the last provided size is used.
 	col_sizes:        []Size,
+	// Number of rows.
+	// Only used for Grid layout.
 	rows:             int,
+	// Size of each row.
+	// If the size of a row is not provided, the last provided size is used.
 	row_sizes:        []Size,
+	// Gap between columns in pixels.
+	// If not provided, falls back to `gap`.
 	col_gap:          f32,
+	// Gap between rows in pixels.
+	// If not provided, falls back to `gap`.
 	row_gap:          f32,
+	// How many columns this element should span.
+	// Only used for Grid layout children.
 	col_span:         int,
+	// How many rows this element should span.
+	// Only used for Grid layout children.
 	row_span:         int,
 
-	// style
+	// Foreground color.
+	// Used for text color if there is text, and texture tint if there is a texture.
 	color:            rl.Color,
+	// Background color.
+	// If the alpha is 0, nothing is drawn.
+	// Default background color is invisible.
 	background_color: rl.Color,
+	// Border color.
+	// If the alpha is 0, nothing is drawn.
+	// Default border color is invisible.
 	border_color:     rl.Color,
+	// Corner radius.
+	// Will be applied to both backgrounds and borders.
+	// Does not apply to content (labels, images).
 	corner_radius:    Corners,
 
-	// text
+	// Must be true if this element has text.
 	has_text:         bool,
+	// The string to render.
 	text:             string,
+	// The font family to use for the text.
 	font:             ^rl.Font,
+	// The font size to use for the text.
 	font_size:        f32,
+	// The space between letters in pixels.
 	letter_spacing:   f32,
+	// The line height multiplier. Default is 1.
 	line_height:      f32,
 
-	// texture
+	// Must be true if this element has a texture.
 	has_texture:      bool,
+	// The texture to use for the element.
 	texture:          ^rl.Texture2D,
+	// The source rectangle of the texture that you want to draw.
 	texture_source:   rl.Rectangle,
+	// How the texture should be resized to fit the element size.
 	texture_fit:      TextureFit,
 
-	// content layout
+	// How the content (text, image) should be aligned within the element.
 	align:            [2]ContentAlignment,
 
-	// input
+	// Whether the element can be interacted with. Inherited from parent by default.
 	disabled:         InheritedBool,
+	// Whether the element will consume mouse interactions, blocking elements below it from receiving them.
+	// Inherited from parent by default.
 	block:            InheritedBool,
+	// Whether the element will consume interactions once they are activated.
+	// Recommended to be set to True for things like sliders and draggable windows.
+	// Inherited from parent by default.
 	capture:          InheritedBool,
 }
 
@@ -166,6 +242,7 @@ Element :: struct {
 	layout:            Layout,
 	direction:         LayoutDirection,
 	position:          Position,
+	placement:         Placement,
 	width:             Size,
 	height:            Size,
 	padding:           Edges,
@@ -234,6 +311,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.layout = config.layout
 	element.direction = config.direction
 	element.position = config.position
+	element.placement = config.placement
 	element.width = config.width
 	element.height = config.height
 	element.padding = config.padding

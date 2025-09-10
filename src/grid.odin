@@ -17,7 +17,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type == .Absolute {
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
 		}
@@ -98,6 +98,7 @@ grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
 			for child != 0 {
 				child_element := &ctx.elements[child]
 				if child_element.position.type != .Absolute &&
+				   child_element.position.type != .Fixed &&
 				   child_element._grid_col_index == i &&
 				   child_element.col_span <= 1 {
 					width := child_element._size.x + x_margin(child_element)
@@ -192,7 +193,7 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type == .Absolute {
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
 		}
@@ -250,6 +251,7 @@ grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
 			for child != 0 {
 				child_element := &ctx.elements[child]
 				if child_element.position.type != .Absolute &&
+				   child_element.position.type != .Fixed &&
 				   child_element._grid_row_index == i &&
 				   child_element.row_span <= 1 {
 					height := child_element._size.y + y_margin(child_element)
@@ -344,7 +346,7 @@ grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type == .Absolute {
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
 		}
@@ -391,7 +393,7 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type == .Absolute {
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
 		}
@@ -403,10 +405,6 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 		y := start_y + element._grid_row_offsets[row] + child_element.margin.top
 
 		child_element._position = element._position + {x, y}
-		if child_element.position.type == .Relative {
-			child_element._position += child_element.position.value
-		}
-
 		child = child_element.next
 	}
 }
@@ -417,7 +415,7 @@ grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> int {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type != .Absolute {
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			span := max(child_element.col_span, 1)
 			end_index := child_element._grid_col_index + span
 			used = max(used, end_index)
@@ -433,7 +431,7 @@ grid_used_rows :: proc(ctx: ^Context, element: ^Element) -> int {
 	child := element.children
 	for child != 0 {
 		child_element := &ctx.elements[child]
-		if child_element.position.type != .Absolute {
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			span := max(child_element.row_span, 1)
 			end_index := child_element._grid_row_index + span
 			used = max(used, end_index)
