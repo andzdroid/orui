@@ -143,6 +143,7 @@ main :: proc() {
 							border = {0, 0, 1, 0},
 							border_color = {150, 150, 150, 255},
 							align_main = .SpaceBetween,
+							corner_radius = {4, 4, 0, 0},
 						},
 					)
 					orui.label(
