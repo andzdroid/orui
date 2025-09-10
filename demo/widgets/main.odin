@@ -44,7 +44,8 @@ tooltip :: proc(font: ^rl.Font) {
 				orui.id("tooltip content"),
 				"Here is some tooltip text",
 				{
-					position = {.Absolute, {150, -45}},
+					position = {.Absolute, {2, -2}},
+					placement = orui.placement(.TopRight, .BottomLeft),
 					width = orui.fixed(200),
 					font = font,
 					font_size = 16,
@@ -181,7 +182,7 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 
 	{orui.container(
 			orui.id("dropdown container"),
-			{padding = orui.padding(4), position = {.Relative, {}}, width = orui.fixed(250)},
+			{padding = orui.padding(2), position = {.Relative, {}}, width = orui.fixed(250)},
 		)
 
 		if orui.label(
@@ -198,7 +199,8 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 			{orui.container(
 					orui.id("dropdown content"),
 					{
-						position = {.Absolute, {0, 38}},
+						position = {.Absolute, {}},
+						placement = orui.placement(.Bottom, .Top),
 						direction = .TopToBottom,
 						padding = orui.padding(4),
 						width = orui.fixed(250),
