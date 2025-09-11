@@ -179,6 +179,8 @@ if orui.label(orui.id("button"), "Button text", {
 }
 ```
 
+**Rendering text makes use of the temp allocator. Make sure you free the temp allocator each frame.**
+
 ### image
 
 Display an image. Takes a pointer to a raylib Texture2D.

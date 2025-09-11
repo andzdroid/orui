@@ -162,6 +162,8 @@ main :: proc() {
 		}
 
 		rl.EndDrawing()
+
+		free_all(context.temp_allocator)
 	}
 
 	for i in 0 ..< ctx.element_count {

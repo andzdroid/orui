@@ -55,15 +55,15 @@ render_test_grid :: proc() {
 		orui.label(orui.id("label 7"), "Column span 3", {col_span = 3}, cell_style)
 		orui.label(orui.id("label 8"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 9"), "Cell", {}, cell_style)
-		orui.label(orui.id("label 10"), "Cell", {row_span = 2, col_span = 3}, cell_style)
+		orui.label(orui.id("label 10"), "3x2", {row_span = 2, col_span = 3}, cell_style)
 		orui.label(orui.id("label 11"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 12"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 13"), "Cell", {}, cell_style)
-		orui.label(orui.id("label 14"), "Cell", {row_span = 3, col_span = 2}, cell_style)
+		orui.label(orui.id("label 14"), "2x3", {row_span = 3, col_span = 2}, cell_style)
 		orui.label(orui.id("label 15"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 16"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 17"), "Cell", {}, cell_style)
 		orui.label(orui.id("label 18"), "Cell", {}, cell_style)
-		orui.label(orui.id("label 19"), "Cell", {col_span = 4}, cell_style)
+		orui.label(orui.id("label 19"), "4x1", {col_span = 4}, cell_style)
 	}
 }

@@ -203,6 +203,8 @@ main :: proc() {
 
 		orui.end()
 		rl.EndDrawing()
+
+		free_all(context.temp_allocator)
 	}
 
 	rl.CloseWindow()
