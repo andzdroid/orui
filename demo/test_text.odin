@@ -14,199 +14,192 @@ button_style :: proc(element: ^orui.Element) {
 }
 
 render_test_text :: proc() {
+	orui.container(
+		orui.id("container"),
+		{
+			direction = .TopToBottom,
+			width = orui.grow(),
+			height = orui.grow(),
+			gap = 16,
+			padding = orui.padding(50),
+			align_main = .Center,
+			align_cross = .Center,
+			background_color = rl.BEIGE,
+		},
+	)
+
+	orui.label(
+		orui.id("1"),
+		"Dropdown: Option 1",
+		{font = &font, font_size = 16, letter_spacing = 5},
+		button_style,
+	)
+
+	orui.label(orui.id("2"), "Dropdown: Option 2", {font = &font, font_size = 16}, button_style)
+
+	orui.label(
+		orui.id("3"),
+		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
+		{
+			font = &font,
+			font_size = 16,
+			height = orui.grow(),
+			width = orui.grow(),
+			overflow = .Wrap,
+			align = {.End, .End},
+		},
+		button_style,
+	)
+
+	orui.label(
+		orui.id("4"),
+		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
+		{
+			font = &font,
+			font_size = 16,
+			width = orui.fixed(300),
+			letter_spacing = 3,
+			overflow = .Wrap,
+		},
+		button_style,
+	)
+
+	orui.label(
+		orui.id("5"),
+		"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		{font = &font, font_size = 16, width = orui.fixed(200), overflow = .Visible},
+		button_style,
+	)
+
 	{orui.container(
-			orui.id("container"),
+			orui.id("align container"),
 			{
-				direction = .TopToBottom,
-				width = orui.grow(),
-				height = orui.grow(),
-				gap = 16,
-				padding = orui.padding(50),
-				align_main = .Center,
-				align_cross = .Center,
-				background_color = rl.BEIGE,
+				layout = .Grid,
+				direction = .LeftToRight,
+				width = orui.fit(),
+				height = orui.fit(),
+				cols = 3,
+				rows = 3,
+				col_sizes = []orui.Size{orui.grow()},
+				row_sizes = []orui.Size{orui.grow()},
+				gap = 4,
 			},
 		)
-
 		orui.label(
-			orui.id("1"),
-			"Dropdown: Option 1",
-			{font = &font, font_size = 16, letter_spacing = 5},
-			button_style,
-		)
-
-		orui.label(
-			orui.id("2"),
-			"Dropdown: Option 2",
-			{font = &font, font_size = 16},
-			button_style,
-		)
-
-		orui.label(
-			orui.id("3"),
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
+			orui.id("align start start"),
+			"Lorem",
 			{
 				font = &font,
-				font_size = 16,
-				height = orui.grow(),
-				width = orui.grow(),
-				overflow = .Wrap,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Start, .Start},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align center start"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Center, .Start},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align end start"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.End, .Start},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align start center"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Start, .Center},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align center center"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Center, .Center},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align end center"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.End, .Center},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align start end"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Start, .End},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align center end"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
+				align = {.Center, .End},
+			},
+			button_style,
+		)
+
+		orui.label(
+			orui.id("align end end"),
+			"Lorem",
+			{
+				font = &font,
+				font_size = 12,
+				width = orui.fixed(100),
+				height = orui.fixed(100),
 				align = {.End, .End},
 			},
 			button_style,
 		)
-
-		orui.label(
-			orui.id("4"),
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
-			{
-				font = &font,
-				font_size = 16,
-				width = orui.fixed(300),
-				letter_spacing = 3,
-				overflow = .Wrap,
-			},
-			button_style,
-		)
-
-		orui.label(
-			orui.id("5"),
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-			{font = &font, font_size = 16, width = orui.fixed(200), overflow = .Visible},
-			button_style,
-		)
-
-		{orui.container(
-				orui.id("align container"),
-				{
-					layout = .Grid,
-					direction = .LeftToRight,
-					width = orui.fit(),
-					height = orui.fit(),
-					cols = 3,
-					rows = 3,
-					col_sizes = []orui.Size{orui.grow()},
-					row_sizes = []orui.Size{orui.grow()},
-					gap = 4,
-				},
-			)
-			orui.label(
-				orui.id("align start start"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Start, .Start},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align center start"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Center, .Start},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align end start"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.End, .Start},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align start center"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Start, .Center},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align center center"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Center, .Center},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align end center"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.End, .Center},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align start end"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Start, .End},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align center end"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.Center, .End},
-				},
-				button_style,
-			)
-
-			orui.label(
-				orui.id("align end end"),
-				"Lorem",
-				{
-					font = &font,
-					font_size = 12,
-					width = orui.fixed(100),
-					height = orui.fixed(100),
-					align = {.End, .End},
-				},
-				button_style,
-			)
-		}
-
 	}
 }

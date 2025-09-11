@@ -27,72 +27,70 @@ dropdown_option_style :: proc(element: ^orui.Element) {
 }
 
 tooltip :: proc(font: ^rl.Font) {
-	{orui.container(
-			orui.id("tooltip container"),
-			{padding = orui.padding(4), position = {.Relative, {}}},
-		)
+	orui.container(
+		orui.id("tooltip container"),
+		{padding = orui.padding(4), position = {.Relative, {}}},
+	)
 
+	orui.label(
+		orui.id("tooltip button"),
+		"Button with tooltip",
+		{font = font, font_size = 16},
+		button_style,
+	)
+
+	if orui.hovered("tooltip button") {
 		orui.label(
-			orui.id("tooltip button"),
-			"Button with tooltip",
-			{font = font, font_size = 16},
-			button_style,
+			orui.id("tooltip content"),
+			"Here is some tooltip text",
+			{
+				position = {.Absolute, {2, -2}},
+				placement = orui.placement(.TopRight, .BottomLeft),
+				width = orui.fixed(200),
+				font = font,
+				font_size = 16,
+				color = rl.BLACK,
+				background_color = rl.WHITE,
+				padding = orui.padding(8, 6),
+				border = orui.border(1),
+				border_color = {100, 100, 160, 255},
+				corner_radius = orui.corner(4),
+				overflow = .Wrap,
+				layer = 100,
+			},
 		)
-
-		if orui.hovered("tooltip button") {
-			orui.label(
-				orui.id("tooltip content"),
-				"Here is some tooltip text",
-				{
-					position = {.Absolute, {2, -2}},
-					placement = orui.placement(.TopRight, .BottomLeft),
-					width = orui.fixed(200),
-					font = font,
-					font_size = 16,
-					color = rl.BLACK,
-					background_color = rl.WHITE,
-					padding = orui.padding(8, 6),
-					border = orui.border(1),
-					border_color = {100, 100, 160, 255},
-					corner_radius = orui.corner(4),
-					overflow = .Wrap,
-					layer = 100,
-				},
-			)
-		}
 	}
 }
 
 tooltip2 :: proc(font: ^rl.Font) {
-	{orui.container(orui.id("tooltip container 2"), {padding = orui.padding(4)})
+	orui.container(orui.id("tooltip container 2"), {padding = orui.padding(4)})
 
+	orui.label(
+		orui.id("tooltip button 2"),
+		"Tooltip follows mouse",
+		{font = font, font_size = 16},
+		button_style,
+	)
+
+	if orui.hovered("tooltip button 2") {
 		orui.label(
-			orui.id("tooltip button 2"),
-			"Tooltip follows mouse",
-			{font = font, font_size = 16},
-			button_style,
+			orui.id("tooltip content 2"),
+			"This tooltip follows the mouse position!",
+			{
+				position = {.Absolute, {f32(rl.GetMouseX() + 5), f32(rl.GetMouseY()) - 50}},
+				width = orui.fixed(200),
+				font = font,
+				font_size = 16,
+				color = rl.BLACK,
+				background_color = rl.WHITE,
+				padding = orui.padding(8, 6),
+				border = orui.border(1),
+				border_color = {100, 100, 160, 255},
+				corner_radius = orui.corner(4),
+				overflow = .Wrap,
+				layer = 100,
+			},
 		)
-
-		if orui.hovered("tooltip button 2") {
-			orui.label(
-				orui.id("tooltip content 2"),
-				"This tooltip follows the mouse position!",
-				{
-					position = {.Absolute, {f32(rl.GetMouseX() + 5), f32(rl.GetMouseY()) - 50}},
-					width = orui.fixed(200),
-					font = font,
-					font_size = 16,
-					color = rl.BLACK,
-					background_color = rl.WHITE,
-					padding = orui.padding(8, 6),
-					border = orui.border(1),
-					border_color = {100, 100, 160, 255},
-					corner_radius = orui.corner(4),
-					overflow = .Wrap,
-					layer = 100,
-				},
-			)
-		}
 	}
 }
 
@@ -124,120 +122,119 @@ toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
 	hovered_color := rl.Color{240, 240, 240, 255}
 	active_color := rl.Color{230, 230, 230, 255}
 
-	{orui.container(orui.id("toggle button 2"), {})
-		if orui.label(
-			orui.id("toggle button 2 left"),
-			"Left button",
-			{
-				font = font,
-				font_size = 16,
-				padding = orui.padding(10, 8),
-				background_color = toggle_state^ == 0 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
-				color = rl.BLACK,
-				border = orui.border(1),
-				border_color = {100, 100, 100, 255},
-				corner_radius = {4, 0, 0, 4},
-			},
-		) {
-			toggle_state^ = 0
-		}
+	orui.container(orui.id("toggle button 2"), {})
 
-		if orui.label(
-			orui.id("toggle button 2 middle"),
-			"Middle button",
-			{
-				font = font,
-				font_size = 16,
-				padding = orui.padding(10, 8),
-				background_color = toggle_state^ == 1 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
-				color = rl.BLACK,
-				border = orui.border(1),
-				border_color = {100, 100, 100, 255},
-			},
-		) {
-			toggle_state^ = 1
-		}
+	if orui.label(
+		orui.id("toggle button 2 left"),
+		"Left button",
+		{
+			font = font,
+			font_size = 16,
+			padding = orui.padding(10, 8),
+			background_color = toggle_state^ == 0 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
+			color = rl.BLACK,
+			border = orui.border(1),
+			border_color = {100, 100, 100, 255},
+			corner_radius = {4, 0, 0, 4},
+		},
+	) {
+		toggle_state^ = 0
+	}
 
-		if orui.label(
-			orui.id("toggle button 2 right"),
-			"Right button",
-			{
-				font = font,
-				font_size = 16,
-				padding = orui.padding(10, 8),
-				background_color = toggle_state^ == 2 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
-				color = rl.BLACK,
-				border = orui.border(1),
-				border_color = {100, 100, 100, 255},
-				corner_radius = {0, 4, 4, 0},
-			},
-		) {
-			toggle_state^ = 2
-		}
+	if orui.label(
+		orui.id("toggle button 2 middle"),
+		"Middle button",
+		{
+			font = font,
+			font_size = 16,
+			padding = orui.padding(10, 8),
+			background_color = toggle_state^ == 1 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
+			color = rl.BLACK,
+			border = orui.border(1),
+			border_color = {100, 100, 100, 255},
+		},
+	) {
+		toggle_state^ = 1
+	}
+
+	if orui.label(
+		orui.id("toggle button 2 right"),
+		"Right button",
+		{
+			font = font,
+			font_size = 16,
+			padding = orui.padding(10, 8),
+			background_color = toggle_state^ == 2 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
+			color = rl.BLACK,
+			border = orui.border(1),
+			border_color = {100, 100, 100, 255},
+			corner_radius = {0, 4, 4, 0},
+		},
+	) {
+		toggle_state^ = 2
 	}
 }
 
 dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 	just_opened := false
 
-	{orui.container(
-			orui.id("dropdown container"),
-			{padding = orui.padding(2), position = {.Relative, {}}, width = orui.fixed(250)},
-		)
+	orui.container(
+		orui.id("dropdown container"),
+		{padding = orui.padding(2), position = {.Relative, {}}, width = orui.fixed(250)},
+	)
 
-		if orui.label(
-			orui.id("dropdown button"),
-			value^ == 0 ? "Dropdown: Option 1" : value^ == 1 ? "Dropdown: Option 2" : "Dropdown: Option 3",
-			{font = font, font_size = 16, width = orui.grow()},
-			button_style,
-		) {
-			open_state^ = !open_state^
-			just_opened = true
-		}
+	if orui.label(
+		orui.id("dropdown button"),
+		value^ == 0 ? "Dropdown: Option 1" : value^ == 1 ? "Dropdown: Option 2" : "Dropdown: Option 3",
+		{font = font, font_size = 16, width = orui.grow()},
+		button_style,
+	) {
+		open_state^ = !open_state^
+		just_opened = true
+	}
 
-		if open_state^ {
-			{orui.container(
-					orui.id("dropdown content"),
-					{
-						position = {.Absolute, {}},
-						placement = orui.placement(.Bottom, .Top),
-						direction = .TopToBottom,
-						padding = orui.padding(4),
-						width = orui.fixed(250),
-						gap = 1,
-						layer = 100,
-					},
-				)
+	if open_state^ {
+		{orui.container(
+				orui.id("dropdown content"),
+				{
+					position = {.Absolute, {}},
+					placement = orui.placement(.Bottom, .Top),
+					direction = .TopToBottom,
+					padding = orui.padding(4),
+					width = orui.fixed(250),
+					gap = 1,
+					layer = 100,
+				},
+			)
 
-				if orui.label(
-					orui.id("dropdown option 1"),
-					"Option 1",
-					{font = font},
-					dropdown_option_style,
-				) {
-					value^ = 0
-					open_state^ = false
-				}
+			if orui.label(
+				orui.id("dropdown option 1"),
+				"Option 1",
+				{font = font},
+				dropdown_option_style,
+			) {
+				value^ = 0
+				open_state^ = false
+			}
 
-				if orui.label(
-					orui.id("dropdown option 2"),
-					"Option 2",
-					{font = font},
-					dropdown_option_style,
-				) {
-					value^ = 1
-					open_state^ = false
-				}
+			if orui.label(
+				orui.id("dropdown option 2"),
+				"Option 2",
+				{font = font},
+				dropdown_option_style,
+			) {
+				value^ = 1
+				open_state^ = false
+			}
 
-				if orui.label(
-					orui.id("dropdown option 3"),
-					"Option 3",
-					{font = font},
-					dropdown_option_style,
-				) {
-					value^ = 2
-					open_state^ = false
-				}
+			if orui.label(
+				orui.id("dropdown option 3"),
+				"Option 3",
+				{font = font},
+				dropdown_option_style,
+			) {
+				value^ = 2
+				open_state^ = false
 			}
 		}
 	}
@@ -248,55 +245,54 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 }
 
 checkbox :: proc(font: ^rl.Font, checked_state: ^bool) {
+	orui.container(
+		orui.id("checkbox container"),
+		{
+			direction = .LeftToRight,
+			gap = 8,
+			width = orui.fit(),
+			height = orui.fit(),
+			align_cross = .Center,
+		},
+	)
+
 	{orui.container(
-			orui.id("checkbox container"),
+			orui.id("checkbox outer"),
 			{
-				direction = .LeftToRight,
-				gap = 8,
-				width = orui.fit(),
-				height = orui.fit(),
-				align_cross = .Center,
+				width = orui.fixed(25),
+				height = orui.fixed(25),
+				background_color = rl.WHITE,
+				padding = orui.padding(5),
+				disabled = .True,
+				corner_radius = orui.corner(5),
 			},
 		)
 
 		{orui.container(
-				orui.id("checkbox outer"),
+				orui.id("checkbox inner"),
 				{
-					width = orui.fixed(25),
-					height = orui.fixed(25),
-					background_color = rl.WHITE,
-					padding = orui.padding(5),
-					disabled = .True,
-					corner_radius = orui.corner(5),
+					width = orui.grow(),
+					height = orui.grow(),
+					background_color = checked_state^ ? {200, 120, 120, 255} : orui.hovered("checkbox container") ? rl.LIGHTGRAY : {},
+					corner_radius = orui.corner(2),
 				},
-			)
-
-			{orui.container(
-					orui.id("checkbox inner"),
-					{
-						width = orui.grow(),
-						height = orui.grow(),
-						background_color = checked_state^ ? {200, 120, 120, 255} : orui.hovered("checkbox container") ? rl.LIGHTGRAY : {},
-						corner_radius = orui.corner(2),
-					},
-				)}
-		}
-
-		orui.label(
-			orui.id("checkbox label"),
-			"Checkbox",
-			{
-				font = font,
-				font_size = 16,
-				color = rl.BLACK,
-				width = orui.fit(),
-				height = orui.grow(),
-				align = {.Start, .Center},
-				padding = orui.padding(12, 0),
-				disabled = .True,
-			},
-		)
+			)}
 	}
+
+	orui.label(
+		orui.id("checkbox label"),
+		"Checkbox",
+		{
+			font = font,
+			font_size = 16,
+			color = rl.BLACK,
+			width = orui.fit(),
+			height = orui.grow(),
+			align = {.Start, .Center},
+			padding = orui.padding(12, 0),
+			disabled = .True,
+		},
+	)
 
 	if orui.clicked("checkbox container") {
 		checked_state^ = !checked_state^

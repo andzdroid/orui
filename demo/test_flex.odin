@@ -5,25 +5,24 @@ import "core:fmt"
 import rl "vendor:raylib"
 
 render_test_flex :: proc() {
-	{orui.container(
-			orui.id("container"),
-			{
-				direction = .TopToBottom,
-				width = orui.grow(),
-				height = orui.grow(),
-				padding = orui.padding(16),
-				background_color = rl.BEIGE,
-				gap = 16,
-			},
-		)
+	orui.container(
+		orui.id("container"),
+		{
+			direction = .TopToBottom,
+			width = orui.grow(),
+			height = orui.grow(),
+			padding = orui.padding(16),
+			background_color = rl.BEIGE,
+			gap = 16,
+		},
+	)
 
-		{row("row 1", "Start", .Start, .Start)}
-		{row("row 2", "Center", .Center, .Center)}
-		{row("row 3", "End", .End, .End)}
-		{row("row 4", "Space between", .SpaceBetween, .Center)}
-		{row("row 5", "Space around", .SpaceAround, .Center)}
-		{row("row 6", "Space evenly", .SpaceEvenly, .Center)}
-	}
+	{row("row 1", "Start", .Start, .Start)}
+	{row("row 2", "Center", .Center, .Center)}
+	{row("row 3", "End", .End, .End)}
+	{row("row 4", "Space between", .SpaceBetween, .Center)}
+	{row("row 5", "Space around", .SpaceAround, .Center)}
+	{row("row 6", "Space evenly", .SpaceEvenly, .Center)}
 }
 
 row :: proc(

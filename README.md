@@ -352,6 +352,10 @@ Position :: struct {
 
 ### placement
 
+Placement controls how an element is positioned relative to its anchor element.
+
+Values are between 0 and 1 where 0,0 is the top left and 1,1 is the bottom right of the element (no matter its size).
+
 This only applies to non-auto positioned elements.
 
 This is useful when you want to align a particular side of an element to a particular side of its parent or anchor element (eg. tooltips, dropdowns).
@@ -424,7 +428,7 @@ Flex alignment along the main axis. Same as justify-content in css.
 
 Main axis is the axis following the direction of the flex element.
 If direction is `LeftToRight`, main axis is horizontal.
-if direction is `TopToBottom`, main axis is vertical.
+If direction is `TopToBottom`, main axis is vertical.
 
 ```odin
 MainAlignment :: enum {
@@ -552,7 +556,7 @@ Font size in pixels.
 
 ### letter_spacing and line_height
 
-Control the letter spacing and line height of the text.
+Control the letter spacing (pixels) and line height (multiplier) of the text.
 
 Default value is 1 for both.
 
@@ -677,6 +681,6 @@ standard_sizing :: proc(element: ^Element) {
 
 {
   orui.container(orui.id("container"), {}, error_style, standard_sizing)
-  orui.label(orui.id("label"), {}, error_style)
+  orui.label(orui.id("label"), "Something went wrong!", {}, error_style)
 }
 ```
