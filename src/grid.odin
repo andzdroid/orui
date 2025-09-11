@@ -139,6 +139,9 @@ grid_fit_width :: proc(ctx: ^Context, element: ^Element) {
 // Set percent and grow column widths.
 grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 	element_inner_width := inner_width(element)
+	gap := element.col_gap > 0 ? element.col_gap : element.gap
+	gaps := gap * f32(max(element.cols - 1, 0))
+	element_inner_width -= gaps
 
 	sum_with_margins: f32 = 0
 	total_weight: f32 = 0
@@ -150,7 +153,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 		case .Fixed:
 			base = element._grid_col_sizes[i]
 		case .Percent:
-			base = grid_clamp_size(element._grid_col_sizes[i] * track.value, track)
+			base = grid_clamp_size(element_inner_width * track.value, track)
 			element._grid_col_sizes[i] = base
 		case .Fit:
 			base = element._grid_col_sizes[i]
@@ -163,9 +166,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 		sum_with_margins += base + x_margin(element)
 	}
 
-	gap := element.col_gap > 0 ? element.col_gap : element.gap
-	gaps := gap * f32(max(element.cols - 1, 0))
-	remaining := element_inner_width - sum_with_margins - gaps
+	remaining := element_inner_width - sum_with_margins
 	if remaining > 0 && total_weight > 0 {
 		for i in 0 ..< element.cols {
 			track := element.col_sizes[i]
@@ -292,6 +293,9 @@ grid_fit_height :: proc(ctx: ^Context, element: ^Element) {
 // Set percent and grow row heights.
 grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 	element_inner_height := inner_height(element)
+	gap := element.row_gap > 0 ? element.row_gap : element.gap
+	gaps := gap * f32(max(element.rows - 1, 0))
+	element_inner_height -= gaps
 
 	sum_with_margins: f32 = 0
 	total_weight: f32 = 0
@@ -303,7 +307,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 		case .Fixed:
 			base = element._grid_row_sizes[i]
 		case .Percent:
-			base = element._grid_row_sizes[i] * track.value
+			base = grid_clamp_size(element_inner_height * track.value, track)
 			element._grid_row_sizes[i] = base
 		case .Fit:
 			base = element._grid_row_sizes[i]
@@ -316,9 +320,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 		sum_with_margins += base + y_margin(element)
 	}
 
-	gap := element.row_gap > 0 ? element.row_gap : element.gap
-	gaps := gap * f32(max(element.rows - 1, 0))
-	remaining := element_inner_height - sum_with_margins - gaps
+	remaining := element_inner_height - sum_with_margins
 	if remaining > 0 && total_weight > 0 {
 		for i in 0 ..< element.rows {
 			track := element.row_sizes[i]

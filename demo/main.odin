@@ -164,5 +164,10 @@ main :: proc() {
 		rl.EndDrawing()
 	}
 
+	for i in 0 ..< ctx.element_count {
+		element := &ctx.elements[i]
+		log.infof("%v", element)
+	}
+
 	rl.CloseWindow()
 }
