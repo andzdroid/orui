@@ -24,6 +24,7 @@ Context :: struct {
 	previous:        int,
 	parent:          int,
 	frame:           int,
+	default_font:    rl.Font,
 
 	// input state
 	sorted:          [MAX_ELEMENTS]int,
@@ -207,6 +208,9 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 		modifier(element)
 	}
 
+	if element.font == nil && current_context.default_font != {} {
+		element.font = &current_context.default_font
+	}
 	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
 
 	end_element()

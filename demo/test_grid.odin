@@ -6,7 +6,6 @@ import rl "vendor:raylib"
 cell_style :: proc(element: ^orui.Element) {
 	element.width = orui.grow()
 	element.height = orui.grow()
-	element.font = &font
 	element.font_size = 32
 	element.letter_spacing = 4
 	element.color = rl.WHITE

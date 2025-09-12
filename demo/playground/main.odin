@@ -76,9 +76,10 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
-	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
+	ctx.default_font = rl.GetFontDefault()
+	defer rl.UnloadFont(ctx.default_font)
 
-	default_font := rl.GetFontDefault()
+	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
 
 	texture := rl.LoadTexture("icon.png")
 	defer rl.UnloadTexture(texture)
@@ -130,7 +131,6 @@ main :: proc() {
 							orui.id(fmt.tprintf("top bar label %v", i)),
 							fmt.tprintf("%v", i),
 							{
-								font = &default_font,
 								font_size = 14,
 								color = rl.WHITE,
 								padding = orui.padding(10),
@@ -159,12 +159,7 @@ main :: proc() {
 						orui.label(
 							orui.id(fmt.tprintf("top bar label2 %v", i)),
 							fmt.tprintf("Button %v", i),
-							{
-								font = &default_font,
-								font_size = 14,
-								color = rl.WHITE,
-								padding = orui.padding(10),
-							},
+							{font_size = 14, color = rl.WHITE, padding = orui.padding(10)},
 							button_style,
 						)
 					}
@@ -194,7 +189,6 @@ main :: proc() {
 							orui.id(fmt.tprintf("sidebar label %v", i)),
 							fmt.tprintf("Row %v", i),
 							{
-								font = &default_font,
 								font_size = 20,
 								color = rl.WHITE,
 								padding = orui.padding(10),
@@ -213,7 +207,6 @@ main :: proc() {
 							orui.id(fmt.tprintf("bottom label %v", i)),
 							fmt.tprintf("Button %v", i),
 							{
-								font = &default_font,
 								font_size = 20,
 								color = rl.WHITE,
 								padding = orui.padding(10),
@@ -254,7 +247,6 @@ main :: proc() {
 							orui.id("button"),
 							labels[label_index],
 							{
-								font = &default_font,
 								font_size = 20,
 								color = rl.WHITE,
 								background_color = orui.active() ? {100, 100, 100, 255} : orui.hovered() ? {120, 120, 120, 255} : {30, 30, 30, 255},
@@ -316,38 +308,28 @@ main :: proc() {
 							},
 						)
 
-						orui.label(
-							orui.id("grid 1"),
-							"Grid cell 1",
-							{font = &default_font},
-							grid_cell_style,
-						)
+						orui.label(orui.id("grid 1"), "Grid cell 1", {}, grid_cell_style)
 
-						orui.label(
-							orui.id("grid 2"),
-							"Grid cell 2",
-							{font = &default_font},
-							grid_cell_style,
-						)
+						orui.label(orui.id("grid 2"), "Grid cell 2", {}, grid_cell_style)
 
 						orui.label(
 							orui.id("grid 3"),
 							"Grid cell 3",
-							{font = &default_font, row_span = 2},
+							{row_span = 2},
 							grid_cell_style,
 						)
 
 						orui.label(
 							orui.id("grid 4"),
 							"Grid cell 4",
-							{font = &default_font, col_span = 3},
+							{col_span = 3},
 							grid_cell_style,
 						)
 
 						orui.label(
 							orui.id("grid 5"),
 							"Grid cell 5",
-							{font = &default_font, col_span = 2},
+							{col_span = 2},
 							grid_cell_style,
 						)
 
@@ -360,7 +342,6 @@ main :: proc() {
 					orui.id("button active"),
 					"button active!",
 					{
-						font = &default_font,
 						font_size = 20,
 						color = rl.BLACK,
 						background_color = rl.WHITE,

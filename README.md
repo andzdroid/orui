@@ -72,6 +72,12 @@ Allocate the orui Context up front:
 ctx := new(orui.Context)
 ```
 
+(Optional) Set a default font:
+
+```odin
+ctx.default_font = rl.GetFontDefault()
+```
+
 In your render loop:
 
 ```odin
@@ -159,6 +165,7 @@ A label element displays text.
 Text will wrap by default. Set the `overflow` option if you want change this behaviour.
 
 Make sure you define the font and font size in the element config.
+If the font is not defined, it will fallback to the `default_font` on the orui context.
 
 This element does not need the surrounding curly braces because it cannot hold child elements.
 

@@ -11,7 +11,6 @@ import rl "vendor:raylib"
 
 SAMPLE_COUNT :: 240
 
-font: rl.Font
 texture: rl.Texture2D
 
 Scene :: enum {
@@ -60,14 +59,14 @@ main :: proc() {
 	rl.InitWindow(1280, 900, "orui")
 	rl.SetTargetFPS(120)
 
-	font = rl.GetFontDefault()
-	defer rl.UnloadFont(font)
-
 	texture = rl.LoadTexture("icon.png")
 	defer rl.UnloadTexture(texture)
 
 	ctx := new(orui.Context)
 	defer free(ctx)
+
+	ctx.default_font = rl.GetFontDefault()
+	defer rl.UnloadFont(ctx.default_font)
 
 	log.infof("orui struct size: %v MB", size_of(ctx^) / mem.Megabyte)
 
@@ -123,17 +122,17 @@ main :: proc() {
 				orui.label(
 					orui.id("debug fps"),
 					fmt.tprintf("FPS: %v", fps),
-					{font = &font, font_size = 16, color = rl.WHITE},
+					{font_size = 16, color = rl.WHITE},
 				)
 				orui.label(
 					orui.id("debug elapsed 1"),
 					fmt.tprintf("Elapsed 1: %v", avg1),
-					{font = &font, font_size = 16, color = rl.WHITE},
+					{font_size = 16, color = rl.WHITE},
 				)
 				orui.label(
 					orui.id("debug elapsed 2"),
 					fmt.tprintf("Elapsed 2: %v", avg2),
-					{font = &font, font_size = 16, color = rl.WHITE},
+					{font_size = 16, color = rl.WHITE},
 				)
 			}
 		}

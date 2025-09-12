@@ -42,11 +42,7 @@ row :: proc(
 		},
 	)
 
-	orui.label(
-		orui.id(fmt.tprintf("%v label", id)),
-		title,
-		{font = &font, font_size = 16, color = rl.WHITE},
-	)
+	orui.label(orui.id(fmt.tprintf("%v label", id)), title, {font_size = 16, color = rl.WHITE})
 
 	{orui.container(
 			orui.id(fmt.tprintf("%v container", id)),

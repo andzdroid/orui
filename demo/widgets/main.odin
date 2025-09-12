@@ -26,18 +26,13 @@ dropdown_option_style :: proc(element: ^orui.Element) {
 	element.align = {.Center, .Center}
 }
 
-tooltip :: proc(font: ^rl.Font) {
+tooltip :: proc() {
 	orui.container(
 		orui.id("tooltip container"),
 		{padding = orui.padding(4), position = {.Relative, {}}},
 	)
 
-	orui.label(
-		orui.id("tooltip button"),
-		"Button with tooltip",
-		{font = font, font_size = 16},
-		button_style,
-	)
+	orui.label(orui.id("tooltip button"), "Button with tooltip", {font_size = 16}, button_style)
 
 	if orui.hovered("tooltip button") {
 		orui.label(
@@ -47,7 +42,6 @@ tooltip :: proc(font: ^rl.Font) {
 				position = {.Absolute, {2, -2}},
 				placement = orui.placement(.TopRight, .BottomLeft),
 				width = orui.fixed(200),
-				font = font,
 				font_size = 16,
 				color = rl.BLACK,
 				background_color = rl.WHITE,
@@ -62,13 +56,13 @@ tooltip :: proc(font: ^rl.Font) {
 	}
 }
 
-tooltip2 :: proc(font: ^rl.Font) {
+tooltip2 :: proc() {
 	orui.container(orui.id("tooltip container 2"), {padding = orui.padding(4)})
 
 	orui.label(
 		orui.id("tooltip button 2"),
 		"Tooltip follows mouse",
-		{font = font, font_size = 16},
+		{font_size = 16},
 		button_style,
 	)
 
@@ -79,7 +73,6 @@ tooltip2 :: proc(font: ^rl.Font) {
 			{
 				position = {.Absolute, {f32(rl.GetMouseX() + 5), f32(rl.GetMouseY()) - 50}},
 				width = orui.fixed(200),
-				font = font,
 				font_size = 16,
 				color = rl.BLACK,
 				background_color = rl.WHITE,
@@ -94,7 +87,7 @@ tooltip2 :: proc(font: ^rl.Font) {
 	}
 }
 
-toggle_button :: proc(font: ^rl.Font, toggle_state: ^bool) {
+toggle_button :: proc(toggle_state: ^bool) {
 	highlight_color := toggle_state^ ? rl.Color{120, 200, 120, 255} : rl.Color{200, 120, 120, 255}
 	normal_color := toggle_state^ ? rl.Color{100, 180, 100, 255} : rl.Color{180, 100, 100, 255}
 
@@ -102,7 +95,6 @@ toggle_button :: proc(font: ^rl.Font, toggle_state: ^bool) {
 		orui.id("toggle button"),
 		"Toggle button",
 		{
-			font = font,
 			font_size = 16,
 			padding = orui.padding(10, 8),
 			background_color = orui.hovered() ? highlight_color : normal_color,
@@ -116,7 +108,7 @@ toggle_button :: proc(font: ^rl.Font, toggle_state: ^bool) {
 	}
 }
 
-toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
+toggle_button2 :: proc(toggle_state: ^int) {
 	highlight_color := rl.Color{200, 200, 200, 255}
 	normal_color := rl.WHITE
 	hovered_color := rl.Color{240, 240, 240, 255}
@@ -128,7 +120,6 @@ toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
 		orui.id("toggle button 2 left"),
 		"Left button",
 		{
-			font = font,
 			font_size = 16,
 			padding = orui.padding(10, 8),
 			background_color = toggle_state^ == 0 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
@@ -145,7 +136,6 @@ toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
 		orui.id("toggle button 2 middle"),
 		"Middle button",
 		{
-			font = font,
 			font_size = 16,
 			padding = orui.padding(10, 8),
 			background_color = toggle_state^ == 1 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
@@ -161,7 +151,6 @@ toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
 		orui.id("toggle button 2 right"),
 		"Right button",
 		{
-			font = font,
 			font_size = 16,
 			padding = orui.padding(10, 8),
 			background_color = toggle_state^ == 2 ? highlight_color : orui.active() ? active_color : orui.hovered() ? hovered_color : normal_color,
@@ -175,7 +164,7 @@ toggle_button2 :: proc(font: ^rl.Font, toggle_state: ^int) {
 	}
 }
 
-dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
+dropdown_menu :: proc(open_state: ^bool, value: ^int) {
 	just_opened := false
 
 	orui.container(
@@ -186,7 +175,7 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 	if orui.label(
 		orui.id("dropdown button"),
 		value^ == 0 ? "Dropdown: Option 1" : value^ == 1 ? "Dropdown: Option 2" : "Dropdown: Option 3",
-		{font = font, font_size = 16, width = orui.grow()},
+		{font_size = 16, width = orui.grow()},
 		button_style,
 	) {
 		open_state^ = !open_state^
@@ -207,32 +196,17 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 				},
 			)
 
-			if orui.label(
-				orui.id("dropdown option 1"),
-				"Option 1",
-				{font = font},
-				dropdown_option_style,
-			) {
+			if orui.label(orui.id("dropdown option 1"), "Option 1", {}, dropdown_option_style) {
 				value^ = 0
 				open_state^ = false
 			}
 
-			if orui.label(
-				orui.id("dropdown option 2"),
-				"Option 2",
-				{font = font},
-				dropdown_option_style,
-			) {
+			if orui.label(orui.id("dropdown option 2"), "Option 2", {}, dropdown_option_style) {
 				value^ = 1
 				open_state^ = false
 			}
 
-			if orui.label(
-				orui.id("dropdown option 3"),
-				"Option 3",
-				{font = font},
-				dropdown_option_style,
-			) {
+			if orui.label(orui.id("dropdown option 3"), "Option 3", {}, dropdown_option_style) {
 				value^ = 2
 				open_state^ = false
 			}
@@ -244,7 +218,7 @@ dropdown_menu :: proc(font: ^rl.Font, open_state: ^bool, value: ^int) {
 	}
 }
 
-checkbox :: proc(font: ^rl.Font, checked_state: ^bool) {
+checkbox :: proc(checked_state: ^bool) {
 	orui.container(
 		orui.id("checkbox container"),
 		{
@@ -283,7 +257,6 @@ checkbox :: proc(font: ^rl.Font, checked_state: ^bool) {
 		orui.id("checkbox label"),
 		"Checkbox",
 		{
-			font = font,
 			font_size = 16,
 			color = rl.BLACK,
 			width = orui.fit(),
@@ -303,10 +276,11 @@ main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
 
-	default_font := rl.GetFontDefault()
-
 	ctx := new(orui.Context)
 	defer free(ctx)
+
+	ctx.default_font = rl.GetFontDefault()
+	defer rl.UnloadFont(ctx.default_font)
 
 	toggle_state := false
 	toggle_state2 := 0
@@ -335,12 +309,12 @@ main :: proc() {
 				},
 			)
 
-			tooltip(&default_font)
-			tooltip2(&default_font)
-			toggle_button(&default_font, &toggle_state)
-			toggle_button2(&default_font, &toggle_state2)
-			dropdown_menu(&default_font, &dropdown_state, &dropdown_value)
-			checkbox(&default_font, &checkbox_state)
+			tooltip()
+			tooltip2()
+			toggle_button(&toggle_state)
+			toggle_button2(&toggle_state2)
+			dropdown_menu(&dropdown_state, &dropdown_value)
+			checkbox(&checkbox_state)
 		}
 
 		orui.end()

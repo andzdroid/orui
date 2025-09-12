@@ -35,7 +35,6 @@ render_test_placement :: proc() {
 			orui.id("anchor label"),
 			"Anchor",
 			{
-				font = &font,
 				font_size = 16,
 				color = rl.WHITE,
 				margin = orui.margin(32),
@@ -80,9 +79,5 @@ placement :: proc(id: string, position: orui.Position, placement: orui.Placement
 		},
 	)
 
-	orui.label(
-		orui.id(id),
-		id,
-		{font = &font, font_size = 16, color = rl.WHITE, align = {.Center, .Center}},
-	)
+	orui.label(orui.id(id), id, {font_size = 16, color = rl.WHITE, align = {.Center, .Center}})
 }
