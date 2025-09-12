@@ -10,27 +10,37 @@ MAX_GRID_TRACKS :: 12
 @(thread_local)
 current_context: ^Context
 
+IdBuffer :: struct {
+	ids:   [MAX_ELEMENTS]Id,
+	count: int,
+}
+
 Context :: struct {
-	elements:          [MAX_ELEMENTS]Element,
-	element_count:     int,
+	elements:        [MAX_ELEMENTS]Element,
+	element_count:   int,
 	// TODO: lookup table of Id => index
-	current:           int,
-	current_id:        Id,
-	previous:          int,
-	parent:            int,
+	current:         int,
+	current_id:      Id,
+	previous:        int,
+	parent:          int,
+	frame:           int,
 
 	// input state
-	sorted:            [MAX_ELEMENTS]int,
-	sorted_count:      int,
-	pointer_capture:   int,
-	hover:             [MAX_ELEMENTS]Id,
-	hover_count:       int,
-	active:            [MAX_ELEMENTS]Id,
-	active_count:      int,
-	hover_prev:        [MAX_ELEMENTS]Id,
-	hover_prev_count:  int,
-	active_prev:       [MAX_ELEMENTS]Id,
-	active_prev_count: int,
+	sorted:          [MAX_ELEMENTS]int,
+	sorted_count:    int,
+	pointer_capture: int,
+	hover:           [2]IdBuffer,
+	active:          [2]IdBuffer,
+}
+
+@(private)
+current_buffer :: #force_inline proc(ctx: ^Context) -> int {
+	return ctx.frame % 2
+}
+
+@(private)
+previous_buffer :: #force_inline proc(ctx: ^Context) -> int {
+	return (ctx.frame + 1) % 2
 }
 
 // Begin UI declaration.
@@ -55,6 +65,7 @@ begin_i32 :: proc(ctx: ^Context, width: i32, height: i32) {
 _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	current_context = ctx
 
+	ctx.frame += 1
 	ctx.element_count = 0
 
 	ctx.elements[0] = {
@@ -73,13 +84,9 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	ctx.previous = 0
 	ctx.parent = 0
 
-	ctx.hover_prev = ctx.hover
-	ctx.hover_prev_count = ctx.hover_count
-	ctx.hover_count = 0
-
-	ctx.active_prev = ctx.active
-	ctx.active_prev_count = ctx.active_count
-	ctx.active_count = 0
+	buffer := current_buffer(ctx)
+	ctx.hover[buffer].count = 0
+	ctx.active[buffer].count = 0
 }
 
 // Ends UI declaration.
@@ -243,8 +250,10 @@ _hovered :: proc() -> bool {
 		return false
 	}
 
-	for i := 0; i < ctx.hover_prev_count; i += 1 {
-		if ctx.hover_prev[i] == ctx.current_id {
+	buffer := previous_buffer(ctx)
+	count := ctx.hover[buffer].count
+	for i := 0; i < count; i += 1 {
+		if ctx.hover[buffer].ids[i] == ctx.current_id {
 			return true
 		}
 	}
@@ -257,8 +266,10 @@ _hovered :: proc() -> bool {
 _hovered_id :: proc(id: string) -> bool {
 	ctx := current_context
 	id := to_id(id)
-	for i := 0; i < ctx.hover_prev_count; i += 1 {
-		if ctx.hover_prev[i] == id {
+	buffer := previous_buffer(ctx)
+	count := ctx.hover[buffer].count
+	for i := 0; i < count; i += 1 {
+		if ctx.hover[buffer].ids[i] == id {
 			return true
 		}
 	}
@@ -280,8 +291,10 @@ _active :: proc() -> bool {
 		return false
 	}
 
-	for i := 0; i < ctx.active_prev_count; i += 1 {
-		if ctx.active_prev[i] == ctx.current_id {
+	buffer := previous_buffer(ctx)
+	count := ctx.active[buffer].count
+	for i := 0; i < count; i += 1 {
+		if ctx.active[buffer].ids[i] == ctx.current_id {
 			return true
 		}
 	}
@@ -294,8 +307,10 @@ _active :: proc() -> bool {
 _active_id :: proc(id: string) -> bool {
 	ctx := current_context
 	id := to_id(id)
-	for i := 0; i < ctx.active_prev_count; i += 1 {
-		if ctx.active_prev[i] == id {
+	buffer := previous_buffer(ctx)
+	count := ctx.active[buffer].count
+	for i := 0; i < count; i += 1 {
+		if ctx.active[buffer].ids[i] == id {
 			return true
 		}
 	}
