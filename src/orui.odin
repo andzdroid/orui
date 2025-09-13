@@ -7,6 +7,9 @@ import rl "vendor:raylib"
 MAX_ELEMENTS :: 8192
 MAX_GRID_TRACKS :: 12
 
+KEY_REPEAT_DELAY: f64 : 0.45
+KEY_REPEAT_INTERVAL: f64 : 0.1
+
 @(thread_local)
 current_context: ^Context
 
@@ -24,14 +27,24 @@ Context :: struct {
 	previous:        int,
 	parent:          int,
 	frame:           int,
+	time:            f64,
 	default_font:    rl.Font,
-
-	// input state
 	sorted:          [MAX_ELEMENTS]int,
 	sorted_count:    int,
+
+	// mouse input
 	pointer_capture: int,
 	hover:           [2]IdBuffer,
 	active:          [2]IdBuffer,
+
+	// text input
+	focus:           int,
+	focus_id:        Id,
+	caret_index:     int,
+	caret_position:  rl.Vector2,
+	caret_time:      f32,
+	repeat_key:      rl.KeyboardKey,
+	repeat_time:     f64,
 }
 
 @(private)
@@ -54,16 +67,16 @@ begin :: proc {
 	begin_i32,
 }
 @(private)
-begin_f32 :: proc(ctx: ^Context, width: f32, height: f32) {
-	_begin(ctx, width, height)
+begin_f32 :: proc(ctx: ^Context, width: f32, height: f32, dt: f32 = 0) {
+	_begin(ctx, width, height, dt)
 }
 @(private)
-begin_i32 :: proc(ctx: ^Context, width: i32, height: i32) {
-	_begin(ctx, f32(width), f32(height))
+begin_i32 :: proc(ctx: ^Context, width: i32, height: i32, dt: f32 = 0) {
+	_begin(ctx, f32(width), f32(height), dt)
 }
 
 @(private)
-_begin :: proc(ctx: ^Context, width: f32, height: f32) {
+_begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	current_context = ctx
 
 	ctx.frame += 1
@@ -88,6 +101,9 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32) {
 	buffer := current_buffer(ctx)
 	ctx.hover[buffer].count = 0
 	ctx.active[buffer].count = 0
+
+	dt := dt > 0 ? dt : rl.GetFrameTime()
+	ctx.caret_time += dt
 }
 
 // Ends UI declaration.
@@ -218,6 +234,54 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 	return rl.IsMouseButtonReleased(.LEFT) && active()
 }
 
+text_input :: proc(
+	id: Id,
+	text: ^TextView,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+) -> bool {
+	element, parent := begin_element(id)
+	configure_element(element, parent^, config)
+	element.has_text = true
+	element.text = string(text.data[:text.length])
+	element.text_view = text
+	element.editable = true
+
+	for modifier in modifiers {
+		modifier(element)
+	}
+
+	if element.font == nil && current_context.default_font != {} {
+		element.font = &current_context.default_font
+	}
+	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
+
+	unfocus := false
+	if rl.IsMouseButtonReleased(.LEFT) && active() {
+		current_context.focus = current_context.current
+		current_context.focus_id = id
+		current_context.caret_index = -1
+		current_context.caret_time = 0
+	} else if rl.IsMouseButtonReleased(.LEFT) && current_context.focus_id == id {
+		unfocus = true
+	}
+	end_element()
+
+	if element.overflow == .Visible && focused() && rl.IsKeyPressed(.ENTER) {
+		unfocus = true
+	}
+
+	// TODO: return true if focus is lost to another element
+	if unfocus {
+		current_context.focus = 0
+		current_context.focus_id = 0
+		current_context.repeat_key = .KEY_NULL
+		return true
+	}
+
+	return false
+}
+
 // An image is an element that displays a texture.
 // This element cannot have children.
 image :: proc(
@@ -337,6 +401,24 @@ _clicked_id :: proc(id: string) -> bool {
 	return rl.IsMouseButtonReleased(.LEFT) && active(id)
 }
 
+focused :: proc {
+	_focused,
+	_focused_id,
+}
+
+@(private)
+_focused :: proc() -> bool {
+	ctx := current_context
+	return ctx.focus_id == ctx.current_id
+}
+
+@(private)
+_focused_id :: proc(id: string) -> bool {
+	ctx := current_context
+	id := to_id(id)
+	return ctx.focus_id == id
+}
+
 padding :: proc {
 	padding_all,
 	padding_axis,
@@ -444,4 +526,13 @@ anchor_point :: proc(point: AnchorPoint) -> rl.Vector2 {
 
 placement :: proc(anchor: AnchorPoint, origin: AnchorPoint) -> Placement {
 	return {anchor_point(anchor), anchor_point(origin)}
+}
+
+text_view :: proc(text: string, size: int, allocator := context.allocator) -> TextView {
+	text_view: TextView
+	buffer := make([]u8, size, allocator)
+	copy(buffer, text)
+	text_view.data = buffer
+	text_view.length = len(text)
+	return text_view
 }

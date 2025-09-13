@@ -37,13 +37,20 @@ Features:
   - Letter spacing
   - Wrapping
   - Alignment
+- Text inputs
+  - Click, move with arrow keys, home+end, insert, backspace
+	- Single line and multi line
 
 To do:
 
 - Flex wrap
 - Text inputs
+  - Mouse selection
+  - Copy/paste
+	- Undo/redo (maybe)
 - 9-slice scaling
 - Grid justify/align
+- Number inputs (maybe)
 - Scroll views (maybe)
 - Other widgets (maybe)
 - Grid row/column start (maybe)
@@ -188,6 +195,36 @@ if orui.label(orui.id("button"), "Button text", {
 
 **Rendering text makes use of the temp allocator. Make sure you free the temp allocator each frame.**
 
+### text_input
+
+This element displays text, and also allows the user to click into it to focus on it, and edit the text.
+
+A blinking caret is drawn using the element's `color`.
+
+You must define a `TextView` buffer to hold the user input. This can be done with the `text_view` helper function:
+
+```odin
+TextView :: struct {
+	data:   []u8,
+	length: int,
+}
+
+buffer := orui.text_view("Initial text value", max_length)
+value := string(buffer.data[buffer.length])
+```
+
+If this element does not wrap, it will return true and unfocus if the user presses the Enter key.
+
+For wrapping elements, the Enter key will add a new line to the text. The return value will always be false.
+
+You can use the `focused()` function to change styles when the element is focused.
+
+```odin
+orui.text_input(orui.id("input"), buffer, {
+	background_color = orui.focused() ? rl.WHITE : rl.LIGHTGRAY,
+})
+```
+
 ### image
 
 Display an image. Takes a pointer to a raylib Texture2D.
@@ -256,6 +293,14 @@ if orui.clicked("label") {
   // label was clicked
 }
 ```
+
+### focused()
+
+Returns true if the text input element is currently focused (active and receiving keyboard input).
+
+Only one element can be focused at a time.
+
+Clicking outside of the element or focusing another element will unfocus the element.
 
 ## Element config
 

@@ -208,6 +208,7 @@ ElementConfig :: struct {
 	letter_spacing:   f32,
 	// The line height multiplier. Default is 1.
 	line_height:      f32,
+	text_view:        ^TextView,
 
 	// Must be true if this element has a texture.
 	has_texture:      bool,
@@ -230,6 +231,7 @@ ElementConfig :: struct {
 	// Recommended to be set to True for things like sliders and draggable windows.
 	// Inherited from parent by default.
 	capture:          InheritedBool,
+	editable:         bool,
 }
 
 Element :: struct {
@@ -278,6 +280,7 @@ Element :: struct {
 	font_size:         f32,
 	letter_spacing:    f32,
 	line_height:       f32,
+	text_view:         ^TextView,
 
 	// texture
 	has_texture:       bool,
@@ -292,6 +295,7 @@ Element :: struct {
 	disabled:          InheritedBool,
 	block:             InheritedBool,
 	capture:           InheritedBool,
+	editable:          bool,
 
 	// internal
 	_position:         rl.Vector2,
@@ -375,6 +379,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.font_size = config.font_size
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
+	element.text_view = config.text_view
 
 	// texture
 	element.has_texture = config.has_texture
@@ -389,6 +394,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.disabled = config.disabled == .Inherit ? parent.disabled : config.disabled
 	element.block = config.block == .Inherit ? parent.block : config.block
 	element.capture = config.capture == .Inherit ? parent.capture : config.capture
+	element.editable = config.editable
 }
 
 to_id :: proc {

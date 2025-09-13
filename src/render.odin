@@ -1,7 +1,5 @@
 package orui
 
-import "core:log"
-import "core:strings"
 import rl "vendor:raylib"
 
 CORNER_SEGMENTS :: 16
@@ -417,46 +415,6 @@ render_texture :: proc(element: ^Element) {
 	if adjusted_dest.width > 0 && adjusted_dest.height > 0 {
 		rl.DrawTexturePro(element.texture^, adjusted_source, adjusted_dest, {}, 0, color)
 	}
-}
-
-@(private)
-render_text :: proc(element: ^Element) {
-	y_offset := calculate_text_offset(element)
-	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	line_width := measure_text_width(element.text, element.font, element.font_size, letter_spacing)
-	inner_width := inner_width(element)
-	render_text_line(
-		element,
-		element.text,
-		line_width,
-		element._position.x + element.padding.left + element.border.left,
-		element._position.y + element.padding.top + element.border.top + y_offset,
-		letter_spacing,
-		inner_width,
-	)
-}
-
-@(private)
-render_text_line :: proc(
-	element: ^Element,
-	text: string,
-	line_width: f32,
-	x_start: f32,
-	y: f32,
-	letter_spacing: f32,
-	inner_width: f32,
-) {
-	line_offset := calculate_line_offset(element, line_width, inner_width)
-	x := x_start + line_offset
-
-	rl.DrawTextEx(
-		element.font^,
-		strings.clone_to_cstring(text, context.temp_allocator),
-		{x, y},
-		element.font_size,
-		letter_spacing,
-		element.color,
-	)
 }
 
 @(private)

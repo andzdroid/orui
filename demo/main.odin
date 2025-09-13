@@ -143,15 +143,17 @@ main :: proc() {
 		orui.end()
 		elapsed2 := time.since(start_time)
 
-		if rl.IsKeyReleased(.Q) {
-			debug = !debug
-		}
+		if ctx.focus == 0 {
+			if rl.IsKeyReleased(.Q) {
+				debug = !debug
+			}
 
-		if rl.IsKeyReleased(.D) {
-			scene = (scene + 1) % len(Scene)
-		}
-		if rl.IsKeyReleased(.A) {
-			scene = (scene - 1 + len(Scene)) % len(Scene)
+			if rl.IsKeyReleased(.D) {
+				scene = (scene + 1) % len(Scene)
+			}
+			if rl.IsKeyReleased(.A) {
+				scene = (scene - 1 + len(Scene)) % len(Scene)
+			}
 		}
 
 		if debug {
