@@ -39,7 +39,7 @@ Features:
   - Alignment
 - Text inputs
   - Click, move with arrow keys, home+end, insert, backspace
-	- Single line and multi line
+  - Single line and multi line
 
 To do:
 
@@ -512,12 +512,14 @@ CrossAlignment :: enum {
 Control how an element handles its content overflowing its size.
 
 - **Wrap**: overflowing content will wrap around. This is the default.
-- **Visible**: content will overflow the container.
+- **Visible**: content will not wrap, it will overflow the container and render outside of it.
+- **Hidden**: content will not wrap, it will be cut off at the container boundary. This uses scissor mode which could impact performance.
 
 ```odin
 Overflow :: enum {
 	Wrap,
 	Visible,
+	Hidden,
 }
 ```
 

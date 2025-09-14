@@ -108,7 +108,7 @@ InheritedBool :: enum {
 Overflow :: enum {
 	Wrap,
 	Visible,
-	// Hidden,
+	Hidden,
 	// Scroll,
 }
 

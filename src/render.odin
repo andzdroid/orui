@@ -62,7 +62,18 @@ render_element :: proc(ctx: ^Context, index: int) {
 		if element.overflow == .Wrap {
 			render_wrapped_text(element)
 		} else {
+			if element.overflow == .Hidden {
+				rl.BeginScissorMode(
+					i32(element._position.x),
+					i32(element._position.y),
+					i32(element._size.x),
+					i32(element._size.y),
+				)
+			}
 			render_text(element)
+			if element.overflow == .Hidden {
+				rl.EndScissorMode()
+			}
 		}
 	}
 

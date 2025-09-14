@@ -267,7 +267,9 @@ text_input :: proc(
 	}
 	end_element()
 
-	if element.overflow == .Visible && focused() && rl.IsKeyPressed(.ENTER) {
+	if (element.overflow == .Visible || element.overflow == .Hidden) &&
+	   focused() &&
+	   rl.IsKeyPressed(.ENTER) {
 		unfocus = true
 	}
 
