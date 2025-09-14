@@ -45,6 +45,8 @@ Context :: struct {
 	caret_time:      f32,
 	repeat_key:      rl.KeyboardKey,
 	repeat_time:     f64,
+	text_selection:  TextSelection,
+	selecting:       bool,
 }
 
 @(private)
@@ -262,7 +264,9 @@ text_input :: proc(
 		current_context.focus_id = id
 		current_context.caret_index = -1
 		current_context.caret_time = 0
-	} else if rl.IsMouseButtonReleased(.LEFT) && current_context.focus_id == id {
+	} else if rl.IsMouseButtonReleased(.LEFT) &&
+	   current_context.focus_id == id &&
+	   !current_context.selecting {
 		unfocus = true
 	}
 	end_element()
@@ -278,6 +282,7 @@ text_input :: proc(
 		current_context.focus = 0
 		current_context.focus_id = 0
 		current_context.repeat_key = .KEY_NULL
+		current_context.text_selection = {}
 		return true
 	}
 
@@ -535,6 +540,6 @@ text_view :: proc(text: string, size: int, allocator := context.allocator) -> Te
 	buffer := make([]u8, size, allocator)
 	copy(buffer, text)
 	text_view.data = buffer
-	text_view.length = len(text)
+	text_view.length = min(len(text), size)
 	return text_view
 }

@@ -59,6 +59,17 @@ handle_input_state :: proc(ctx: ^Context) {
 			ctx.active[current].ids[count] = element.id
 			ctx.active[current].count += 1
 
+			if rl.IsMouseButtonPressed(.LEFT) && element.editable {
+				ctx.focus = ctx.sorted[i]
+				ctx.focus_id = element.id
+				start := text_caret_from_point(element, position)
+				ctx.text_selection.start = start
+				ctx.text_selection.end = start
+				ctx.caret_index = start
+				ctx.caret_time = 0
+				ctx.selecting = true
+			}
+
 			if element.capture == .True {
 				ctx.pointer_capture = i
 			}
@@ -67,6 +78,18 @@ handle_input_state :: proc(ctx: ^Context) {
 		if element.block == .True {
 			break
 		}
+	}
+
+	if ctx.selecting && mouse_down && ctx.focus != 0 {
+		el := &ctx.elements[ctx.focus]
+		end := text_caret_from_point(el, position)
+		ctx.text_selection.end = end
+		ctx.caret_index = end
+		ctx.caret_time = 0
+	}
+
+	if rl.IsMouseButtonReleased(.LEFT) {
+		ctx.selecting = false
 	}
 
 	handle_keyboard_input(ctx)
@@ -88,59 +111,148 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 						continue
 					}
 
+					if ctx.text_selection.start != ctx.text_selection.end {
+						a := min(ctx.text_selection.start, ctx.text_selection.end)
+						b := max(ctx.text_selection.start, ctx.text_selection.end)
+						delete_range(text_view, a, b)
+						ctx.caret_index = a
+						ctx.text_selection = {}
+					}
+
 					char_bytes, char_len := utf8.encode_rune(char)
 					insert_bytes(text_view, ctx.caret_index, char_bytes[:char_len])
 					ctx.caret_index += char_len
 					ctx.caret_index = min(ctx.caret_index, text_view.length)
+					ctx.caret_time = 0
 				}
 			}
 
+			shift_down := rl.IsKeyDown(.LEFT_SHIFT) || rl.IsKeyDown(.RIGHT_SHIFT)
+
 			if key_pressed(ctx, .LEFT) {
-				ctx.caret_index = utf8_prev(text_view, ctx.caret_index)
+				next := utf8_prev(text_view, ctx.caret_index)
+				if shift_down {
+					if ctx.text_selection.start == ctx.text_selection.end {
+						ctx.text_selection.start = ctx.caret_index
+					}
+					ctx.text_selection.end = next
+				} else {
+					ctx.text_selection = {}
+				}
+				ctx.caret_index = next
 				ctx.caret_time = 0
 			}
 			if key_pressed(ctx, .RIGHT) {
-				ctx.caret_index = utf8_next(text_view, ctx.caret_index)
+				next := utf8_next(text_view, ctx.caret_index)
+				if shift_down {
+					if ctx.text_selection.start == ctx.text_selection.end {
+						ctx.text_selection.start = ctx.caret_index
+					}
+					ctx.text_selection.end = next
+				} else {
+					ctx.text_selection = {}
+				}
+				ctx.caret_index = next
 				ctx.caret_time = 0
 			}
+
 			if rl.IsKeyPressed(.HOME) {
+				if shift_down {
+					if ctx.text_selection.start == ctx.text_selection.end {
+						ctx.text_selection.start = ctx.caret_index
+					}
+					ctx.text_selection.end = 0
+				} else {
+					ctx.text_selection = {}
+				}
 				ctx.caret_index = 0
 				ctx.caret_time = 0
 			}
 			if rl.IsKeyPressed(.END) {
+				if shift_down {
+					if ctx.text_selection.start == ctx.text_selection.end {
+						ctx.text_selection.start = ctx.caret_index
+					}
+					ctx.text_selection.end = text_view.length
+				} else {
+					ctx.text_selection = {}
+				}
 				ctx.caret_index = text_view.length
 				ctx.caret_time = 0
 			}
 
 			if element.overflow == .Wrap {
 				if key_pressed(ctx, .UP) {
-					ctx.caret_index = caret_index_up(element, ctx.caret_position)
+					next := caret_index_up(element, ctx.caret_position)
+					if shift_down {
+						if ctx.text_selection.start == ctx.text_selection.end {
+							ctx.text_selection.start = ctx.caret_index
+						}
+						ctx.text_selection.end = next
+					} else {
+						ctx.text_selection = {}
+					}
+					ctx.caret_index = next
 					ctx.caret_time = 0
 				}
 				if key_pressed(ctx, .DOWN) {
-					ctx.caret_index = caret_index_down(element, ctx.caret_position)
+					next := caret_index_down(element, ctx.caret_position)
+					if shift_down {
+						if ctx.text_selection.start == ctx.text_selection.end {
+							ctx.text_selection.start = ctx.caret_index
+						}
+						ctx.text_selection.end = next
+					} else {
+						ctx.text_selection = {}
+					}
+					ctx.caret_index = next
 					ctx.caret_time = 0
 				}
 			}
 
 			if key_pressed(ctx, .BACKSPACE) {
-				prev := utf8_prev(text_view, ctx.caret_index)
-				delete_range(text_view, prev, ctx.caret_index)
-				ctx.caret_index = prev
+				if ctx.text_selection.start == ctx.text_selection.end {
+					prev := utf8_prev(text_view, ctx.caret_index)
+					delete_range(text_view, prev, ctx.caret_index)
+					ctx.caret_index = prev
+				} else {
+					a := min(ctx.text_selection.start, ctx.text_selection.end)
+					b := max(ctx.text_selection.start, ctx.text_selection.end)
+					delete_range(text_view, a, b)
+					ctx.caret_index = a
+					ctx.text_selection = {}
+				}
 				ctx.caret_time = 0
 			}
 			if key_pressed(ctx, .DELETE) {
-				next := utf8_next(text_view, ctx.caret_index)
-				delete_range(text_view, ctx.caret_index, next)
+				if ctx.text_selection.start == ctx.text_selection.end {
+					next := utf8_next(text_view, ctx.caret_index)
+					delete_range(text_view, ctx.caret_index, next)
+				} else {
+					a := min(ctx.text_selection.start, ctx.text_selection.end)
+					b := max(ctx.text_selection.start, ctx.text_selection.end)
+					delete_range(text_view, a, b)
+					ctx.caret_index = a
+					ctx.text_selection = {}
+				}
 				ctx.caret_time = 0
 			}
 
 			if key_pressed(ctx, .ENTER) {
 				if element.overflow == .Wrap {
+					if ctx.text_selection.start != ctx.text_selection.end {
+						a := min(ctx.text_selection.start, ctx.text_selection.end)
+						b := max(ctx.text_selection.start, ctx.text_selection.end)
+						delete_range(text_view, a, b)
+						ctx.caret_index = a
+						ctx.text_selection = {}
+					}
+
 					char_bytes, char_len := utf8.encode_rune('\n')
 					insert_bytes(text_view, ctx.caret_index, char_bytes[:char_len])
 					ctx.caret_index += char_len
 					ctx.caret_index = min(ctx.caret_index, text_view.length)
+					ctx.caret_time = 0
 				}
 			}
 		}

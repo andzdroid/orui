@@ -230,6 +230,21 @@ render_text :: proc(element: ^Element) {
 	x := element._position.x + element.padding.left + element.border.left
 	y := element._position.y + element.padding.top + element.border.top + y_offset
 
+	if current_context.focus_id == element.id {
+		render_selection(
+			element,
+			element.text,
+			0,
+			len(element.text),
+			line_width,
+			x,
+			y,
+			letter_spacing,
+			inner_width,
+			current_context.text_selection,
+		)
+	}
+
 	render_text_line(element, element.text, line_width, x, y, letter_spacing, inner_width)
 
 	render_caret(
@@ -276,6 +291,21 @@ render_wrapped_text :: proc(element: ^Element) {
 			joining_space := (line_width > 0 && pending_space > 0) ? letter_spacing : 0
 			actual_width := line_width + pending_space + joining_space
 			if line_start < index {
+				if current_context.focus_id == element.id {
+					render_selection(
+						element,
+						element.text,
+						line_start,
+						index,
+						actual_width,
+						x_start,
+						y,
+						letter_spacing,
+						inner_width,
+						current_context.text_selection,
+					)
+				}
+
 				render_text_line(
 					element,
 					text[line_start:index],
@@ -306,6 +336,18 @@ render_wrapped_text :: proc(element: ^Element) {
 			pending_space = 0
 			last_nonspace_end = index
 			line_started_by_newline = true
+
+			render_caret(
+				element,
+				text,
+				line_start,
+				line_start,
+				0,
+				x_start,
+				y,
+				letter_spacing,
+				inner_width,
+			)
 			continue
 		}
 
@@ -352,6 +394,22 @@ render_wrapped_text :: proc(element: ^Element) {
 			// soft wrap
 			if line_start < last_nonspace_end {
 				actual_width := line_width
+
+				if current_context.focus_id == element.id {
+					render_selection(
+						element,
+						element.text,
+						line_start,
+						index,
+						actual_width,
+						x_start,
+						y,
+						letter_spacing,
+						inner_width,
+						current_context.text_selection,
+					)
+				}
+
 				render_text_line(
 					element,
 					text[line_start:last_nonspace_end],
@@ -389,6 +447,22 @@ render_wrapped_text :: proc(element: ^Element) {
 			if line_start < index {
 				joining_space := pending_space > 0 ? letter_spacing : 0
 				actual_width := line_width + pending_space + joining_space
+
+				if current_context.focus_id == element.id {
+					render_selection(
+						element,
+						element.text,
+						line_start,
+						index,
+						actual_width,
+						x_start,
+						y,
+						letter_spacing,
+						inner_width,
+						current_context.text_selection,
+					)
+				}
+
 				render_text_line(
 					element,
 					text[line_start:index],
@@ -473,4 +547,50 @@ render_caret :: proc(
 		0,
 		element.color,
 	)
+}
+
+@(private)
+render_selection :: proc(
+	element: ^Element,
+	text: string,
+	line_start: int,
+	line_end: int,
+	line_width: f32,
+	x_start: f32,
+	y: f32,
+	letter_spacing: f32,
+	inner_width: f32,
+	selection: TextSelection,
+) {
+	if current_context.focus_id != element.id {
+		return
+	}
+
+	if selection.start == selection.end {
+		return
+	}
+
+	start := clamp(selection.start, line_start, line_end)
+	end := clamp(selection.end, line_start, line_end)
+	if start > end {
+		start, end = end, start
+	}
+
+	prefix_width := measure_text_width(
+		text[line_start:start],
+		element.font,
+		element.font_size,
+		letter_spacing,
+	)
+	selection_width := measure_text_width(
+		text[start:end],
+		element.font,
+		element.font_size,
+		letter_spacing,
+	)
+	line_offset := calculate_line_offset(element, line_width, inner_width)
+	line_height := measure_text_height(element.font_size, element.line_height)
+
+	x := x_start + line_offset + prefix_width
+	rl.DrawRectanglePro({x, y, selection_width, line_height}, {}, 0, {31, 104, 217, 120})
 }

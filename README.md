@@ -40,14 +40,15 @@ Features:
 - Text inputs
   - Click, move with arrow keys, home+end, insert, backspace
   - Single line and multi line
+	- Mouse and keyboard text selection
 
 To do:
 
 - Flex wrap
 - Text inputs
-  - Mouse selection
   - Copy/paste
 	- Undo/redo (maybe)
+	- Placeholder (maybe)
 - 9-slice scaling
 - Grid justify/align
 - Number inputs (maybe)
