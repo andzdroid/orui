@@ -5,12 +5,57 @@ import rl "vendor:raylib"
 CORNER_SEGMENTS :: 16
 MISSING_COLOR :: rl.Color{0, 0, 0, 0}
 
+render_command :: proc(command: RenderCommand) {
+	switch data in command.data {
+	case RenderCommandDataRectangle:
+		if has_round_corners(data.corner_radius) {
+			render_rounded_rectangle(data.position, data.size, data.corner_radius, data.color)
+		} else {
+			draw_rectangle(data.position, data.size, data.color)
+		}
+	case RenderCommandDataBorder:
+		if has_round_corners(data.corner_radius) {
+			render_rounded_border(
+				data.position,
+				data.size,
+				data.border,
+				data.corner_radius,
+				data.color,
+			)
+		} else {
+			render_straight_border(data.position, data.size, data.border, data.color)
+		}
+	case RenderCommandDataText:
+		render_text_line(
+			data.position,
+			data.text,
+			data.font,
+			data.font_size,
+			data.letter_spacing,
+			data.color,
+		)
+	case RenderCommandDataImage:
+		render_image(data.texture, data.color, data.src, data.dst)
+	case RenderCommandDataScissorStart:
+		rl.BeginScissorMode(
+			i32(data.rectangle.x),
+			i32(data.rectangle.y),
+			i32(data.rectangle.width),
+			i32(data.rectangle.height),
+		)
+	case RenderCommandDataScissorEnd:
+		rl.EndScissorMode()
+	case RenderCommandDataCustom:
+	}
+}
+
 @(private)
 render :: proc(ctx: ^Context) {
 	ctx.sorted_count = 0
 	collect_elements(ctx, 0, 0)
 	sort_elements(ctx)
 
+	ctx.render_command_count = 0
 	for i := 0; i < ctx.sorted_count; i += 1 {
 		index := ctx.sorted[i]
 		render_element(ctx, index)
@@ -51,191 +96,209 @@ render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
 	if element.background_color.a > 0 {
-		render_background(element)
+		ctx.render_commands[ctx.render_command_count] = RenderCommand {
+			type = .Rectangle,
+			data = RenderCommandDataRectangle {
+				position = element._position,
+				size = element._size,
+				color = element.background_color,
+				corner_radius = clamp_corner_radius(element._size, element.corner_radius),
+			},
+		}
+		ctx.render_command_count += 1
 	}
 
 	if element.border_color.a > 0 {
-		render_border(element)
+		ctx.render_commands[ctx.render_command_count] = RenderCommand {
+			type = .Border,
+			data = RenderCommandDataBorder {
+				position = element._position,
+				size = element._size,
+				border = element.border,
+				color = element.border_color,
+				corner_radius = clamp_corner_radius(element._size, element.corner_radius),
+			},
+		}
+		ctx.render_command_count += 1
 	}
 
 	if element.has_text {
+		if element.overflow == .Hidden {
+			ctx.render_commands[ctx.render_command_count] = RenderCommand {
+				type = .ScissorStart,
+				data = RenderCommandDataScissorStart {
+					rectangle = {
+						element._position.x,
+						element._position.y,
+						element._size.x,
+						element._size.y,
+					},
+				},
+			}
+			ctx.render_command_count += 1
+		}
+
 		if element.overflow == .Wrap {
-			render_wrapped_text(element)
+			render_wrapped_text(ctx, element)
 		} else {
-			if element.overflow == .Hidden {
-				rl.BeginScissorMode(
-					i32(element._position.x),
-					i32(element._position.y),
-					i32(element._size.x),
-					i32(element._size.y),
-				)
+			render_text(ctx, element)
+		}
+
+		if element.overflow == .Hidden {
+			ctx.render_commands[ctx.render_command_count] = RenderCommand {
+				type = .ScissorEnd,
+				data = RenderCommandDataScissorEnd{},
 			}
-			render_text(element)
-			if element.overflow == .Hidden {
-				rl.EndScissorMode()
-			}
+			ctx.render_command_count += 1
 		}
 	}
 
 	if element.has_texture {
-		render_texture(element)
+		render_texture(ctx, element)
+	}
+
+	if element.custom_event != nil {
+		ctx.render_commands[ctx.render_command_count] = RenderCommand {
+			type = .Custom,
+			data = RenderCommandDataCustom {
+				rectangle = {
+					element._position.x,
+					element._position.y,
+					element._size.x,
+					element._size.y,
+				},
+				custom_event = element.custom_event,
+			},
+		}
+		ctx.render_command_count += 1
 	}
 }
 
 @(private)
-render_background :: proc(element: ^Element) {
-	if has_round_corners(element) {
-		render_rounded_background(element)
-	} else {
-		size := element._size
-		position := element._position
-		draw_rectangle({position.x, position.y}, {size.x, size.y}, element.background_color)
-	}
-}
-
-@(private)
-render_rounded_background :: proc(element: ^Element) {
-	size := element._size
-	position := element._position
-	radius := clamp_corner_radius(element)
-
+render_rounded_rectangle :: proc(
+	position: rl.Vector2,
+	size: rl.Vector2,
+	corners: Corners,
+	color: rl.Color,
+) {
 	// central vertical rectangle
-	if size.x - (radius.top_left + radius.top_right) > 0 {
+	if size.x - (corners.top_left + corners.top_right) > 0 {
 		draw_rectangle(
-			{position.x + radius.top_left, position.y},
-			{size.x - (radius.top_left + radius.top_right), size.y},
-			element.background_color,
+			{position.x + corners.top_left, position.y},
+			{size.x - (corners.top_left + corners.top_right), size.y},
+			color,
 		)
 	}
 
 	// left bar
-	if radius.top_left + radius.bottom_left < size.y {
+	if corners.top_left + corners.bottom_left < size.y {
 		draw_rectangle(
-			{position.x, position.y + radius.top_left},
-			{radius.top_left, size.y - (radius.top_left + radius.bottom_left)},
-			element.background_color,
+			{position.x, position.y + corners.top_left},
+			{corners.top_left, size.y - (corners.top_left + corners.bottom_left)},
+			color,
 		)
 	}
 
 	// right bar
-	if radius.top_right + radius.bottom_right < size.y {
+	if corners.top_right + corners.bottom_right < size.y {
 		draw_rectangle(
-			{position.x + size.x - radius.top_right, position.y + radius.top_right},
-			{radius.top_right, size.y - (radius.top_right + radius.bottom_right)},
-			element.background_color,
+			{position.x + size.x - corners.top_right, position.y + corners.top_right},
+			{corners.top_right, size.y - (corners.top_right + corners.bottom_right)},
+			color,
 		)
 	}
 
 	// corners
-	if radius.top_left > 0 {
+	if corners.top_left > 0 {
 		rl.DrawCircleSector(
-			{position.x + radius.top_left, position.y + radius.top_left},
-			radius.top_left,
+			{position.x + corners.top_left, position.y + corners.top_left},
+			corners.top_left,
 			180,
 			270,
 			CORNER_SEGMENTS,
-			element.background_color,
+			color,
 		)
 	}
 
-	if radius.top_right > 0 {
+	if corners.top_right > 0 {
 		rl.DrawCircleSector(
-			{position.x + size.x - radius.top_right, position.y + radius.top_right},
-			radius.top_right,
+			{position.x + size.x - corners.top_right, position.y + corners.top_right},
+			corners.top_right,
 			270,
 			360,
 			CORNER_SEGMENTS,
-			element.background_color,
+			color,
 		)
 	}
 
-	if radius.bottom_left > 0 {
+	if corners.bottom_left > 0 {
 		rl.DrawCircleSector(
-			{position.x + radius.bottom_left, position.y + size.y - radius.bottom_left},
-			radius.bottom_left,
+			{position.x + corners.bottom_left, position.y + size.y - corners.bottom_left},
+			corners.bottom_left,
 			90,
 			180,
 			CORNER_SEGMENTS,
-			element.background_color,
+			color,
 		)
 	}
 
-	if radius.bottom_right > 0 {
+	if corners.bottom_right > 0 {
 		rl.DrawCircleSector(
-			{position.x + size.x - radius.bottom_right, position.y + size.y - radius.bottom_right},
-			radius.bottom_right,
+			{
+				position.x + size.x - corners.bottom_right,
+				position.y + size.y - corners.bottom_right,
+			},
+			corners.bottom_right,
 			0,
 			90,
 			CORNER_SEGMENTS,
-			element.background_color,
+			color,
 		)
 	}
 }
 
 @(private)
-render_border :: proc(element: ^Element) {
-	if has_round_corners(element) {
-		render_rounded_border(element)
+render_straight_border :: proc(
+	position: rl.Vector2,
+	size: rl.Vector2,
+	border: Edges,
+	color: rl.Color,
+) {
+	if border.top == border.left && border.left == border.right && border.right == border.bottom {
+		rl.DrawRectangleLinesEx({position.x, position.y, size.x, size.y}, border.top, color)
 	} else {
-		render_straight_border(element)
-	}
-}
-
-@(private)
-render_straight_border :: proc(element: ^Element) {
-	if element.border.top == element.border.left &&
-	   element.border.left == element.border.right &&
-	   element.border.right == element.border.bottom {
-		rl.DrawRectangleLinesEx(
-			{element._position.x, element._position.y, element._size.x, element._size.y},
-			element.border.top,
-			element.border_color,
-		)
-	} else {
-		if element.border.top > 0 {
+		if border.top > 0 {
+			draw_rectangle({position.x, position.y}, {size.x, border.top}, color)
+		}
+		if border.right > 0 {
 			draw_rectangle(
-				{element._position.x, element._position.y},
-				{element._size.x, element.border.top},
-				element.border_color,
+				{position.x + size.x - border.right, position.y},
+				{border.right, size.y},
+				color,
 			)
 		}
-		if element.border.right > 0 {
+		if border.bottom > 0 {
 			draw_rectangle(
-				{
-					element._position.x + element._size.x - element.border.right,
-					element._position.y,
-				},
-				{element.border.right, element._size.y},
-				element.border_color,
+				{position.x, position.y + size.y - border.bottom},
+				{size.x, border.bottom},
+				color,
 			)
 		}
-		if element.border.bottom > 0 {
-			draw_rectangle(
-				{
-					element._position.x,
-					element._position.y + element._size.y - element.border.bottom,
-				},
-				{element._size.x, element.border.bottom},
-				element.border_color,
-			)
-		}
-		if element.border.left > 0 {
-			draw_rectangle(
-				{element._position.x, element._position.y},
-				{element.border.left, element._size.y},
-				element.border_color,
-			)
+		if border.left > 0 {
+			draw_rectangle({position.x, position.y}, {border.left, size.y}, color)
 		}
 	}
 }
 
 @(private)
-render_rounded_border :: proc(element: ^Element) {
-	size := element._size
-	position := element._position
-	radius := clamp_corner_radius(element)
-	border := element.border
-	color := element.border_color
+render_rounded_border :: proc(
+	position: rl.Vector2,
+	size: rl.Vector2,
+	border: Edges,
+	corners: Corners,
+	color: rl.Color,
+) {
+	radius := clamp_corner_radius(size, corners)
 
 	if border.left > 0 {
 		draw_rectangle(
@@ -318,8 +381,17 @@ render_rounded_border :: proc(element: ^Element) {
 	}
 }
 
+render_image :: proc(
+	texture: ^rl.Texture2D,
+	color: rl.Color,
+	src: rl.Rectangle,
+	dst: rl.Rectangle,
+) {
+	rl.DrawTexturePro(texture^, src, dst, {}, 0, color)
+}
+
 @(private)
-render_texture :: proc(element: ^Element) {
+render_texture :: proc(ctx: ^Context, element: ^Element) {
 	source := element.texture_source
 	if source.width == 0 && source.height == 0 {
 		source = {0, 0, f32(element.texture^.width), f32(element.texture^.height)}
@@ -424,16 +496,24 @@ render_texture :: proc(element: ^Element) {
 	}
 
 	if adjusted_dest.width > 0 && adjusted_dest.height > 0 {
-		rl.DrawTexturePro(element.texture^, adjusted_source, adjusted_dest, {}, 0, color)
+		ctx.render_commands[ctx.render_command_count] = RenderCommand {
+			type = .Image,
+			data = RenderCommandDataImage {
+				texture = element.texture,
+				color = color,
+				src = adjusted_source,
+				dst = adjusted_dest,
+			},
+		}
+		ctx.render_command_count += 1
 	}
 }
 
 @(private)
-clamp_corner_radius :: proc(element: ^Element) -> Corners {
+clamp_corner_radius :: proc(size: rl.Vector2, radius: Corners) -> Corners {
 	scale: f32 = 1
-	width := element._size.x
-	height := element._size.y
-	radius := element.corner_radius
+	width := size.x
+	height := size.y
 
 	top_sum := radius.top_left + radius.top_right
 	bottom_sum := radius.bottom_left + radius.bottom_right

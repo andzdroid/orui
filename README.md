@@ -40,15 +40,15 @@ Features:
 - Text inputs
   - Click, move with arrow keys, home+end, insert, backspace
   - Single line and multi line
-	- Mouse and keyboard text selection
+  - Mouse and keyboard text selection
 
 To do:
 
 - Flex wrap
 - Text inputs
   - Copy/paste
-	- Undo/redo (maybe)
-	- Placeholder (maybe)
+  - Undo/redo (maybe)
+  - Placeholder (maybe)
 - 9-slice scaling
 - Grid justify/align
 - Number inputs (maybe)
@@ -95,7 +95,13 @@ for !rl.WindowShouldClose() {
 
 	// Declare UI here
 
-	orui.end() // The UI gets rendered here
+	render_commands := orui.end()
+
+	for render_command in render_commands {
+		// optional: use orui's built-in helper
+		orui.render_command(render_command)
+	}
+
 	rl.EndDrawing()
 }
 ```

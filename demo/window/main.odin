@@ -201,7 +201,10 @@ main :: proc() {
 			}
 		}
 
-		orui.end()
+		render_commands := orui.end()
+		for command in render_commands {
+			orui.render_command(command)
+		}
 		rl.EndDrawing()
 
 		free_all(context.temp_allocator)

@@ -232,6 +232,10 @@ ElementConfig :: struct {
 	// Inherited from parent by default.
 	capture:          InheritedBool,
 	editable:         bool,
+
+	// Emit a custom event in the render command array for this element.
+	// Can be used to interleave your own rendering with orui's rendering.
+	custom_event:     rawptr,
 }
 
 Element :: struct {
@@ -296,6 +300,9 @@ Element :: struct {
 	block:             InheritedBool,
 	capture:           InheritedBool,
 	editable:          bool,
+
+	// custom event
+	custom_event:      rawptr,
 
 	// internal
 	_position:         rl.Vector2,
@@ -395,6 +402,8 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.block = config.block == .Inherit ? parent.block : config.block
 	element.capture = config.capture == .Inherit ? parent.capture : config.capture
 	element.editable = config.editable
+
+	element.custom_event = config.custom_event
 }
 
 to_id :: proc {

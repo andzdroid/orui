@@ -1,5 +1,6 @@
 package orui
 
+import "core:log"
 import "core:math"
 import "core:strings"
 import rl "vendor:raylib"
@@ -195,6 +196,26 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 
 @(private)
 render_text_line :: proc(
+	position: rl.Vector2,
+	text: string,
+	font: ^rl.Font,
+	font_size: f32,
+	letter_spacing: f32,
+	color: rl.Color,
+) {
+	rl.DrawTextEx(
+		font^,
+		strings.clone_to_cstring(text, context.temp_allocator),
+		position,
+		font_size,
+		letter_spacing,
+		color,
+	)
+}
+
+@(private)
+_render_text_line :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	text: string,
 	line_width: f32,
@@ -206,18 +227,22 @@ render_text_line :: proc(
 	line_offset := calculate_line_offset(element, line_width, inner_width)
 	x := x_start + line_offset
 
-	rl.DrawTextEx(
-		element.font^,
-		strings.clone_to_cstring(text, context.temp_allocator),
-		{x, y},
-		element.font_size,
-		letter_spacing,
-		element.color,
-	)
+	ctx.render_commands[ctx.render_command_count] = RenderCommand {
+		type = .Text,
+		data = RenderCommandDataText {
+			position = {x, y},
+			text = text,
+			font = element.font,
+			font_size = element.font_size,
+			letter_spacing = letter_spacing,
+			color = element.color,
+		},
+	}
+	ctx.render_command_count += 1
 }
 
 @(private)
-render_text :: proc(element: ^Element) {
+render_text :: proc(ctx: ^Context, element: ^Element) {
 	if len(element.text) == 0 {
 		return
 	}
@@ -245,7 +270,7 @@ render_text :: proc(element: ^Element) {
 		)
 	}
 
-	render_text_line(element, element.text, line_width, x, y, letter_spacing, inner_width)
+	_render_text_line(ctx, element, element.text, line_width, x, y, letter_spacing, inner_width)
 
 	render_caret(
 		element,
@@ -261,7 +286,7 @@ render_text :: proc(element: ^Element) {
 }
 
 @(private)
-render_wrapped_text :: proc(element: ^Element) {
+render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	text := element.text
 	text_len := len(element.text)
 	if text_len == 0 {
@@ -306,7 +331,8 @@ render_wrapped_text :: proc(element: ^Element) {
 					)
 				}
 
-				render_text_line(
+				_render_text_line(
+					ctx,
 					element,
 					text[line_start:index],
 					actual_width,
@@ -410,7 +436,8 @@ render_wrapped_text :: proc(element: ^Element) {
 					)
 				}
 
-				render_text_line(
+				_render_text_line(
+					ctx,
 					element,
 					text[line_start:last_nonspace_end],
 					actual_width,
@@ -463,7 +490,8 @@ render_wrapped_text :: proc(element: ^Element) {
 					)
 				}
 
-				render_text_line(
+				_render_text_line(
+					ctx,
 					element,
 					text[line_start:index],
 					actual_width,
@@ -541,12 +569,15 @@ render_caret :: proc(
 	line_height := measure_text_height(element.font_size, element.line_height)
 
 	current_context.caret_position = {x_start + line_offset + prefix_width, y}
-	rl.DrawRectanglePro(
-		{current_context.caret_position.x, current_context.caret_position.y, 1, line_height},
-		{},
-		0,
-		element.color,
-	)
+	current_context.render_commands[current_context.render_command_count] = RenderCommand {
+		type = .Rectangle,
+		data = RenderCommandDataRectangle {
+			position = current_context.caret_position,
+			size = {1, line_height},
+			color = element.color,
+		},
+	}
+	current_context.render_command_count += 1
 }
 
 @(private)
@@ -592,5 +623,13 @@ render_selection :: proc(
 	line_height := measure_text_height(element.font_size, element.line_height)
 
 	x := x_start + line_offset + prefix_width
-	rl.DrawRectanglePro({x, y, selection_width, line_height}, {}, 0, {31, 104, 217, 120})
+	current_context.render_commands[current_context.render_command_count] = RenderCommand {
+		type = .Rectangle,
+		data = RenderCommandDataRectangle {
+			position = {x, y},
+			size = {selection_width, line_height},
+			color = {31, 104, 217, 120},
+		},
+	}
+	current_context.render_command_count += 1
 }

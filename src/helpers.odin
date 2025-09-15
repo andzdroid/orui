@@ -96,11 +96,11 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 }
 
 @(private)
-has_round_corners :: proc(e: ^Element) -> bool {
+has_round_corners :: proc(corners: Corners) -> bool {
 	return(
-		e.corner_radius.top_left > 0 ||
-		e.corner_radius.top_right > 0 ||
-		e.corner_radius.bottom_right > 0 ||
-		e.corner_radius.bottom_left > 0 \
+		corners.top_left > 0 ||
+		corners.top_right > 0 ||
+		corners.bottom_right > 0 ||
+		corners.bottom_left > 0 \
 	)
 }

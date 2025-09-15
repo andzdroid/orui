@@ -5,6 +5,7 @@ import "core:log"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
+MAX_COMMANDS :: 8192
 MAX_GRID_TRACKS :: 12
 
 KEY_REPEAT_DELAY: f64 : 0.45
@@ -19,34 +20,37 @@ IdBuffer :: struct {
 }
 
 Context :: struct {
-	elements:        [MAX_ELEMENTS]Element,
-	element_count:   int,
+	elements:             [MAX_ELEMENTS]Element,
+	element_count:        int,
 	// TODO: lookup table of Id => index
-	current:         int,
-	current_id:      Id,
-	previous:        int,
-	parent:          int,
-	frame:           int,
-	time:            f64,
-	default_font:    rl.Font,
-	sorted:          [MAX_ELEMENTS]int,
-	sorted_count:    int,
+	current:              int,
+	current_id:           Id,
+	previous:             int,
+	parent:               int,
+	frame:                int,
+	time:                 f64,
+	default_font:         rl.Font,
+	sorted:               [MAX_ELEMENTS]int,
+	sorted_count:         int,
+	render_commands:      [MAX_COMMANDS]RenderCommand,
+	render_command_count: int,
 
 	// mouse input
-	pointer_capture: int,
-	hover:           [2]IdBuffer,
-	active:          [2]IdBuffer,
+	pointer_capture:      int,
+	hover:                [2]IdBuffer,
+	active:               [2]IdBuffer,
 
 	// text input
-	focus:           int,
-	focus_id:        Id,
-	caret_index:     int,
-	caret_position:  rl.Vector2,
-	caret_time:      f32,
-	repeat_key:      rl.KeyboardKey,
-	repeat_time:     f64,
-	text_selection:  TextSelection,
-	selecting:       bool,
+	focus:                int,
+	focus_id:             Id,
+	prev_focus_id:        Id,
+	caret_index:          int,
+	caret_position:       rl.Vector2,
+	caret_time:           f32,
+	repeat_key:           rl.KeyboardKey,
+	repeat_time:          f64,
+	text_selection:       TextSelection,
+	selecting:            bool,
 }
 
 @(private)
@@ -82,8 +86,10 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	current_context = ctx
 
 	ctx.frame += 1
-	ctx.element_count = 0
 
+	handle_input_state(ctx)
+
+	ctx.element_count = 0
 	ctx.elements[0] = {
 		id       = to_id("root"),
 		width    = fixed(width),
@@ -100,10 +106,6 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	ctx.previous = 0
 	ctx.parent = 0
 
-	buffer := current_buffer(ctx)
-	ctx.hover[buffer].count = 0
-	ctx.active[buffer].count = 0
-
 	dt := dt > 0 ? dt : rl.GetFrameTime()
 	ctx.caret_time += dt
 }
@@ -116,25 +118,22 @@ end :: proc {
 }
 
 @(private)
-_end :: proc() {
+_end :: proc() -> []RenderCommand {
 	ctx := current_context
-	_end_with_context(ctx)
+	return _end_with_context(ctx)
 }
 
 @(private)
-_end_with_context :: proc(ctx: ^Context) {
+_end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
-
 	wrap(ctx)
-
 	fit_heights(ctx, 0)
 	distribute_heights(ctx, 0)
 
 	compute_layout(ctx, 0)
 	render(ctx)
-
-	handle_input_state(ctx)
+	return ctx.render_commands[:ctx.render_command_count]
 }
 
 
@@ -233,7 +232,7 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 
 	end_element()
 
-	return rl.IsMouseButtonReleased(.LEFT) && active()
+	return clicked()
 }
 
 text_input :: proc(
@@ -258,35 +257,9 @@ text_input :: proc(
 	}
 	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
 
-	unfocus := false
-	if rl.IsMouseButtonReleased(.LEFT) && active() {
-		current_context.focus = current_context.current
-		current_context.focus_id = id
-		current_context.caret_index = -1
-		current_context.caret_time = 0
-	} else if rl.IsMouseButtonReleased(.LEFT) &&
-	   current_context.focus_id == id &&
-	   !current_context.selecting {
-		unfocus = true
-	}
 	end_element()
 
-	if (element.overflow == .Visible || element.overflow == .Hidden) &&
-	   focused() &&
-	   rl.IsKeyPressed(.ENTER) {
-		unfocus = true
-	}
-
-	// TODO: return true if focus is lost to another element
-	if unfocus {
-		current_context.focus = 0
-		current_context.focus_id = 0
-		current_context.repeat_key = .KEY_NULL
-		current_context.text_selection = {}
-		return true
-	}
-
-	return false
+	return current_context.prev_focus_id == id && current_context.focus_id != id
 }
 
 // An image is an element that displays a texture.
@@ -308,7 +281,7 @@ image :: proc(
 
 	end_element()
 
-	return rl.IsMouseButtonReleased(.LEFT) && active()
+	return clicked()
 }
 
 hovered :: proc {
@@ -325,7 +298,7 @@ _hovered :: proc() -> bool {
 		return false
 	}
 
-	buffer := previous_buffer(ctx)
+	buffer := current_buffer(ctx)
 	count := ctx.hover[buffer].count
 	for i := 0; i < count; i += 1 {
 		if ctx.hover[buffer].ids[i] == ctx.current_id {
@@ -341,7 +314,7 @@ _hovered :: proc() -> bool {
 _hovered_id :: proc(id: string) -> bool {
 	ctx := current_context
 	id := to_id(id)
-	buffer := previous_buffer(ctx)
+	buffer := current_buffer(ctx)
 	count := ctx.hover[buffer].count
 	for i := 0; i < count; i += 1 {
 		if ctx.hover[buffer].ids[i] == id {

@@ -1,38 +1,47 @@
 package orui
 
-import "core:log"
 import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 
 @(private)
 handle_input_state :: proc(ctx: ^Context) {
+
 	position := rl.GetMousePosition()
 	mouse_down := rl.IsMouseButtonDown(.LEFT)
+	pressed := rl.IsMouseButtonPressed(.LEFT)
+	released := rl.IsMouseButtonReleased(.LEFT)
 
 	current := current_buffer(ctx)
 	previous := previous_buffer(ctx)
 
-	if ctx.focus != 0 && ctx.caret_index == -1 {
-		if rl.IsMouseButtonReleased(.LEFT) {
+	ctx.prev_focus_id = ctx.focus_id
+	ctx.hover[current].count = 0
+	ctx.active[current].count = 0
+
+	if released {
+		ctx.pointer_capture = 0
+		// ctx.selecting = false
+
+		if ctx.focus != 0 && ctx.caret_index == -1 {
 			ctx.caret_index = text_caret_from_point(&ctx.elements[ctx.focus], position)
 		}
 	}
 
-	if rl.IsMouseButtonReleased(.LEFT) {
-		ctx.pointer_capture = 0
-	}
-
-	if ctx.pointer_capture != 0 && mouse_down {
-		el := &ctx.elements[ctx.pointer_capture]
-		count := ctx.active[current].count
-		ctx.active[current].ids[count] = el.id
-		ctx.active[current].count += 1
-		return
-	}
+	// if ctx.pointer_capture != 0 && mouse_down {
+	// 	el := &ctx.elements[ctx.pointer_capture]
+	// 	count := ctx.active[current].count
+	// 	ctx.active[current].ids[count] = el.id
+	// 	ctx.active[current].count += 1
+	// 	return
+	// }
 
 	for i := ctx.sorted_count - 1; i >= 0; i -= 1 {
 		element := &ctx.elements[ctx.sorted[i]]
+
+		if ctx.pointer_capture != 0 && ctx.pointer_capture != ctx.sorted[i] {
+			continue
+		}
 
 		if element.disabled == .True {
 			continue
@@ -54,24 +63,31 @@ handle_input_state :: proc(ctx: ^Context) {
 			}
 		}
 
-		if mouse_down && (rl.IsMouseButtonPressed(.LEFT) || already_active) {
+		if mouse_down && (pressed || already_active) {
 			count := ctx.active[current].count
 			ctx.active[current].ids[count] = element.id
 			ctx.active[current].count += 1
 
-			if rl.IsMouseButtonPressed(.LEFT) && element.editable {
-				ctx.focus = ctx.sorted[i]
-				ctx.focus_id = element.id
-				start := text_caret_from_point(element, position)
-				ctx.text_selection.start = start
-				ctx.text_selection.end = start
-				ctx.caret_index = start
-				ctx.caret_time = 0
-				ctx.selecting = true
+			if pressed {
+				if element.editable {
+					ctx.focus = ctx.sorted[i]
+					ctx.focus_id = element.id
+					start := text_caret_from_point(element, position)
+					ctx.text_selection.start = start
+					ctx.text_selection.end = start
+					ctx.caret_index = start
+					ctx.caret_time = 0
+					ctx.selecting = true
+				} else if ctx.focus != 0 {
+					ctx.focus = 0
+					ctx.focus_id = 0
+					ctx.repeat_key = .KEY_NULL
+					ctx.text_selection = {}
+				}
 			}
 
 			if element.capture == .True {
-				ctx.pointer_capture = i
+				ctx.pointer_capture = ctx.sorted[i]
 			}
 		}
 
@@ -88,7 +104,7 @@ handle_input_state :: proc(ctx: ^Context) {
 		ctx.caret_time = 0
 	}
 
-	if rl.IsMouseButtonReleased(.LEFT) {
+	if released {
 		ctx.selecting = false
 	}
 
@@ -102,6 +118,14 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 		if !element.editable {
 			ctx.focus = 0
 			ctx.focus_id = 0
+			ctx.repeat_key = .KEY_NULL
+			ctx.text_selection = {}
+		} else if rl.IsKeyPressed(.ENTER) &&
+		   (element.overflow == .Visible || element.overflow == .Hidden) {
+			ctx.focus = 0
+			ctx.focus_id = 0
+			ctx.repeat_key = .KEY_NULL
+			ctx.text_selection = {}
 		} else {
 			text_view := element.text_view
 

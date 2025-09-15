@@ -354,9 +354,13 @@ main :: proc() {
 		elapsed1 += time.since(start_time)
 
 		start_time = time.now()
-		orui.end()
+		render_commands := orui.end()
 		elapsed2 += time.since(start_time)
 		iterations += 1
+
+		for render_command in render_commands {
+			orui.render_command(render_command)
+		}
 
 		rl.DrawFPS(10, 10)
 

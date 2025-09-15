@@ -317,7 +317,10 @@ main :: proc() {
 			checkbox(&checkbox_state)
 		}
 
-		orui.end()
+		render_commands := orui.end()
+		for command in render_commands {
+			orui.render_command(command)
+		}
 
 		rl.EndDrawing()
 
