@@ -407,6 +407,11 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 		y := start_y + element._grid_row_offsets[row] + child_element.margin.top
 
 		child_element._position = element._position + {x, y}
+
+		if child_element.position.type == .Relative {
+			child_element._position += child_element.position.value
+		}
+
 		child = child_element.next
 	}
 }

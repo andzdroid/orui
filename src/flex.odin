@@ -391,6 +391,10 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 		child_element._position = element._position + {x, y}
 
+		if child_element.position.type == .Relative {
+			child_element._position += child_element.position.value
+		}
+
 		if element.direction == .LeftToRight {
 			x += child_element._size.x + element.gap + child_element.margin.right
 		} else {

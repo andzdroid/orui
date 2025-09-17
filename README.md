@@ -41,6 +41,8 @@ Features:
   - Click, move with arrow keys, home+end, insert, backspace
   - Single line and multi line
   - Mouse and keyboard text selection
+- Custom render events
+  - Interleave your own rendering with the UI
 
 To do:
 
@@ -71,6 +73,7 @@ To do:
 - [Element config](#element-config)
   - [Config helpers](#config-helpers)
   - [Config modifiers](#config-modifiers)
+- [Custom render events](#custom-render-events)
 
 ## Usage
 
@@ -367,6 +370,9 @@ ElementConfig :: struct {
 	disabled:         InheritedBool,
 	block:            InheritedBool,
 	capture:          InheritedBool,
+
+	// custom event
+	custom_event:     rawptr,
 }
 ```
 
@@ -679,6 +685,10 @@ InheritedBool :: enum {
 }
 ```
 
+### custom_event
+
+Pass a pointer to your own custom event. See the `Custom render events` section.
+
 ### Config helpers
 
 Config helpers can be used in the element config as a shortcut for common values:
@@ -747,3 +757,20 @@ standard_sizing :: proc(element: ^Element) {
   orui.label(orui.id("label"), "Something went wrong!", {}, error_style)
 }
 ```
+
+## Custom render events
+
+This feature allows you to insert custom events into the render command queue, allowing you to run code when specific parts of the UI are rendered.
+
+You can do this by setting the `custom_event` field on any element.
+
+When that element gets rendered, it will emit a `RenderCommandDataCustom` after emitting other render commands for that element.
+
+```odin
+RenderCommandDataCustom :: struct {
+	rectangle:    rl.Rectangle, // computed position/size of the element
+	custom_event: rawptr,       // the custom event that you originally passed in
+}
+```
+
+See `demo/window` for an example of custom render events.

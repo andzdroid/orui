@@ -50,7 +50,6 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	if element.position.type == .Relative {
-		element._position += element.position.value
 		apply_placement(element, parent)
 	}
 }
