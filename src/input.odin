@@ -1,5 +1,6 @@
 package orui
 
+import "core:log"
 import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
@@ -11,6 +12,7 @@ handle_input_state :: proc(ctx: ^Context) {
 	mouse_down := rl.IsMouseButtonDown(.LEFT)
 	pressed := rl.IsMouseButtonPressed(.LEFT)
 	released := rl.IsMouseButtonReleased(.LEFT)
+	scroll := rl.GetMouseWheelMoveV()
 
 	current := current_buffer(ctx)
 	previous := previous_buffer(ctx)
@@ -36,6 +38,9 @@ handle_input_state :: proc(ctx: ^Context) {
 	// 	return
 	// }
 
+	scroll_consumed := false
+	click_consumed := false
+
 	for i := ctx.sorted_count - 1; i >= 0; i -= 1 {
 		element := &ctx.elements[ctx.sorted[i]]
 
@@ -47,51 +52,87 @@ handle_input_state :: proc(ctx: ^Context) {
 			continue
 		}
 
-		if !point_in_rect(position, element._position, element._size) {
+		if !point_in_element(position, element) {
 			continue
 		}
 
-		count := ctx.hover[current].count
-		ctx.hover[current].ids[count] = element.id
-		ctx.hover[current].count += 1
-
-		already_active := false
-		for i := 0; i < ctx.active[previous].count; i += 1 {
-			if ctx.active[previous].ids[i] == element.id {
-				already_active = true
-				break
+		if !scroll_consumed {
+			if scroll.x != 0 && scrolls_x(element) {
+				scroll_offset := get_scroll_offset(element)
+				scroll_offset.x -= scroll.x * SCROLL_FACTOR
+				scroll_offset.x = clamp(
+					scroll_offset.x,
+					0,
+					element._content_size.x - inner_width(element),
+				)
+				set_scroll_offset(element.id, scroll_offset)
+				if element.block == .True {
+					scroll_consumed = true
+				}
+			}
+			if scroll.y != 0 && scrolls_y(element) {
+				scroll_offset := get_scroll_offset(element)
+				scroll_offset.y -= scroll.y * SCROLL_FACTOR
+				scroll_offset.y = clamp(
+					scroll_offset.y,
+					0,
+					element._content_size.y - inner_height(element),
+				)
+				set_scroll_offset(element.id, scroll_offset)
+				if element.block == .True {
+					scroll_consumed = true
+				}
 			}
 		}
 
-		if mouse_down && (pressed || already_active) {
-			count := ctx.active[current].count
-			ctx.active[current].ids[count] = element.id
-			ctx.active[current].count += 1
+		if !click_consumed {
+			count := ctx.hover[current].count
+			ctx.hover[current].ids[count] = element.id
+			ctx.hover[current].count += 1
 
-			if pressed {
-				if element.editable {
-					ctx.focus = ctx.sorted[i]
-					ctx.focus_id = element.id
-					start := text_caret_from_point(element, position)
-					ctx.text_selection.start = start
-					ctx.text_selection.end = start
-					ctx.caret_index = start
-					ctx.caret_time = 0
-					ctx.selecting = true
-				} else if ctx.focus != 0 {
-					ctx.focus = 0
-					ctx.focus_id = 0
-					ctx.repeat_key = .KEY_NULL
-					ctx.text_selection = {}
+			already_active := false
+			for i := 0; i < ctx.active[previous].count; i += 1 {
+				if ctx.active[previous].ids[i] == element.id {
+					already_active = true
+					break
 				}
 			}
 
-			if element.capture == .True {
-				ctx.pointer_capture = ctx.sorted[i]
+			if mouse_down && (pressed || already_active) {
+				count := ctx.active[current].count
+				ctx.active[current].ids[count] = element.id
+				ctx.active[current].count += 1
+
+				if pressed {
+					if element.editable {
+						ctx.focus = ctx.sorted[i]
+						ctx.focus_id = element.id
+						start := text_caret_from_point(element, position)
+						ctx.text_selection.start = start
+						ctx.text_selection.end = start
+						ctx.caret_index = start
+						ctx.caret_time = 0
+						ctx.selecting = true
+						ensure_caret_visible(ctx, element, ctx.caret_index)
+					} else if ctx.focus != 0 {
+						ctx.focus = 0
+						ctx.focus_id = 0
+						ctx.repeat_key = .KEY_NULL
+						ctx.text_selection = {}
+					}
+				}
+
+				if element.capture == .True {
+					ctx.pointer_capture = ctx.sorted[i]
+				}
+			}
+
+			if element.block == .True {
+				click_consumed = true
 			}
 		}
 
-		if element.block == .True {
+		if scroll_consumed && click_consumed {
 			break
 		}
 	}
@@ -102,6 +143,7 @@ handle_input_state :: proc(ctx: ^Context) {
 		ctx.text_selection.end = end
 		ctx.caret_index = end
 		ctx.caret_time = 0
+		ensure_caret_visible(ctx, el, ctx.caret_index)
 	}
 
 	if released {
@@ -147,6 +189,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					ctx.caret_index += char_len
 					ctx.caret_index = min(ctx.caret_index, text_view.length)
 					ctx.caret_time = 0
+					ensure_caret_visible(ctx, element, ctx.caret_index)
 				}
 			}
 
@@ -164,6 +207,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				ctx.caret_index = next
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 			if key_pressed(ctx, .RIGHT) {
 				next := utf8_next(text_view, ctx.caret_index)
@@ -177,6 +221,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				ctx.caret_index = next
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 
 			if rl.IsKeyPressed(.HOME) {
@@ -190,6 +235,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				ctx.caret_index = 0
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 			if rl.IsKeyPressed(.END) {
 				if shift_down {
@@ -202,6 +248,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				ctx.caret_index = text_view.length
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 
 			if element.overflow == .Wrap {
@@ -217,6 +264,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					}
 					ctx.caret_index = next
 					ctx.caret_time = 0
+					ensure_caret_visible(ctx, element, ctx.caret_index)
 				}
 				if key_pressed(ctx, .DOWN) {
 					next := caret_index_down(element, ctx.caret_position)
@@ -230,6 +278,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					}
 					ctx.caret_index = next
 					ctx.caret_time = 0
+					ensure_caret_visible(ctx, element, ctx.caret_index)
 				}
 			}
 
@@ -246,6 +295,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					ctx.text_selection = {}
 				}
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 			if key_pressed(ctx, .DELETE) {
 				if ctx.text_selection.start == ctx.text_selection.end {
@@ -259,6 +309,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					ctx.text_selection = {}
 				}
 				ctx.caret_time = 0
+				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 
 			if key_pressed(ctx, .ENTER) {
@@ -276,6 +327,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					ctx.caret_index += char_len
 					ctx.caret_index = min(ctx.caret_index, text_view.length)
 					ctx.caret_time = 0
+					ensure_caret_visible(ctx, element, ctx.caret_index)
 				}
 			}
 		}
@@ -285,6 +337,23 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 @(private)
 point_in_rect :: proc(p: rl.Vector2, pos: rl.Vector2, size: rl.Vector2) -> bool {
 	return p.x >= pos.x && p.y >= pos.y && p.x < pos.x + size.x && p.y < pos.y + size.y
+}
+
+@(private)
+point_in_element :: proc(p: rl.Vector2, element: ^Element) -> bool {
+	if !point_in_rect(p, element._position, element._size) {
+		return false
+	}
+
+	if element._clip.width > 0 || element._clip.height > 0 {
+		return point_in_rect(
+			p,
+			{f32(element._clip.x), f32(element._clip.y)},
+			{f32(element._clip.width), f32(element._clip.height)},
+		)
+	}
+
+	return true
 }
 
 @(private)

@@ -1,5 +1,7 @@
 package orui
 
+import rl "vendor:raylib"
+
 @(private)
 x_padding :: proc(e: ^Element) -> f32 {
 	return e.padding.left + e.padding.right
@@ -66,9 +68,9 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 		gap := parent.col_gap > 0 ? parent.col_gap : parent.gap
 		gap_count := max(col_span - 1, 0)
 		width += gap * f32(gap_count)
-		return width, true
+		return width, !scrolls_x(e)
 	} else {
-		return inner_width(parent), parent._size.x > 0
+		return inner_width(parent), parent._size.x > 0 && !scrolls_x(e)
 	}
 }
 
@@ -89,9 +91,9 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 		gap := parent.row_gap > 0 ? parent.row_gap : parent.gap
 		gap_count := max(row_span - 1, 0)
 		height += gap * f32(gap_count)
-		return height, true
+		return height, !scrolls_y(e)
 	} else {
-		return inner_height(parent), parent._size.y > 0
+		return inner_height(parent), parent._size.y > 0 && !scrolls_y(e)
 	}
 }
 
@@ -103,4 +105,38 @@ has_round_corners :: proc(corners: Corners) -> bool {
 		corners.bottom_right > 0 ||
 		corners.bottom_left > 0 \
 	)
+}
+
+@(private)
+scrolls_x :: proc(element: ^Element) -> bool {
+	return(
+		(element.scroll.direction == .Auto || element.scroll.direction == .Horizontal) &&
+		element._content_size.x > inner_width(element) \
+	)
+}
+
+@(private)
+scrolls_y :: proc(element: ^Element) -> bool {
+	return(
+		(element.scroll.direction == .Auto || element.scroll.direction == .Vertical) &&
+		element._content_size.y > inner_height(element) \
+	)
+}
+
+@(private)
+get_scroll_offset :: proc(element: ^Element) -> rl.Vector2 {
+	scroll := element.scroll.offset
+	switch element.scroll.direction {
+	case .None:
+		return {}
+	case .Auto:
+		return scroll
+	case .Vertical:
+		return {0, scroll.y}
+	case .Horizontal:
+		return {scroll.x, 0}
+	case .Manual:
+		return scroll
+	}
+	return {}
 }

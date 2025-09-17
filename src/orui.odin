@@ -10,6 +10,7 @@ MAX_GRID_TRACKS :: 12
 
 KEY_REPEAT_DELAY: f64 : 0.45
 KEY_REPEAT_INTERVAL: f64 : 0.1
+SCROLL_FACTOR: f32 : 8
 
 @(thread_local)
 current_context: ^Context
@@ -17,6 +18,11 @@ current_context: ^Context
 IdBuffer :: struct {
 	ids:   [MAX_ELEMENTS]Id,
 	count: int,
+}
+
+ScrollData :: struct {
+	id:     Id,
+	offset: rl.Vector2,
 }
 
 Context :: struct {
@@ -34,6 +40,8 @@ Context :: struct {
 	sorted_count:         int,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
 	render_command_count: int,
+	scroll_data:          [MAX_ELEMENTS]ScrollData,
+	scroll_count:         int,
 
 	// mouse input
 	pointer_capture:      int,
@@ -233,6 +241,7 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element, parent := begin_element(id)
 	configure_element(element, parent^, config)
+	element.layout = .None
 	element.has_text = true
 	element.text = text
 
@@ -258,6 +267,7 @@ text_input :: proc(
 ) -> bool {
 	element, parent := begin_element(id)
 	configure_element(element, parent^, config)
+	element.layout = .None
 	element.has_text = true
 	element.text = string(text.data[:text.length])
 	element.text_view = text
@@ -287,6 +297,7 @@ image :: proc(
 ) -> bool {
 	element, parent := begin_element(id)
 	configure_element(element, parent^, config)
+	element.layout = .None
 	element.has_texture = true
 	element.texture = texture
 
@@ -530,4 +541,43 @@ text_view :: proc(text: string, size: int, allocator := context.allocator) -> Te
 	text_view.data = buffer
 	text_view.length = min(len(text), size)
 	return text_view
+}
+
+scroll :: proc(direction: ScrollDirection) -> ScrollConfig {
+	return {direction, scroll_offset()}
+}
+
+scroll_offset :: proc {
+	_scroll_offset,
+	_scroll_offset_id,
+}
+
+@(private)
+_scroll_offset :: proc() -> rl.Vector2 {
+	return scroll_offset(current_context.current_id)
+}
+
+@(private)
+_scroll_offset_id :: proc(id: Id) -> rl.Vector2 {
+	ctx := current_context
+	for i := 0; i < ctx.scroll_count; i += 1 {
+		if ctx.scroll_data[i].id == id {
+			return ctx.scroll_data[i].offset
+		}
+	}
+	return {}
+}
+
+set_scroll_offset :: proc(id: Id, offset: rl.Vector2) {
+	ctx := current_context
+	for i in 0 ..< ctx.scroll_count {
+		if ctx.scroll_data[i].id == id {
+			ctx.scroll_data[i].offset = offset
+			return
+		}
+	}
+	if ctx.scroll_count < MAX_ELEMENTS {
+		ctx.scroll_data[ctx.scroll_count] = {id, offset}
+		ctx.scroll_count += 1
+	}
 }

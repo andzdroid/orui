@@ -15,14 +15,22 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 		element._size.x = element.width.value
 	}
 
-	if element.has_text && (element.width.type == .Fit || element.width.type == .Grow) {
+	if element.has_text &&
+	   (element.overflow != .Wrap || element.width.type == .Fit || element.width.type == .Grow) {
 		text_width := measure_text_width(
 			element.text,
 			element.font,
 			element.font_size,
 			element.letter_spacing,
 		)
-		element._size.x = text_width + x_padding(element) + x_border(element)
+
+		if element.overflow != .Wrap {
+			element._content_size.x = text_width
+		}
+
+		if element.width.type == .Fit || element.width.type == .Grow {
+			element._size.x = text_width + x_padding(element) + x_border(element)
+		}
 	}
 
 	if element.layout == .Grid {
@@ -83,6 +91,7 @@ wrap :: proc(ctx: ^Context) {
 		}
 
 		// TODO: wrap flex containers
+		// should not happen here, should be part of flex sizing
 	}
 }
 
@@ -95,10 +104,15 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 		element._size.y = element.height.value
 	}
 
-	if (element.height.type == .Fit || element.height.type == .Grow) && element.has_text {
+	if element.has_text {
 		lines := element._line_count > 0 ? element._line_count : 1
 		line_height_px := measure_text_height(element.font_size, element.line_height)
-		element._size.y = line_height_px * f32(lines) + y_padding(element) + y_border(element)
+		text_height := line_height_px * f32(lines)
+		element._content_size.y = text_height
+
+		if element.height.type == .Fit || element.height.type == .Grow {
+			element._size.y = text_height + y_padding(element) + y_border(element)
+		}
 	}
 
 	child := element.children

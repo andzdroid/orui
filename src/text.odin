@@ -192,6 +192,8 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 		element._size.x = max_line_width + x_padding(element) + x_border(element)
 		flex_clamp_width(ctx, element)
 	}
+
+	element._content_size.x = max_line_width
 }
 
 @(private)
@@ -224,6 +226,13 @@ _render_text_line :: proc(
 	letter_spacing: f32,
 	inner_width: f32,
 ) {
+	line_height := measure_text_height(element.font_size, element.line_height)
+	if element._clip.height > 0 &&
+	   (y + line_height < f32(element._clip.y) ||
+			   y > f32(element._clip.y + element._clip.height)) {
+		return
+	}
+
 	line_offset := calculate_line_offset(element, line_width, inner_width)
 	x := x_start + line_offset
 
@@ -247,13 +256,17 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	y_offset := calculate_text_offset(element)
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	line_width := measure_text_width(element.text, element.font, element.font_size, letter_spacing)
 	inner_width := inner_width(element)
 
-	x := element._position.x + element.padding.left + element.border.left
-	y := element._position.y + element.padding.top + element.border.top + y_offset
+	x := element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	y :=
+		element._position.y +
+		element.padding.top +
+		element.border.top +
+		calculate_text_offset(element) -
+		element.scroll.offset.y
 
 	if current_context.focus_id == element.id {
 		render_selection(
@@ -293,9 +306,14 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	y_offset := calculate_text_offset(element)
-	x_start := element._position.x + element.padding.left + element.border.left
-	y_start := element._position.y + element.padding.top + element.border.top + y_offset
+	x_start :=
+		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	y_start :=
+		element._position.y +
+		element.padding.top +
+		element.border.top +
+		calculate_text_offset(element) -
+		element.scroll.offset.y
 	line_height := measure_text_height(element.font_size, element.line_height)
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
@@ -559,6 +577,13 @@ render_caret :: proc(
 		return
 	}
 
+	line_height := measure_text_height(element.font_size, element.line_height)
+	if element._clip.height > 0 &&
+	   (y + line_height < f32(element._clip.y) ||
+			   y > f32(element._clip.y + element._clip.height)) {
+		return
+	}
+
 	prefix_width := measure_text_width(
 		text[line_start:caret],
 		element.font,
@@ -566,7 +591,6 @@ render_caret :: proc(
 		letter_spacing,
 	)
 	line_offset := calculate_line_offset(element, line_width, inner_width)
-	line_height := measure_text_height(element.font_size, element.line_height)
 
 	current_context.caret_position = {x_start + line_offset + prefix_width, y}
 	current_context.render_commands[current_context.render_command_count] = RenderCommand {
@@ -601,6 +625,13 @@ render_selection :: proc(
 		return
 	}
 
+	line_height := measure_text_height(element.font_size, element.line_height)
+	if element._clip.height > 0 &&
+	   (y + line_height < f32(element._clip.y) ||
+			   y > f32(element._clip.y + element._clip.height)) {
+		return
+	}
+
 	start := clamp(selection.start, line_start, line_end)
 	end := clamp(selection.end, line_start, line_end)
 	if start > end {
@@ -620,7 +651,6 @@ render_selection :: proc(
 		letter_spacing,
 	)
 	line_offset := calculate_line_offset(element, line_width, inner_width)
-	line_height := measure_text_height(element.font_size, element.line_height)
 
 	x := x_start + line_offset + prefix_width
 	current_context.render_commands[current_context.render_command_count] = RenderCommand {

@@ -41,6 +41,7 @@ SAMPLE_COUNT :: 240
 texture: rl.Texture2D
 
 Scene :: enum {
+	Test_Scroll,
 	Test_Text,
 	Test_Flex,
 	Test_Grid,
@@ -113,6 +114,7 @@ main :: proc() {
 
 	debug := false
 	scene := 0
+	command_count := 0
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -142,6 +144,8 @@ main :: proc() {
 			render_test_placement()
 		case .Test_Dense:
 			render_dense()
+		case .Test_Scroll:
+			render_test_scroll()
 		}
 
 		if debug {
@@ -173,6 +177,16 @@ main :: proc() {
 					fmt.tprintf("Elapsed 2: %v", avg2),
 					{font_size = 16, color = rl.WHITE},
 				)
+				orui.label(
+					orui.id("debug command count"),
+					fmt.tprintf("Command count: %v", command_count),
+					{font_size = 16, color = rl.WHITE},
+				)
+				orui.label(
+					orui.id("debug element count"),
+					fmt.tprintf("Element count: %v", ctx.element_count),
+					{font_size = 16, color = rl.WHITE},
+				)
 			}
 		}
 
@@ -181,6 +195,8 @@ main :: proc() {
 		start_time = time.now()
 		render_commands := orui.end()
 		elapsed2 := time.since(start_time)
+
+		command_count = len(render_commands)
 
 		for render_command in render_commands {
 			orui.render_command(render_command)
@@ -216,10 +232,10 @@ main :: proc() {
 		}
 	}
 
-	// for i in 0 ..< ctx.element_count {
-	// 	element := &ctx.elements[i]
-	// 	log.infof("%v", element)
-	// }
+	for i in 0 ..< ctx.element_count {
+		element := &ctx.elements[i]
+		log.infof("%v", element)
+	}
 
 	rl.CloseWindow()
 }

@@ -34,30 +34,6 @@ render_test_text :: proc() {
 		},
 	)
 
-	orui.text_input(
-		orui.id("text input"),
-		&text_view,
-		{
-			width = orui.fixed(300),
-			padding = orui.padding(8),
-			background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
-			color = rl.BLACK,
-			font_size = 14,
-			overflow = .Visible,
-			clip = {.Self, {}},
-			border = orui.border(1),
-			border_color = orui.focused() ? rl.BLACK : rl.LIGHTGRAY,
-		},
-	)
-
-	orui.label(
-		orui.id("text output"),
-		string(text_view.data[:text_view.length]),
-		{font_size = 14},
-		button_style,
-	)
-
-
 	orui.label(
 		orui.id("1"),
 		"Dropdown: Option 1",
@@ -86,6 +62,31 @@ render_test_text :: proc() {
 		{font_size = 12, width = orui.fixed(300), letter_spacing = 3},
 		button_style,
 	)
+
+	orui.text_input(
+		orui.id("text input"),
+		&text_view,
+		{
+			width = orui.fixed(300),
+			padding = orui.padding(8),
+			background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
+			color = rl.BLACK,
+			font_size = 14,
+			overflow = .Visible,
+			clip = {.Self, {}},
+			scroll = orui.scroll(.Horizontal),
+			border = orui.border(1),
+			border_color = orui.focused() ? rl.BLACK : rl.LIGHTGRAY,
+		},
+	)
+
+	orui.label(
+		orui.id("text output"),
+		string(text_view.data[:text_view.length]),
+		{font_size = 14},
+		button_style,
+	)
+
 
 	orui.label(
 		orui.id("5"),

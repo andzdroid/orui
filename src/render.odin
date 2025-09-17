@@ -164,6 +164,20 @@ sort_elements :: proc(ctx: ^Context) {
 render_element :: proc(ctx: ^Context, index: int) {
 	element := &ctx.elements[index]
 
+	if element._clip.width > 0 || element._clip.height > 0 {
+		clip_right := element._clip.x + element._clip.width
+		clip_bottom := element._clip.y + element._clip.height
+		element_right := element._position.x + element._size.x
+		element_bottom := element._position.y + element._size.y
+
+		if i32(element._position.x) >= clip_right ||
+		   i32(element._position.y) >= clip_bottom ||
+		   i32(element_right) <= element._clip.x ||
+		   i32(element_bottom) <= element._clip.y {
+			return
+		}
+	}
+
 	if element.background_color.a > 0 {
 		ctx.render_commands[ctx.render_command_count] = RenderCommand {
 			type = .Rectangle,

@@ -28,7 +28,8 @@ Features:
 - Absolute, relative and fixed positioning
 	- Anchor and origin
 - Layers (z-index)
-- Padding, margin, borders, rounded corners, overflow
+- Padding, margin, borders, rounded corners, overflow, clipping
+- Scroll (with mouse wheel)
 - Images (textures)
   - Alignment
   - Content fit (fill, contain, cover, none, scale-down)
@@ -47,16 +48,22 @@ Features:
 To do:
 
 - Flex wrap
-- Text inputs
-  - Copy/paste
-  - Undo/redo (maybe)
-  - Placeholder (maybe)
 - 9-slice scaling
 - Grid justify/align
+- Text inputs
+  - Copy/paste
+	- Select all
+	- More standard motion shortcuts
+	- Double click, triple click
+  - Undo/redo (maybe)
+  - Placeholder (maybe)
 - Number inputs (maybe)
-- Scroll views (maybe)
 - Other widgets (maybe)
 - Grid row/column start (maybe)
+- Scroll with drag
+- Scroll momentum
+- Scroll bounce
+- Scrollbar (maybe)
 
 ## Table of Contents
 
@@ -70,6 +77,7 @@ To do:
   - [hovered()](#hovered)
   - [active()](#active)
   - [clicked()](#clicked)
+	- [focused()](#focused)
 - [Element config](#element-config)
   - [Config helpers](#config-helpers)
   - [Config modifiers](#config-modifiers)
@@ -370,6 +378,9 @@ ElementConfig :: struct {
 	disabled:         InheritedBool,
 	block:            InheritedBool,
 	capture:          InheritedBool,
+
+	// scroll
+	scroll:           ScrollConfig,
 
 	// custom event
 	custom_event:     rawptr,
@@ -715,6 +726,29 @@ InheritedBool :: enum {
 }
 ```
 
+### scroll
+
+Control how an element scrolls if its content is larger than its size. Text, flex child elements and grid columns/rows count towards content size. Images and grid column/row child elements do not.
+
+You probably want to pair this together with the `clip` option.
+
+The offset can be managed by orui or passed in manually. If you want to use the orui scroll position, call `scroll_offset()` to get the element's scroll position.
+
+```odin
+ScrollDirection :: enum {
+	None,
+	Auto,
+	Vertical,   // Automatically handle mouse scroll events for vertical scrolling.
+	Horizontal, // Automatically handle mouse scroll events for horizontal scrolling.
+	Manual,     // Manually set scroll offset
+}
+
+ScrollConfig :: struct {
+	direction: ScrollDirection,
+	offset:    rl.Vector2,
+}
+```
+
 ### custom_event
 
 Pass a pointer to your own custom event. See the `Custom render events` section.
@@ -756,6 +790,9 @@ orui.container(orui.id("container"), {
   // anchor/origin, equivalent to {{0, 0}, {1, 1}}
 	// aligns the bottom right of the element to the top left of its parent
 	placement = orui.placement(.TopLeft, .BottomRight),
+
+  // scroll managed by orui, equivalent to {.Vertical, scroll_offset()}
+	scroll = orui.scroll(.Vertical),
 })
 ```
 

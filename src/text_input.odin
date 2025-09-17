@@ -114,12 +114,14 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
 	inner_width := inner_width(element)
 
-	x_start := element._position.x + element.padding.left + element.border.left
+	x_start :=
+		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
 	y_start :=
 		element._position.y +
 		element.padding.top +
 		element.border.top +
-		calculate_text_offset(element)
+		calculate_text_offset(element) -
+		element.scroll.offset.y
 
 	if element.overflow == .Visible {
 		line_width := measure_text_width(text, element.font, element.font_size, letter_spacing)
@@ -341,4 +343,165 @@ caret_index_down :: proc(element: ^Element, from: rl.Vector2) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
 	target := from + {0, line_height}
 	return text_caret_from_point(element, target)
+}
+
+@(private)
+ensure_caret_visible :: proc(ctx: ^Context, element: ^Element, caret_index: int) {
+	if element.overflow == .Visible {
+		ensure_caret_visible_horizontal(ctx, element, caret_index)
+	} else if element.overflow == .Wrap {
+		ensure_caret_visible_vertical(ctx, element, caret_index)
+	}
+}
+
+@(private)
+ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_index: int) {
+	if len(element.text) == 0 {
+		return
+	}
+
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	inner_width := inner_width(element)
+
+	text_before_caret := element.text[:caret_index]
+	caret_x := measure_text_width(
+		text_before_caret,
+		element.font,
+		element.font_size,
+		letter_spacing,
+	)
+	scroll_offset := get_scroll_offset(element)
+
+	if caret_x < scroll_offset.x {
+		scroll_offset.x = caret_x
+	}
+
+	if caret_x > scroll_offset.x + inner_width {
+		scroll_offset.x = caret_x - inner_width
+	}
+
+	max_scroll := max(0, element._content_size.x - inner_width)
+	scroll_offset.x = clamp(scroll_offset.x, 0, max_scroll)
+	set_scroll_offset(element.id, scroll_offset)
+}
+
+@(private)
+ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_index: int) {
+	if len(element.text) == 0 {
+		return
+	}
+
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	line_height := measure_text_height(element.font_size, element.line_height)
+	inner_width := inner_width(element)
+	inner_height := inner_height(element)
+
+	caret_line := find_caret_line(element, caret_index, inner_width, letter_spacing)
+	caret_y := f32(caret_line) * line_height
+
+	scroll_offset := get_scroll_offset(element)
+
+	if caret_y < scroll_offset.y {
+		scroll_offset.y = caret_y
+	}
+
+	if caret_y + line_height > scroll_offset.y + inner_height {
+		scroll_offset.y = caret_y + line_height - inner_height
+	}
+
+	prev_max := max(0, element._content_size.y - inner_height)
+	needed_max := max(0, caret_y + line_height - inner_height)
+	max_scroll := max(prev_max, needed_max)
+	scroll_offset.y = clamp(scroll_offset.y, 0, max_scroll)
+	set_scroll_offset(element.id, scroll_offset)
+}
+
+@(private)
+find_caret_line :: proc(
+	element: ^Element,
+	caret_index: int,
+	inner_width: f32,
+	letter_spacing: f32,
+) -> int {
+	text := element.text
+	text_len := len(text)
+	index := 0
+	line := 0
+	line_width: f32 = 0
+	pending_space: f32 = 0
+	line_started_by_newline := true
+	last_nonspace_end := 0
+
+	for index < text_len {
+		if text[index] == '\n' {
+			if caret_index <= index {
+				return line
+			}
+			index += 1
+			line += 1
+			line_width = 0
+			pending_space = 0
+			last_nonspace_end = index
+			line_started_by_newline = true
+			continue
+		}
+
+		for index < text_len && text[index] != '\n' {
+			if caret_index <= index {
+				return line
+			}
+
+			word_start, word_end := find_next_space(text, index)
+			token := text[word_start:word_end]
+			is_space := text[word_start] == ' '
+			token_width := measure_text_width(
+				token,
+				element.font,
+				element.font_size,
+				letter_spacing,
+			)
+
+			if is_space {
+				if line_width == 0 && !line_started_by_newline {
+					index = word_end
+					continue
+				}
+				if line_width > 0 {
+					line_width += letter_spacing
+				}
+				pending_space = token_width
+				index = word_end
+				continue
+			}
+
+			joining_space := pending_space > 0 ? letter_spacing : 0
+			next_width := line_width + pending_space + token_width + joining_space
+
+			if next_width <= inner_width + 0.0001 {
+				line_width = next_width
+				last_nonspace_end = word_end
+				pending_space = 0
+				index = word_end
+				line_started_by_newline = false
+				continue
+			}
+
+			if caret_index <= last_nonspace_end {
+				return line
+			}
+
+			line += 1
+			line_width = 0
+			pending_space = 0
+			line_started_by_newline = false
+			index = word_start
+			break
+		}
+
+		if index >= text_len {
+			return line
+		}
+	}
+
+	return line
 }

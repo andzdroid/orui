@@ -115,10 +115,13 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 				child = child_element.next
 			}
 		}
+
+		element._content_size.x = sum_with_margins + gaps
 	} else {
 		// set percent and grow widths of children according to parent width
 		element_inner_width := inner_width(element)
 
+		max_width: f32 = 0
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
@@ -126,6 +129,11 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
+			}
+
+			width := child_element._size.x + x_margin(child_element)
+			if width > max_width {
+				max_width = width
 			}
 
 			if child_element.width.type == .Percent {
@@ -138,6 +146,8 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 			flex_clamp_width(ctx, child_element)
 			child = child_element.next
 		}
+
+		element._content_size.x = max_width
 	}
 }
 
@@ -256,10 +266,13 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 				child = child_element.next
 			}
 		}
+
+		element._content_size.y = sum_with_margins + gaps
 	} else {
 		// set percent and grow heights of children according to parent height
 		element_inner_height := inner_height(element)
 
+		max_height: f32 = 0
 		child := element.children
 		for child != 0 {
 			child_element := &ctx.elements[child]
@@ -267,6 +280,11 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
+			}
+
+			height := child_element._size.y + y_margin(child_element)
+			if height > max_height {
+				max_height = height
 			}
 
 			if child_element.height.type == .Percent {
@@ -279,6 +297,8 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 			flex_clamp_height(ctx, child_element)
 			child = child_element.next
 		}
+
+		element._content_size.y = max_height
 	}
 }
 
@@ -394,6 +414,8 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 		if child_element.position.type == .Relative {
 			child_element._position += child_element.position.value
 		}
+
+		child_element._position -= get_scroll_offset(element)
 
 		if element.direction == .LeftToRight {
 			x += child_element._size.x + element.gap + child_element.margin.right

@@ -7,11 +7,11 @@ import rl "vendor:raylib"
 id_buffer: [32]byte
 
 row_id :: proc(i: int) -> int {
-	return i
+	return 123456789 + i
 }
 
 cell_id :: proc(i: int, j: int) -> int {
-	return i * 80 + j
+	return 123456789 + i * 80 + j
 }
 
 render_dense_row :: proc(i: int) {

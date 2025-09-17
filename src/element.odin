@@ -118,9 +118,8 @@ Overflow :: enum {
 	// Content will be wrapped to fit in the element.
 	Wrap,
 	// Content will be visible outside of the element.
-	// You might want to combine this with a clip type.
+	// You might want to combine this with clip and/or scroll.
 	Visible,
-	// Scroll,
 }
 
 TextureFit :: enum {
@@ -159,6 +158,22 @@ ClipRectangle :: struct {
 Clip :: struct {
 	type:      ClipType,
 	rectangle: ClipRectangle,
+}
+
+ScrollDirection :: enum {
+	None,
+	Auto,
+	// Automatically handle mouse scroll events for vertical scrolling.
+	Vertical,
+	// Automatically handle mouse scroll events for horizontal scrolling.
+	Horizontal,
+	// Manually set scroll offset
+	Manual,
+}
+
+ScrollConfig :: struct {
+	direction: ScrollDirection,
+	offset:    rl.Vector2,
 }
 
 ElementConfig :: struct {
@@ -277,6 +292,9 @@ ElementConfig :: struct {
 	capture:          InheritedBool,
 	editable:         bool,
 
+	// Scroll configuration
+	scroll:           ScrollConfig,
+
 	// Emit a custom event in the render command array for this element.
 	// Can be used to interleave your own rendering with orui's rendering.
 	custom_event:     rawptr,
@@ -346,12 +364,16 @@ Element :: struct {
 	capture:           InheritedBool,
 	editable:          bool,
 
+	// scroll
+	scroll:            ScrollConfig,
+
 	// custom event
 	custom_event:      rawptr,
 
 	// internal
 	_position:         rl.Vector2,
 	_size:             rl.Vector2, // border box size
+	_content_size:     rl.Vector2,
 	_layer:            int,
 	_line_count:       int,
 	_grid_col_index:   int,
@@ -441,6 +463,9 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.block = config.block == .Inherit ? parent.block : config.block
 	element.capture = config.capture == .Inherit ? parent.capture : config.capture
 	element.editable = config.editable
+
+	// scroll
+	element.scroll = config.scroll
 
 	element.custom_event = config.custom_event
 }
