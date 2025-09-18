@@ -339,32 +339,24 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.cols = config.cols
 	{
 		provided := len(config.col_sizes)
-		copy_count := provided
-		if copy_count > MAX_GRID_TRACKS {copy_count = MAX_GRID_TRACKS}
+		copy_count := min(provided, MAX_GRID_TRACKS)
 		for i in 0 ..< copy_count {
 			element.col_sizes[i] = config.col_sizes[i]
 		}
-		last := Size{}
-		if provided > 0 {
-			last = config.col_sizes[provided - 1]
-		}
-		for i in copy_count ..< MAX_GRID_TRACKS {
+		last := provided > 0 ? config.col_sizes[provided - 1] : {}
+		for i in copy_count ..< element.cols {
 			element.col_sizes[i] = last
 		}
 	}
 	element.rows = config.rows
 	{
 		provided := len(config.row_sizes)
-		copy_count := provided
-		if copy_count > MAX_GRID_TRACKS {copy_count = MAX_GRID_TRACKS}
+		copy_count := min(provided, MAX_GRID_TRACKS)
 		for i in 0 ..< copy_count {
 			element.row_sizes[i] = config.row_sizes[i]
 		}
-		last := Size{}
-		if provided > 0 {
-			last = config.row_sizes[provided - 1]
-		}
-		for i in copy_count ..< MAX_GRID_TRACKS {
+		last := provided > 0 ? config.row_sizes[provided - 1] : {}
+		for i in copy_count ..< element.rows {
 			element.row_sizes[i] = last
 		}
 	}

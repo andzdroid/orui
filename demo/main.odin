@@ -1,24 +1,52 @@
 package demo
 
 import orui "../src"
+import "base:runtime"
 import "core:fmt"
 import "core:log"
 import "core:mem"
 import "core:os"
+import "core:prof/spall"
 import "core:strings"
+import "core:sync"
 import "core:time"
 import rl "vendor:raylib"
+
+PROFILE :: #config(PROFILE, false)
+
+when PROFILE {
+	spall_ctx: spall.Context
+	@(thread_local)
+	spall_buffer: spall.Buffer
+
+	@(instrumentation_enter)
+	spall_enter :: proc "contextless" (
+		proc_address, call_site_return_address: rawptr,
+		loc: runtime.Source_Code_Location,
+	) {
+		spall._buffer_begin(&spall_ctx, &spall_buffer, "", "", loc)
+	}
+
+	@(instrumentation_exit)
+	spall_exit :: proc "contextless" (
+		proc_address, call_site_return_address: rawptr,
+		loc: runtime.Source_Code_Location,
+	) {
+		spall._buffer_end(&spall_ctx, &spall_buffer)
+	}
+}
 
 SAMPLE_COUNT :: 240
 
 texture: rl.Texture2D
 
 Scene :: enum {
+	Test_Text,
 	Test_Flex,
 	Test_Grid,
-	Test_Text,
 	Test_Image,
 	Test_Placement,
+	Test_Dense,
 }
 
 main :: proc() {
@@ -53,6 +81,15 @@ main :: proc() {
 			log.info("No allocations were leaked")
 		}
 		mem.tracking_allocator_destroy(&tracking_allocator)
+	}
+
+	when PROFILE {
+		spall_ctx = spall.context_create("trace_test.spall")
+		defer spall.context_destroy(&spall_ctx)
+		buffer_backing := make([]u8, spall.BUFFER_DEFAULT_SIZE)
+		defer delete(buffer_backing)
+		spall_buffer = spall.buffer_create(buffer_backing, u32(sync.current_thread_id()))
+		defer spall.buffer_destroy(&spall_ctx, &spall_buffer)
 	}
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT})
@@ -103,6 +140,8 @@ main :: proc() {
 			render_test_text()
 		case .Test_Placement:
 			render_test_placement()
+		case .Test_Dense:
+			render_dense()
 		}
 
 		if debug {
@@ -169,12 +208,18 @@ main :: proc() {
 		rl.EndDrawing()
 
 		free_all(context.temp_allocator)
+
+		when PROFILE {
+			if ctx.frame > 15 {
+				break
+			}
+		}
 	}
 
-	for i in 0 ..< ctx.element_count {
-		element := &ctx.elements[i]
-		log.infof("%v", element)
-	}
+	// for i in 0 ..< ctx.element_count {
+	// 	element := &ctx.elements[i]
+	// 	log.infof("%v", element)
+	// }
 
 	rl.CloseWindow()
 }

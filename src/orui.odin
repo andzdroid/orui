@@ -142,8 +142,20 @@ _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
 //
 // You should NOT cache the result of this function, always call it inside an element declaration.
 // This should not be used outside of element declarations. Use to_id() instead.
-id :: proc(str: string) -> Id {
+id :: proc {
+	_id,
+	_id_int,
+}
+
+_id :: proc(str: string) -> Id {
 	id := to_id(str)
+	ctx := current_context
+	ctx.current_id = id
+	return id
+}
+
+_id_int :: proc(id: int) -> Id {
+	id := Id(id)
 	ctx := current_context
 	ctx.current_id = id
 	return id
@@ -155,7 +167,10 @@ id :: proc(str: string) -> Id {
 // Must be closed with end_element().
 begin_element :: proc(id: Id) -> (^Element, ^Element) {
 	ctx := current_context
-	assert(ctx.current_id == id, "id mismatch. id() should only be called in element declarations")
+	assert(
+		ctx.current_id == id,
+		"id mismatch. id() must always be called in the element declaration",
+	)
 	parent_index := ctx.current
 	parent := &ctx.elements[parent_index]
 

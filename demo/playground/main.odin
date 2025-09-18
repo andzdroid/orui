@@ -240,6 +240,7 @@ main :: proc() {
 								padding = orui.padding(10),
 								margin = orui.margin(25),
 								gap = 10,
+								overflow = .Hidden,
 							},
 						)
 

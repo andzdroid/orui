@@ -39,7 +39,11 @@ window :: proc(id: string, title: string, position: rl.Vector2, dragging: bool, 
 				capture = .True,
 			},
 		)
-		orui.label(orui.id(fmt.tprintf("%s title", id)), title, {font_size = 16, color = rl.WHITE})
+		orui.label(
+			orui.id(fmt.tprintf("%s title", id)),
+			title,
+			{font_size = 16, color = rl.WHITE, disabled = .True},
+		)
 
 		orui.image(
 			orui.id(fmt.tprintf("%s close icon", id)),
