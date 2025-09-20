@@ -61,7 +61,7 @@ RenderCommandDataImage :: struct {
 }
 
 RenderCommandDataScissorStart :: struct {
-	rectangle: rl.Rectangle,
+	rectangle: ClipRectangle,
 }
 
 RenderCommandDataScissorEnd :: struct {}

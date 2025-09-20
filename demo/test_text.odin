@@ -44,6 +44,7 @@ render_test_text :: proc() {
 			color = rl.BLACK,
 			font_size = 14,
 			overflow = .Visible,
+			clip = {.Self, {}},
 			border = orui.border(1),
 			border_color = orui.focused() ? rl.BLACK : rl.LIGHTGRAY,
 		},

@@ -121,7 +121,7 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 		element.border.top +
 		calculate_text_offset(element)
 
-	if element.overflow == .Visible || element.overflow == .Hidden {
+	if element.overflow == .Visible {
 		line_width := measure_text_width(text, element.font, element.font_size, letter_spacing)
 		line_offset := calculate_line_offset(element, line_width, inner_width)
 		local_x := point.x - (x_start + line_offset)

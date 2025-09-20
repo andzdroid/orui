@@ -526,13 +526,11 @@ Control how an element handles its content overflowing its size.
 
 - **Wrap**: overflowing content will wrap around. This is the default.
 - **Visible**: content will not wrap, it will overflow the container and render outside of it.
-- **Hidden**: content will not wrap, it will be cut off at the container boundary. This uses scissor mode which could impact performance.
 
 ```odin
 Overflow :: enum {
 	Wrap,
 	Visible,
-	Hidden,
 }
 ```
 
@@ -543,6 +541,38 @@ Layer controls the render order of elements. Set this to ensure an element rende
 The root layer starts at layer 1. If you don't define the element's layer, it will be placed in the same layer as its parent.
 
 Elements in the same layer are drawn in the order in which the elements were declared.
+
+### clip
+
+Control an element's clipping when being rendered.
+
+Any content or children outside of an element's clip rectangle will be cut off and not rendered.
+
+Set it to `Self` or `Intersect` to set a clip rectangle automatically using the element's size and position. The `rectangle` field is ignored.
+
+Set it to `Manual` if you want to pass in a custom clip rectangle.
+
+Set it to `None` to break out of an ancestor element's clip. The `rectangle` field is ignored.
+
+```odin
+Clip :: struct {
+	type:      ClipType,
+	rectangle: ClipRectangle,
+}
+
+ClipType :: enum {
+	// Use parent clip
+	Inherit,
+	// Set clip to element position and size
+	Self,
+	// Set clip to element position and size, and intersect with parent clip
+	Intersect,
+	// Set clip to the provided rectangle
+	Manual,
+	// Do not clip the element
+	None,
+}
+```
 
 ### cols, rows
 

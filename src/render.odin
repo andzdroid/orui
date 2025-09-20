@@ -55,24 +55,93 @@ render :: proc(ctx: ^Context) {
 	collect_elements(ctx, 0, 0)
 	sort_elements(ctx)
 
+	current_clip: ClipRectangle
 	ctx.render_command_count = 0
 	for i := 0; i < ctx.sorted_count; i += 1 {
 		index := ctx.sorted[i]
+		element := &ctx.elements[index]
+
+		if element._clip != current_clip {
+			if current_clip.width > 0 && current_clip.height > 0 {
+				ctx.render_commands[ctx.render_command_count] = RenderCommand {
+					type = .ScissorEnd,
+					data = RenderCommandDataScissorEnd{},
+				}
+				ctx.render_command_count += 1
+				current_clip = {}
+			}
+
+			if element._clip.width > 0 && element._clip.height > 0 {
+				ctx.render_commands[ctx.render_command_count] = RenderCommand {
+					type = .ScissorStart,
+					data = RenderCommandDataScissorStart{rectangle = element._clip},
+				}
+				ctx.render_command_count += 1
+				current_clip = element._clip
+			}
+		}
+
 		render_element(ctx, index)
+	}
+
+	if current_clip != {} {
+		ctx.render_commands[ctx.render_command_count] = RenderCommand {
+			type = .ScissorEnd,
+			data = RenderCommandDataScissorEnd{},
+		}
+		ctx.render_command_count += 1
 	}
 }
 
 @(private = "file")
-collect_elements :: proc(ctx: ^Context, index: int, parent_layer: int) {
+collect_elements :: proc(ctx: ^Context, index: int, parent_index: int) {
 	element := &ctx.elements[index]
-	element._layer = element.layer == 0 ? parent_layer : element.layer
+	parent := &ctx.elements[parent_index]
+	element._layer = element.layer == 0 ? parent._layer : element.layer
+
+	switch element.clip.type {
+	case .Inherit:
+		element._clip = parent._clip
+	case .Self:
+		element._clip = {
+			i32(element._position.x),
+			i32(element._position.y),
+			i32(element._size.x),
+			i32(element._size.y),
+		}
+	case .Intersect:
+		if parent._clip != {} {
+			x1 := max(i32(element._position.x), parent._clip.x)
+			y1 := max(i32(element._position.y), parent._clip.y)
+			x2 := min(
+				i32(element._position.x + element._size.x),
+				parent._clip.x + parent._clip.width,
+			)
+			y2 := min(
+				i32(element._position.y + element._size.y),
+				parent._clip.y + parent._clip.height,
+			)
+			element._clip = {x1, y1, max(0, x2 - x1), max(0, y2 - y1)}
+		} else {
+			element._clip = {
+				i32(element._position.x),
+				i32(element._position.y),
+				i32(element._size.x),
+				i32(element._size.y),
+			}
+		}
+	case .Manual:
+		element._clip = element.clip.rectangle
+	case .None:
+		element._clip = {}
+	}
 
 	ctx.sorted[ctx.sorted_count] = index
 	ctx.sorted_count += 1
 
 	child := ctx.elements[index].children
 	for child != 0 {
-		collect_elements(ctx, child, element._layer)
+		collect_elements(ctx, child, index)
 		child = ctx.elements[child].next
 	}
 }
@@ -123,33 +192,10 @@ render_element :: proc(ctx: ^Context, index: int) {
 	}
 
 	if element.has_text {
-		if element.overflow == .Hidden {
-			ctx.render_commands[ctx.render_command_count] = RenderCommand {
-				type = .ScissorStart,
-				data = RenderCommandDataScissorStart {
-					rectangle = {
-						element._position.x,
-						element._position.y,
-						element._size.x,
-						element._size.y,
-					},
-				},
-			}
-			ctx.render_command_count += 1
-		}
-
 		if element.overflow == .Wrap {
 			render_wrapped_text(ctx, element)
 		} else {
 			render_text(ctx, element)
-		}
-
-		if element.overflow == .Hidden {
-			ctx.render_commands[ctx.render_command_count] = RenderCommand {
-				type = .ScissorEnd,
-				data = RenderCommandDataScissorEnd{},
-			}
-			ctx.render_command_count += 1
 		}
 	}
 

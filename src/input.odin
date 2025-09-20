@@ -120,8 +120,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			ctx.focus_id = 0
 			ctx.repeat_key = .KEY_NULL
 			ctx.text_selection = {}
-		} else if rl.IsKeyPressed(.ENTER) &&
-		   (element.overflow == .Visible || element.overflow == .Hidden) {
+		} else if rl.IsKeyPressed(.ENTER) && element.overflow == .Visible {
 			ctx.focus = 0
 			ctx.focus_id = 0
 			ctx.repeat_key = .KEY_NULL

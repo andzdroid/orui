@@ -79,17 +79,26 @@ LayoutDirection :: enum {
 }
 
 MainAlignment :: enum {
+	// Align children to beginning of element
 	Start,
+	// Align children to end of element
 	End,
+	// Center the children
 	Center,
+	// Distribute children with equal space between them, no space at edges
 	SpaceBetween,
+	// Distribute children with equal space around each item
 	SpaceAround,
+	// Distribute children with equal space between them and edges
 	SpaceEvenly,
 }
 
 CrossAlignment :: enum {
+	// Align children to beginning of element
 	Start,
+	// Align children to end of element
 	End,
+	// Center the children
 	Center,
 }
 
@@ -106,18 +115,50 @@ InheritedBool :: enum {
 }
 
 Overflow :: enum {
+	// Content will be wrapped to fit in the element.
 	Wrap,
+	// Content will be visible outside of the element.
+	// You might want to combine this with a clip type.
 	Visible,
-	Hidden,
 	// Scroll,
 }
 
 TextureFit :: enum {
+	// Image will be stretched or squashed to fill the container.
 	Fill,
+	// Keeps its aspect ratio, and resizes to fit the container.
 	Contain,
+	// Keeps its aspect ratio, and resizes to fill the container. Image may be clipped.
 	Cover,
+	// Image is not resized.
 	None,
+	// Same as contain but only scale down, never up.
 	ScaleDown,
+}
+
+ClipType :: enum {
+	// Use parent clip
+	Inherit,
+	// Set clip to element position and size
+	Self,
+	// Set clip to element position and size, and intersect with parent clip
+	Intersect,
+	// Set clip to the provided rectangle
+	Manual,
+	// Do not clip the element
+	None,
+}
+
+ClipRectangle :: struct {
+	x:      i32,
+	y:      i32,
+	width:  i32,
+	height: i32,
+}
+
+Clip :: struct {
+	type:      ClipType,
+	rectangle: ClipRectangle,
 }
 
 ElementConfig :: struct {
@@ -154,6 +195,9 @@ ElementConfig :: struct {
 	// Control the render order of the element.
 	// Inherited from parent by default.
 	layer:            int,
+	// How the element is clipped.
+	// Inherited from parent by default.
+	clip:             Clip,
 
 	// Number of columns.
 	// Only used for Grid layout.
@@ -260,6 +304,7 @@ Element :: struct {
 	align_cross:       CrossAlignment,
 	overflow:          Overflow,
 	layer:             int,
+	clip:              Clip,
 
 	// grid
 	cols:              int,
@@ -315,6 +360,7 @@ Element :: struct {
 	_grid_col_sizes:   [MAX_GRID_TRACKS]f32,
 	_grid_row_offsets: [MAX_GRID_TRACKS]f32,
 	_grid_col_offsets: [MAX_GRID_TRACKS]f32,
+	_clip:             ClipRectangle,
 }
 
 @(private)
@@ -334,6 +380,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.align_cross = config.align_cross
 	element.overflow = config.overflow
 	element.layer = config.layer
+	element.clip = config.clip
 
 	// grid
 	element.cols = config.cols
