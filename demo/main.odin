@@ -37,7 +37,7 @@ when PROFILE {
 	}
 }
 
-SAMPLE_COUNT :: 240
+SAMPLE_COUNT :: 60
 
 texture: rl.Texture2D
 
@@ -119,15 +119,21 @@ main :: proc() {
 	scene := 0
 	command_count := 0
 
+	avg1, avg2: time.Duration
+	update_timer: f32 = 0
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
 
-		avg1, avg2: time.Duration
-		for sample in elapsed1_samples do avg1 += sample
-		for sample in elapsed2_samples do avg2 += sample
-		avg1 /= SAMPLE_COUNT
-		avg2 /= SAMPLE_COUNT
+		update_timer += rl.GetFrameTime()
+		if update_timer > 1 {
+			update_timer = 0
+			for sample in elapsed1_samples do avg1 += sample
+			for sample in elapsed2_samples do avg2 += sample
+			avg1 /= SAMPLE_COUNT
+			avg2 /= SAMPLE_COUNT
+		}
 
 		start_time := time.now()
 		width := rl.GetScreenWidth()
@@ -173,12 +179,12 @@ main :: proc() {
 					)
 					orui.label(
 						orui.id("debug elapsed 1"),
-						fmt.tprintf("Elapsed 1: %v", avg1),
+						fmt.tprintf("Elapsed 1: %.3f ms", time.duration_milliseconds(avg1)),
 						{font_size = 16, color = rl.WHITE},
 					)
 					orui.label(
 						orui.id("debug elapsed 2"),
-						fmt.tprintf("Elapsed 2: %v", avg2),
+						fmt.tprintf("Elapsed 2: %.3f ms", time.duration_milliseconds(avg2)),
 						{font_size = 16, color = rl.WHITE},
 					)
 					orui.label(

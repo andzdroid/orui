@@ -23,6 +23,11 @@ measure_text_width :: proc(
 		count += 1
 
 		if codepoint != '\n' {
+			// fallback to question mark
+			if index < 0 || i32(index) >= font.glyphCount {
+				index = '?' - 32
+			}
+
 			if font.glyphs[index].advanceX > 0 {
 				width += f32(font.glyphs[index].advanceX)
 			} else {
