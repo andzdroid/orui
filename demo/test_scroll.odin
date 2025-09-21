@@ -1,7 +1,6 @@
 package demo
 
 import orui "../src"
-import "core:fmt"
 import rl "vendor:raylib"
 
 text_view1: orui.TextView
@@ -92,7 +91,7 @@ render_test_scroll :: proc() {
 		for i in 0 ..< 50 {
 			orui.label(
 				orui.id(123456789 + i),
-				fmt.tprintf("Label %v", i + 1),
+				"Element",
 				{
 					width = orui.grow(),
 					height = orui.fixed(200),

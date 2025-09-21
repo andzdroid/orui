@@ -252,7 +252,6 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 	if element.font == nil && current_context.default_font != {} {
 		element.font = &current_context.default_font
 	}
-	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
 
 	end_element()
 
@@ -280,7 +279,6 @@ text_input :: proc(
 	if element.font == nil && current_context.default_font != {} {
 		element.font = &current_context.default_font
 	}
-	assert(element.font != nil, fmt.tprintf("element with id %s is missing a font", id))
 
 	end_element()
 

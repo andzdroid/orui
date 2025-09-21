@@ -363,6 +363,7 @@ ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
 
+	caret_index := clamp(caret_index, 0, len(element.text))
 	text_before_caret := element.text[:caret_index]
 	caret_x := measure_text_width(
 		text_before_caret,

@@ -1,6 +1,8 @@
 package demo
 
 import orui "../../src"
+import "core:path/filepath"
+import "core:strings"
 import rl "vendor:raylib"
 
 Skin :: enum {
@@ -64,7 +66,7 @@ button :: proc(id: string, label: string, skin: Skin) -> bool {
 	return orui.label(
 		orui.id(id),
 		label,
-		{width = orui.fit(), height = orui.fit(), font_size = 14, padding = {10, 20, 10, 20}},
+		{width = orui.fit(), height = orui.fit(), font_size = 16, padding = {10, 20, 10, 20}},
 		button_style(skin),
 	)
 }
@@ -76,7 +78,8 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
-	ctx.default_font = rl.GetFontDefault()
+	font_path := filepath.join({#directory, "..", "assets", "Inter-Regular.ttf"})
+	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 
 	skin := Skin.Dark
@@ -164,7 +167,7 @@ main :: proc() {
 						{
 							width = orui.grow(),
 							height = orui.grow(),
-							font_size = 14,
+							font_size = 16,
 							color = skin == .Dark ? rl.WHITE : rl.BLACK,
 							padding = orui.padding(16),
 							align = {.Start, .Start},

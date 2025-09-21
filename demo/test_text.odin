@@ -35,31 +35,16 @@ render_test_text :: proc() {
 	)
 
 	orui.label(
-		orui.id("1"),
-		"Dropdown: Option 1",
-		{font_size = 14, letter_spacing = 5},
-		button_style,
-	)
-
-	orui.label(orui.id("2"), "Dropdown: Option 2", {font_size = 14}, button_style)
-
-	orui.label(
 		orui.id("3"),
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
-		{
-			font_size = 12,
-			height = orui.grow(),
-			width = orui.grow(),
-			overflow = .Wrap,
-			align = {.End, .End},
-		},
+		{font_size = 16, width = orui.grow(), overflow = .Wrap, align = {.End, .End}},
 		button_style,
 	)
 
 	orui.label(
 		orui.id("4"),
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
-		{font_size = 12, width = orui.fixed(300), letter_spacing = 3},
+		{font_size = 16, width = orui.fixed(300), letter_spacing = 3},
 		button_style,
 	)
 
@@ -71,7 +56,7 @@ render_test_text :: proc() {
 			padding = orui.padding(8),
 			background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
 			color = rl.BLACK,
-			font_size = 14,
+			font_size = 16,
 			overflow = .Visible,
 			clip = {.Self, {}},
 			scroll = orui.scroll(.Horizontal),
@@ -83,7 +68,7 @@ render_test_text :: proc() {
 	orui.label(
 		orui.id("text output"),
 		string(text_view.data[:text_view.length]),
-		{font_size = 14},
+		{font_size = 16},
 		button_style,
 	)
 
@@ -91,7 +76,7 @@ render_test_text :: proc() {
 	orui.label(
 		orui.id("5"),
 		"Line 1\nLine 2",
-		{font_size = 14, width = orui.fixed(200)},
+		{font_size = 16, width = orui.fixed(200)},
 		button_style,
 	)
 
@@ -113,7 +98,7 @@ render_test_text :: proc() {
 			orui.id("align start start"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Start, .Start},
@@ -125,7 +110,7 @@ render_test_text :: proc() {
 			orui.id("align center start"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Center, .Start},
@@ -137,7 +122,7 @@ render_test_text :: proc() {
 			orui.id("align end start"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.End, .Start},
@@ -149,7 +134,7 @@ render_test_text :: proc() {
 			orui.id("align start center"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Start, .Center},
@@ -161,7 +146,7 @@ render_test_text :: proc() {
 			orui.id("align center center"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Center, .Center},
@@ -173,7 +158,7 @@ render_test_text :: proc() {
 			orui.id("align end center"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.End, .Center},
@@ -185,7 +170,7 @@ render_test_text :: proc() {
 			orui.id("align start end"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Start, .End},
@@ -197,7 +182,7 @@ render_test_text :: proc() {
 			orui.id("align center end"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.Center, .End},
@@ -209,7 +194,7 @@ render_test_text :: proc() {
 			orui.id("align end end"),
 			"Lorem",
 			{
-				font_size = 12,
+				font_size = 16,
 				width = orui.fixed(100),
 				height = orui.fixed(100),
 				align = {.End, .End},

@@ -1,6 +1,8 @@
 package demo
 
 import orui "../../src"
+import "core:path/filepath"
+import "core:strings"
 import rl "vendor:raylib"
 
 button_style :: proc(element: ^orui.Element) {
@@ -279,7 +281,8 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
-	ctx.default_font = rl.GetFontDefault()
+	font_path := filepath.join({#directory, "..", "assets", "Inter-Regular.ttf"})
+	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 
 	toggle_state := false

@@ -5,6 +5,8 @@ import "core:fmt"
 import "core:log"
 import "core:math"
 import "core:os"
+import "core:path/filepath"
+import "core:strings"
 import rl "vendor:raylib"
 
 close_icon: rl.Texture2D
@@ -77,12 +79,12 @@ main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
 
-	default_font := rl.GetFontDefault()
-
 	ctx := new(orui.Context)
 	defer free(ctx)
 
-	ctx.default_font = default_font
+	font_path := filepath.join({#directory, "..", "assets", "Inter-Regular.ttf"})
+	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
+	defer rl.UnloadFont(ctx.default_font)
 
 	close_icon = rl.LoadTexture("close.png")
 	defer rl.UnloadTexture(close_icon)
@@ -163,8 +165,7 @@ main :: proc() {
 						{
 							width = orui.grow(),
 							height = orui.grow(),
-							font = &default_font,
-							font_size = 14,
+							font_size = 16,
 							color = rl.WHITE,
 							padding = orui.padding(16),
 							align = {.Start, .Start},
@@ -190,8 +191,7 @@ main :: proc() {
 							{
 								width = orui.fit(),
 								height = orui.fit(),
-								font = &default_font,
-								font_size = 14,
+								font_size = 16,
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
 								background_color = orui.active() ? {100, 120, 100, 255} : orui.hovered() ? {110, 140, 110, 255} : {60, 80, 60, 255},
@@ -208,8 +208,7 @@ main :: proc() {
 							{
 								width = orui.fit(),
 								height = orui.fit(),
-								font = &default_font,
-								font_size = 14,
+								font_size = 16,
 								color = rl.WHITE,
 								padding = {10, 20, 10, 20},
 								background_color = orui.active() ? {120, 100, 100, 255} : orui.hovered() ? {140, 120, 120, 255} : {80, 60, 60, 255},

@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:log"
 import "core:mem"
 import "core:os"
+import "core:path/filepath"
 import "core:prof/spall"
 import "core:strings"
 import "core:sync"
@@ -97,13 +98,15 @@ main :: proc() {
 	rl.InitWindow(1280, 900, "orui")
 	rl.SetTargetFPS(120)
 
-	texture = rl.LoadTexture("icon.png")
+	texture_path := filepath.join({#directory, "assets", "icon.png"})
+	texture = rl.LoadTexture(strings.clone_to_cstring(texture_path, context.temp_allocator))
 	defer rl.UnloadTexture(texture)
 
 	ctx := new(orui.Context)
 	defer free(ctx)
 
-	ctx.default_font = rl.GetFontDefault()
+	font_path := filepath.join({#directory, "assets", "Inter-Regular.ttf"})
+	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 
 	log.infof("orui struct size: %v MB", size_of(ctx^) / mem.Megabyte)
@@ -148,45 +151,47 @@ main :: proc() {
 			render_test_scroll()
 		}
 
-		if debug {
-			{orui.container(
-					orui.id("debug"),
-					{
-						position = {.Fixed, {}},
-						width = orui.percent(1),
-						direction = .TopToBottom,
-						padding = orui.padding(8),
-						gap = 4,
-						background_color = {0, 0, 0, 220},
-					},
-				)
+		when !PROFILE {
+			if debug {
+				{orui.container(
+						orui.id("debug"),
+						{
+							position = {.Fixed, {}},
+							width = orui.percent(1),
+							direction = .TopToBottom,
+							padding = orui.padding(8),
+							gap = 4,
+							background_color = {0, 0, 0, 220},
+						},
+					)
 
-				fps := rl.GetFPS()
-				orui.label(
-					orui.id("debug fps"),
-					fmt.tprintf("FPS: %v", fps),
-					{font_size = 16, color = rl.WHITE},
-				)
-				orui.label(
-					orui.id("debug elapsed 1"),
-					fmt.tprintf("Elapsed 1: %v", avg1),
-					{font_size = 16, color = rl.WHITE},
-				)
-				orui.label(
-					orui.id("debug elapsed 2"),
-					fmt.tprintf("Elapsed 2: %v", avg2),
-					{font_size = 16, color = rl.WHITE},
-				)
-				orui.label(
-					orui.id("debug command count"),
-					fmt.tprintf("Command count: %v", command_count),
-					{font_size = 16, color = rl.WHITE},
-				)
-				orui.label(
-					orui.id("debug element count"),
-					fmt.tprintf("Element count: %v", ctx.element_count),
-					{font_size = 16, color = rl.WHITE},
-				)
+					fps := rl.GetFPS()
+					orui.label(
+						orui.id("debug fps"),
+						fmt.tprintf("FPS: %v", fps),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("debug elapsed 1"),
+						fmt.tprintf("Elapsed 1: %v", avg1),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("debug elapsed 2"),
+						fmt.tprintf("Elapsed 2: %v", avg2),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("debug command count"),
+						fmt.tprintf("Command count: %v", command_count),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("debug element count"),
+						fmt.tprintf("Element count: %v", ctx.element_count),
+						{font_size = 16, color = rl.WHITE},
+					)
+				}
 			}
 		}
 
@@ -232,9 +237,11 @@ main :: proc() {
 		}
 	}
 
-	for i in 0 ..< ctx.element_count {
-		element := &ctx.elements[i]
-		log.infof("%v", element)
+	when !PROFILE {
+		for i in 0 ..< ctx.element_count {
+			element := &ctx.elements[i]
+			log.infof("%v", element)
+		}
 	}
 
 	rl.CloseWindow()
