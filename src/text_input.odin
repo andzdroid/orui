@@ -216,123 +216,24 @@ wrapped_line_at :: proc(
 	text := element.text
 	text_len := len(text)
 
-	index := 0
-	line := 0
-
-	line_start := 0
-	line_width: f32 = 0
-	pending_space: f32 = 0
-	line_started_by_newline := true
-	last_nonspace_end := 0
-
-	for index < text_len {
-		if text[index] == '\n' {
-			// include trailing spaces on hard wrapped lines
-			joining_space := (line_width > 0 && pending_space > 0) ? letter_spacing : 0
-			actual_width := line_width + pending_space + joining_space
-			if line == target_line {
-				return line_start, index, actual_width
-			}
-
-			// advance to next line
-			index += 1
-			line += 1
-			line_start = index
-			line_width = 0
-			pending_space = 0
-			last_nonspace_end = index
-			line_started_by_newline = true
-			continue
-		}
-
-		// build line until soft wrap or new line
-		for index < text_len && text[index] != '\n' {
-			word_start, word_end := find_next_space(text, index)
-			token := text[word_start:word_end]
-			is_space := text[word_start] == ' '
-			token_width := measure_text_width(
-				token,
-				element.font,
-				element.font_size,
-				letter_spacing,
-			)
-
-			if is_space {
-				// drop leading spaces on soft wrapped lines
-				if line_width == 0 && !line_started_by_newline {
-					index = word_end
-					line_start = index
-					last_nonspace_end = index
-					continue
-				}
-				if line_width > 0 {
-					line_width += letter_spacing
-				}
-				pending_space = token_width
-				index = word_end
-				continue
-			}
-
-			joining_space := pending_space > 0 ? letter_spacing : 0
-			next_width := line_width + pending_space + token_width + joining_space
-
-			if next_width <= inner_width + 0.0001 {
-				line_width = next_width
-				last_nonspace_end = word_end
-				pending_space = 0
-				index = word_end
-				line_started_by_newline = false
-				continue
-			}
-
-			// soft wrap before this token
-			if line == target_line && line_width > 0 {
-				return line_start, last_nonspace_end, line_width
-			}
-
-			if line_width > 0 {
-				// start new line with this token
-				line += 1
-				line_start = word_start
-				line_width = 0
-				pending_space = 0
-				last_nonspace_end = word_start
-				line_started_by_newline = false
-				index = word_start
-				break
-			}
-
-			split_index, part_width := find_break_index(
-				text,
-				word_start,
-				word_end,
-				element.font,
-				element.font_size,
-				letter_spacing,
-				inner_width,
-			)
-			if line == target_line {
-				return line_start, split_index, part_width
-			}
-			// advance to next line from split point
-			line += 1
-			line_start = split_index
-			line_width = 0
-			pending_space = 0
-			last_nonspace_end = split_index
-			line_started_by_newline = false
-			index = split_index
-			break
-		}
+	it := TextWrapIterator {
+		text           = text,
+		font           = element.font,
+		font_size      = element.font_size,
+		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
+		inner_width    = inner_width,
 	}
 
-	if line_start < index {
-		joining_space := (line_width > 0 && pending_space > 0) ? letter_spacing : 0
-		actual_width := line_width + pending_space + joining_space
-		if line == target_line {
-			return line_start, index, actual_width
+	count := 0
+	for {
+		ok, line := text_wrap_iterator_next(&it)
+		if !ok {
+			break
 		}
-		line += 1
+		if count == target_line {
+			return line.start, line.end, line.width
+		}
+		count += 1
 	}
 
 	return text_len, text_len, 0
@@ -484,104 +385,30 @@ find_caret_line :: proc(
 ) -> int {
 	text := element.text
 	text_len := len(text)
-	index := 0
-	line := 0
-	line_width: f32 = 0
-	pending_space: f32 = 0
-	line_started_by_newline := true
-	last_nonspace_end := 0
 
-	for index < text_len {
-		if text[index] == '\n' {
-			if caret_index <= index {
-				return line
-			}
-			index += 1
-			line += 1
-			line_width = 0
-			pending_space = 0
-			last_nonspace_end = index
-			line_started_by_newline = true
-			continue
-		}
-
-		for index < text_len && text[index] != '\n' {
-			if caret_index <= index {
-				return line
-			}
-
-			word_start, word_end := find_next_space(text, index)
-			token := text[word_start:word_end]
-			is_space := text[word_start] == ' '
-			token_width := measure_text_width(
-				token,
-				element.font,
-				element.font_size,
-				letter_spacing,
-			)
-
-			if is_space {
-				if line_width == 0 && !line_started_by_newline {
-					index = word_end
-					continue
-				}
-				if line_width > 0 {
-					line_width += letter_spacing
-				}
-				pending_space = token_width
-				index = word_end
-				continue
-			}
-
-			joining_space := pending_space > 0 ? letter_spacing : 0
-			next_width := line_width + pending_space + token_width + joining_space
-
-			if next_width <= inner_width + 0.0001 {
-				line_width = next_width
-				last_nonspace_end = word_end
-				pending_space = 0
-				index = word_end
-				line_started_by_newline = false
-				continue
-			}
-
-			if caret_index <= last_nonspace_end {
-				return line
-			}
-
-			if line_width > 0 {
-				line += 1
-				line_width = 0
-				pending_space = 0
-				line_started_by_newline = false
-				index = word_start
-				break
-			}
-
-			split_index, part_width := find_break_index(
-				text,
-				word_start,
-				word_end,
-				element.font,
-				element.font_size,
-				letter_spacing,
-				inner_width,
-			)
-			if caret_index <= split_index {
-				return line
-			}
-			line += 1
-			line_width = 0
-			pending_space = 0
-			line_started_by_newline = false
-			index = split_index
-			break
-		}
-
-		if index >= text_len {
-			return line
-		}
+	it := TextWrapIterator {
+		text           = text,
+		font           = element.font,
+		font_size      = element.font_size,
+		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
+		inner_width    = inner_width,
 	}
 
-	return line
+	count := 0
+	for {
+		ok, line := text_wrap_iterator_next(&it)
+		if !ok {
+			break
+		}
+		if caret_index <= line.end {
+			return count
+		}
+		count += 1
+	}
+
+	if text_len > 0 && text[text_len - 1] == '\n' && caret_index == text_len {
+		return count
+	}
+
+	return max(count - 1, 0)
 }

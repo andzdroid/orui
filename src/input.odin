@@ -348,7 +348,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 			}
 
-			if rl.IsKeyPressed(.V) && (ctrl_down || cmd_down) {
+			if key_pressed(ctx, .V) && (ctrl_down || cmd_down) {
 				clipboard_text := rl.GetClipboardText()
 				if clipboard_text != nil {
 					text := string(clipboard_text)
