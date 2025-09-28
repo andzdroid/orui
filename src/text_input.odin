@@ -286,18 +286,42 @@ wrapped_line_at :: proc(
 			}
 
 			// soft wrap before this token
-			if line == target_line {
+			if line == target_line && line_width > 0 {
 				return line_start, last_nonspace_end, line_width
 			}
 
-			// start new line
+			if line_width > 0 {
+				// start new line with this token
+				line += 1
+				line_start = word_start
+				line_width = 0
+				pending_space = 0
+				last_nonspace_end = word_start
+				line_started_by_newline = false
+				index = word_start
+				break
+			}
+
+			split_index, part_width := find_break_index(
+				text,
+				word_start,
+				word_end,
+				element.font,
+				element.font_size,
+				letter_spacing,
+				inner_width,
+			)
+			if line == target_line {
+				return line_start, split_index, part_width
+			}
+			// advance to next line from split point
 			line += 1
-			line_start = word_start
+			line_start = split_index
 			line_width = 0
 			pending_space = 0
-			last_nonspace_end = word_start
+			last_nonspace_end = split_index
 			line_started_by_newline = false
-			index = word_start
+			index = split_index
 			break
 		}
 	}
@@ -324,36 +348,13 @@ caret_index_in_line :: proc(
 	x: f32,
 	letter_spacing: f32,
 ) -> int {
-	font := element.font^
-	scale := element.font_size / f32(font.baseSize)
-
 	acc: f32 = 0
 	count := 0
 	i := start
 
 	for i < end {
 		r, size := utf8.decode_rune(text[i:end])
-
-		idx := int(r) - 32
-		adv: f32 = 0
-		if idx >= 0 && idx < int(font.glyphCount) {
-			if font.glyphs[idx].advanceX > 0 {
-				adv = f32(font.glyphs[idx].advanceX)
-			} else {
-				adv = font.recs[idx].width + f32(font.glyphs[idx].offsetX)
-			}
-		} else {
-			q := int('?' - 32)
-			if q >= 0 && q < int(font.glyphCount) {
-				if font.glyphs[q].advanceX > 0 {
-					adv = f32(font.glyphs[q].advanceX)
-				} else {
-					adv = font.recs[q].width + f32(font.glyphs[q].offsetX)
-				}
-			}
-		}
-
-		adv = adv * scale
+		adv := glyph_advance(element.font, r, element.font_size)
 		spacing := count > 0 ? letter_spacing : 0
 		step := spacing + adv
 
@@ -548,11 +549,32 @@ find_caret_line :: proc(
 				return line
 			}
 
+			if line_width > 0 {
+				line += 1
+				line_width = 0
+				pending_space = 0
+				line_started_by_newline = false
+				index = word_start
+				break
+			}
+
+			split_index, part_width := find_break_index(
+				text,
+				word_start,
+				word_end,
+				element.font,
+				element.font_size,
+				letter_spacing,
+				inner_width,
+			)
+			if caret_index <= split_index {
+				return line
+			}
 			line += 1
 			line_width = 0
 			pending_space = 0
 			line_started_by_newline = false
-			index = word_start
+			index = split_index
 			break
 		}
 

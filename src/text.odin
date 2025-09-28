@@ -3,6 +3,7 @@ package orui
 import "core:log"
 import "core:math"
 import "core:strings"
+import "core:unicode/utf8"
 import rl "vendor:raylib"
 
 @(private)
@@ -19,26 +20,14 @@ measure_text_width :: proc(
 	width: f32 = 0
 	count := 0
 	for codepoint in text {
-		index := codepoint - 32
 		count += 1
-
 		if codepoint != '\n' {
-			// fallback to question mark
-			if index < 0 || i32(index) >= font.glyphCount {
-				index = '?' - 32
-			}
-
-			if font.glyphs[index].advanceX > 0 {
-				width += f32(font.glyphs[index].advanceX)
-			} else {
-				width += font.recs[index].width + f32(font.glyphs[index].offsetX)
-			}
+			width += glyph_advance(font, codepoint, font_size)
 		}
 	}
 
-	scale := font_size / f32(font.baseSize)
 	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
-	return width * scale + letter_spacing * f32(count - 1)
+	return width + letter_spacing * f32(count - 1)
 }
 
 @(private)
@@ -48,7 +37,64 @@ measure_text_height :: proc(font_size: f32, line_height_multiplier: f32) -> f32 
 }
 
 @(private)
-// Find the next space or new line character
+glyph_advance :: proc(font: ^rl.Font, r: rune, font_size: f32) -> (adv: f32) {
+	idx := i32(r) - 32
+	if idx < 0 || idx >= font.glyphCount {
+		idx = i32('?' - 32)
+	}
+	if font.glyphs[idx].advanceX > 0 {
+		adv = f32(font.glyphs[idx].advanceX)
+	} else {
+		adv = font.recs[idx].width + f32(font.glyphs[idx].offsetX)
+	}
+	return adv * (font_size / f32(font.baseSize))
+}
+
+@(private)
+find_break_index :: proc(
+	text: string,
+	start: int,
+	end: int,
+	font: ^rl.Font,
+	font_size: f32,
+	letter_spacing: f32,
+	max_width: f32,
+) -> (
+	split_index: int,
+	width: f32,
+) {
+	if start >= end || max_width <= 0 {
+		_, size := utf8.decode_rune(text[start:end])
+		sub := text[start:start + size]
+		width = measure_text_width(sub, font, font_size, letter_spacing)
+		return start + size, width
+	}
+
+	count := 0
+	i := start
+
+	for i < end {
+		rune, size := utf8.decode_rune(text[i:end])
+		adv := glyph_advance(font, rune, font_size)
+		spacing := count > 0 ? letter_spacing : 0
+		next_width := width + spacing + adv
+
+		if next_width > max_width {
+			if count == 0 {
+				return i + size, spacing + adv
+			}
+			return i, width
+		}
+
+		width = next_width
+		count += 1
+		i += size
+	}
+
+	return end, width
+}
+
+@(private)
 find_next_space :: proc(text: string, start_index: int) -> (start: int, end: int) {
 	index := start_index
 	text_len := len(text)
@@ -157,15 +203,48 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 				continue
 			}
 
-			// soft wrap, drop pending spaces
-			line_count += 1
-			line_width = token_width
-			if line_width > max_line_width {
-				max_line_width = line_width
+			// soft wrap
+			if width_definite {
+				// If the current line already has content, wrap before this token
+				if line_width > 0 {
+					line_count += 1
+					line_width = 0
+					pending_space = 0
+					line_started_by_newline = false
+					// Start next line with this token
+					continue
+				}
+
+				// The token itself is longer than the available width. Break mid-word.
+				remaining_start := word_start
+				for remaining_start < word_end {
+					split_index, part_width := find_break_index(
+						text,
+						remaining_start,
+						word_end,
+						element.font,
+						element.font_size,
+						letter_spacing,
+						inner_available,
+					)
+
+					// Account this part as a line
+					line_width = part_width
+					if line_width > max_line_width {
+						max_line_width = line_width
+					}
+					line_count += 1
+					line_width = 0
+					pending_space = 0
+					line_started_by_newline = false
+
+					remaining_start = split_index
+				}
+
+				// We've consumed the whole token
+				index = word_end
+				continue
 			}
-			pending_space = 0
-			index = word_end
-			line_started_by_newline = false
 		}
 	}
 
@@ -444,7 +523,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 				if current_context.focus_id == element.id {
 					render_selection(
 						element,
-						element.text,
+						text,
 						line_start,
 						index,
 						actual_width,
@@ -478,16 +557,76 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 					letter_spacing,
 					inner_width,
 				)
-			}
 
-			y += line_height
-			line_start = word_start
-			line_width = 0
-			pending_space = 0
-			last_nonspace_end = word_start
-			line_started_by_newline = false
-			index = word_start
-			break
+				y += line_height
+				line_start = word_start
+				line_width = 0
+				pending_space = 0
+				last_nonspace_end = word_start
+				line_started_by_newline = false
+				index = word_start
+				break
+			} else {
+				// Line is empty and token itself doesn't fit; break mid-word similar to CSS break-word
+				split_index, part_width := find_break_index(
+					text,
+					word_start,
+					word_end,
+					element.font,
+					element.font_size,
+					letter_spacing,
+					inner_width,
+				)
+
+				actual_width := part_width
+				if current_context.focus_id == element.id {
+					render_selection(
+						element,
+						text,
+						line_start,
+						split_index,
+						actual_width,
+						x_start,
+						y,
+						letter_spacing,
+						inner_width,
+						current_context.text_selection,
+					)
+				}
+
+				_render_text_line(
+					ctx,
+					element,
+					text[line_start:split_index],
+					actual_width,
+					x_start,
+					y,
+					letter_spacing,
+					inner_width,
+				)
+
+				render_caret(
+					element,
+					text,
+					line_start,
+					split_index,
+					actual_width,
+					x_start,
+					y,
+					letter_spacing,
+					inner_width,
+				)
+
+				// advance to next line starting after the split
+				y += line_height
+				line_start = split_index
+				line_width = 0
+				pending_space = 0
+				last_nonspace_end = split_index
+				line_started_by_newline = false
+				index = split_index
+				break
+			}
 		}
 
 		if index >= text_len {
