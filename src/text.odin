@@ -257,10 +257,6 @@ _render_text_line :: proc(
 
 @(private)
 render_text :: proc(ctx: ^Context, element: ^Element) {
-	if len(element.text) == 0 {
-		return
-	}
-
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	line_width := measure_text_width(element.text, element.font, element.font_size, letter_spacing)
 	inner_width := inner_width(element)
@@ -307,10 +303,6 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	text := element.text
 	text_len := len(element.text)
-	if text_len == 0 {
-		return
-	}
-
 	x_start :=
 		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
 	y_start :=
@@ -319,10 +311,15 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		element.border.top +
 		calculate_text_offset(element) -
 		element.scroll.offset.y
-	line_height := measure_text_height(element.font_size, element.line_height)
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
 
+	if text_len == 0 {
+		render_caret(element, "", 0, 0, 0, x_start, y_start, letter_spacing, inner_width)
+		return
+	}
+
+	line_height := measure_text_height(element.font_size, element.line_height)
 	active := current_context.focus_id == element.id
 
 	y := y_start

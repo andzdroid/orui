@@ -24,8 +24,13 @@ TextSelection :: struct {
 }
 
 @(private = "file")
-utf8_is_cont :: #force_inline proc(b: u8) -> bool {
-	return (b & 0xC0) == 0x80
+is_continuation_byte :: #force_inline proc(b: u8) -> bool {
+	return b >= 0x80 && b < 0xc0
+}
+
+@(private = "file")
+is_space :: #force_inline proc(b: u8) -> bool {
+	return b == ' ' || b == '\t' || b == '\n'
 }
 
 @(private)
@@ -36,7 +41,7 @@ utf8_prev :: proc(text: ^TextView, index: int) -> int {
 
 	index := index
 	index -= 1
-	for index > 0 && utf8_is_cont(text.data[index]) {
+	for index > 0 && is_continuation_byte(text.data[index]) {
 		index -= 1
 	}
 	return index
@@ -50,35 +55,68 @@ utf8_next :: proc(text: ^TextView, index: int) -> int {
 
 	index := index
 	index += 1
-	for index < text.length && utf8_is_cont(text.data[index]) {
+	for index < text.length && is_continuation_byte(text.data[index]) {
 		index += 1
 	}
 	return index
 }
 
 @(private)
-insert_bytes :: proc(text_view: ^TextView, position: int, bytes: []u8) -> (bool, int) {
+utf8_prev_word :: proc(text: ^TextView, index: int) -> int {
+	if index <= 0 {
+		return 0
+	}
+
+	index := index
+	for index > 0 && is_space(text.data[index - 1]) {
+		index -= 1
+	}
+	for index > 0 && !is_space(text.data[index - 1]) {
+		index -= 1
+	}
+	return index
+}
+
+@(private)
+utf8_next_word :: proc(text: ^TextView, index: int) -> int {
+	if index >= text.length {
+		return text.length
+	}
+
+	index := index
+	for index < text.length && is_space(text.data[index]) {
+		index += 1
+	}
+	for index < text.length && !is_space(text.data[index]) {
+		index += 1
+	}
+	return index
+}
+
+@(private)
+insert_bytes :: proc(text_view: ^TextView, position: int, bytes: []u8) -> int {
 	if position < 0 || position > text_view.length {
-		return false, position
+		return 0
 	}
 
 	available_space := len(text_view.data) - text_view.length
-	if len(bytes) > available_space {
-		return false, position
+	bytes_to_insert := min(len(bytes), available_space)
+	if bytes_to_insert <= 0 {
+		return 0
 	}
 
 	bytes_to_move := text_view.length - position
 	if bytes_to_move > 0 {
 		src_start := position
 		src_end := position + bytes_to_move
-		dst_start := position + len(bytes)
+		dst_start := position + bytes_to_insert
 		dst_end := dst_start + bytes_to_move
 		copy(text_view.data[dst_start:dst_end], text_view.data[src_start:src_end])
 	}
 
-	copy(text_view.data[position:position + len(bytes)], bytes)
-	text_view.length += len(bytes)
-	return true, position + len(bytes)
+	copy(text_view.data[position:position + bytes_to_insert], bytes[:bytes_to_insert])
+	text_view.length += bytes_to_insert
+	return bytes_to_insert
 }
 
 @(private)
@@ -344,6 +382,25 @@ caret_index_down :: proc(element: ^Element, from: rl.Vector2) -> int {
 	target := from + {0, line_height}
 	return text_caret_from_point(element, target)
 }
+
+@(private)
+caret_index_start_of_line :: proc(element: ^Element, caret_index: int) -> int {
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	inner_width := inner_width(element)
+	current_line_index := find_caret_line(element, caret_index, inner_width, letter_spacing)
+	line_start, _, _ := wrapped_line_at(element, current_line_index, inner_width, letter_spacing)
+	return line_start
+}
+
+@(private)
+caret_index_end_of_line :: proc(element: ^Element, caret_index: int) -> int {
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	inner_width := inner_width(element)
+	current_line_index := find_caret_line(element, caret_index, inner_width, letter_spacing)
+	_, line_end, _ := wrapped_line_at(element, current_line_index, inner_width, letter_spacing)
+	return line_end
+}
+
 
 @(private)
 ensure_caret_visible :: proc(ctx: ^Context, element: ^Element, caret_index: int) {

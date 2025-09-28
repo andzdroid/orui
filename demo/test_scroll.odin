@@ -5,33 +5,35 @@ import rl "vendor:raylib"
 
 text_view1: orui.TextView
 text_view2: orui.TextView
+scroll_initialised := false
 
 render_test_scroll :: proc() {
-	if text_view1.length == 0 {
+	if !scroll_initialised {
 		text_view1 = orui.text_view(
 			"Hello world! This is a single line text input. This is a single line text input.",
 			128,
 		)
-	}
 
-	if text_view2.length == 0 {
 		text_view2 = orui.text_view(
 			"Hello world!\nThis is a multi-line text input.\nThere are multiple lines of text.",
-			128,
+			512,
 		)
+
+		scroll_initialised = true
 	}
 
 	orui.container(
 		orui.id("container"),
 		{
-			direction = .TopToBottom,
-			width = orui.grow(),
-			height = orui.grow(),
-			padding = orui.padding(16),
+			direction        = .TopToBottom,
+			width            = orui.grow(),
+			height           = orui.grow(),
+			padding          = orui.padding(16),
 			background_color = rl.BEIGE,
-			gap = 16,
-			align_main = .Center,
-			align_cross = .Center,
+			gap              = 16,
+			// align_main       = .Center,
+			align_cross      = .Center,
+			scroll           = orui.scroll(.Vertical),
 		},
 	)
 
@@ -58,7 +60,7 @@ render_test_scroll :: proc() {
 		&text_view2,
 		{
 			width = orui.fixed(300),
-			height = orui.fixed(50),
+			height = orui.fixed(300),
 			padding = orui.padding(8),
 			background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
 			color = rl.BLACK,
@@ -78,7 +80,7 @@ render_test_scroll :: proc() {
 				layout = .Flex,
 				direction = .TopToBottom,
 				width = orui.percent(0.5),
-				height = orui.percent(0.5),
+				height = orui.percent(0.75),
 				padding = orui.padding(16),
 				background_color = rl.LIGHTGRAY,
 				gap = 16,

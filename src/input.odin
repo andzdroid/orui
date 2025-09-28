@@ -169,165 +169,196 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			ctx.text_selection = {}
 		} else {
 			text_view := element.text_view
+			ctrl_down := rl.IsKeyDown(.LEFT_CONTROL) || rl.IsKeyDown(.RIGHT_CONTROL)
+			cmd_down := rl.IsKeyDown(.LEFT_SUPER) || rl.IsKeyDown(.RIGHT_SUPER)
+			shift_down := rl.IsKeyDown(.LEFT_SHIFT) || rl.IsKeyDown(.RIGHT_SHIFT)
+
+			when ODIN_OS == .Darwin {
+				word_modifier := rl.IsKeyDown(.LEFT_ALT) || rl.IsKeyDown(.RIGHT_ALT)
+				line_modifier := cmd_down
+			} else {
+				word_modifier := ctrl_down
+				line_modifier := false
+			}
 
 			if text_view.length < len(text_view.data) {
 				for char := rl.GetCharPressed(); char != 0; char = rl.GetCharPressed() {
 					if char == '\r' || char == '\n' {
 						continue
 					}
-
-					if ctx.text_selection.start != ctx.text_selection.end {
-						a := min(ctx.text_selection.start, ctx.text_selection.end)
-						b := max(ctx.text_selection.start, ctx.text_selection.end)
-						delete_range(text_view, a, b)
-						ctx.caret_index = a
-						ctx.text_selection = {}
+					if has_text_selection(ctx) {
+						ctx.caret_index = delete_text_selection(ctx, element)
 					}
-
 					char_bytes, char_len := utf8.encode_rune(char)
-					insert_bytes(text_view, ctx.caret_index, char_bytes[:char_len])
-					ctx.caret_index += char_len
-					ctx.caret_index = min(ctx.caret_index, text_view.length)
-					ctx.caret_time = 0
-					ensure_caret_visible(ctx, element, ctx.caret_index)
+					bytes_inserted := insert_bytes(
+						text_view,
+						ctx.caret_index,
+						char_bytes[:char_len],
+					)
+					set_caret_index(ctx, element, ctx.caret_index + bytes_inserted)
 				}
 			}
-
-			shift_down := rl.IsKeyDown(.LEFT_SHIFT) || rl.IsKeyDown(.RIGHT_SHIFT)
 
 			if key_pressed(ctx, .LEFT) {
-				next := utf8_prev(text_view, ctx.caret_index)
+				next :=
+					word_modifier ? utf8_prev_word(text_view, ctx.caret_index) : utf8_prev(text_view, ctx.caret_index)
 				if shift_down {
-					if ctx.text_selection.start == ctx.text_selection.end {
+					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
 					}
 					ctx.text_selection.end = next
 				} else {
-					ctx.text_selection = {}
+					clear_text_selection(ctx)
 				}
-				ctx.caret_index = next
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
+				set_caret_index(ctx, element, next)
 			}
 			if key_pressed(ctx, .RIGHT) {
-				next := utf8_next(text_view, ctx.caret_index)
+				next :=
+					word_modifier ? utf8_next_word(text_view, ctx.caret_index) : utf8_next(text_view, ctx.caret_index)
 				if shift_down {
-					if ctx.text_selection.start == ctx.text_selection.end {
+					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
 					}
 					ctx.text_selection.end = next
 				} else {
-					ctx.text_selection = {}
+					clear_text_selection(ctx)
 				}
-				ctx.caret_index = next
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
+				set_caret_index(ctx, element, next)
 			}
 
 			if rl.IsKeyPressed(.HOME) {
+				next_index := 0
+				if ctrl_down || cmd_down || element.overflow == .Visible {
+					next_index = 0
+				} else {
+					next_index = caret_index_start_of_line(element, ctx.caret_index)
+				}
 				if shift_down {
-					if ctx.text_selection.start == ctx.text_selection.end {
+					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
 					}
-					ctx.text_selection.end = 0
+					ctx.text_selection.end = next_index
 				} else {
-					ctx.text_selection = {}
+					clear_text_selection(ctx)
 				}
-				ctx.caret_index = 0
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
+				set_caret_index(ctx, element, next_index)
 			}
 			if rl.IsKeyPressed(.END) {
+				next_index := text_view.length
+				if ctrl_down || cmd_down || element.overflow == .Visible {
+					next_index = text_view.length
+				} else {
+					next_index = caret_index_end_of_line(element, ctx.caret_index)
+				}
 				if shift_down {
-					if ctx.text_selection.start == ctx.text_selection.end {
+					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
 					}
-					ctx.text_selection.end = text_view.length
+					ctx.text_selection.end = next_index
 				} else {
-					ctx.text_selection = {}
+					clear_text_selection(ctx)
 				}
-				ctx.caret_index = text_view.length
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
+				set_caret_index(ctx, element, next_index)
 			}
 
 			if element.overflow == .Wrap {
 				if key_pressed(ctx, .UP) {
 					next := caret_index_up(element, ctx.caret_position)
 					if shift_down {
-						if ctx.text_selection.start == ctx.text_selection.end {
+						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
 						}
 						ctx.text_selection.end = next
 					} else {
-						ctx.text_selection = {}
+						clear_text_selection(ctx)
 					}
-					ctx.caret_index = next
-					ctx.caret_time = 0
-					ensure_caret_visible(ctx, element, ctx.caret_index)
+					set_caret_index(ctx, element, next)
 				}
 				if key_pressed(ctx, .DOWN) {
 					next := caret_index_down(element, ctx.caret_position)
 					if shift_down {
-						if ctx.text_selection.start == ctx.text_selection.end {
+						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
 						}
 						ctx.text_selection.end = next
 					} else {
-						ctx.text_selection = {}
+						clear_text_selection(ctx)
 					}
-					ctx.caret_index = next
-					ctx.caret_time = 0
-					ensure_caret_visible(ctx, element, ctx.caret_index)
+					set_caret_index(ctx, element, next)
 				}
 			}
 
 			if key_pressed(ctx, .BACKSPACE) {
-				if ctx.text_selection.start == ctx.text_selection.end {
+				caret := ctx.caret_index
+				if has_text_selection(ctx) {
+					caret = delete_text_selection(ctx, element)
+				} else {
 					prev := utf8_prev(text_view, ctx.caret_index)
 					delete_range(text_view, prev, ctx.caret_index)
-					ctx.caret_index = prev
-				} else {
-					a := min(ctx.text_selection.start, ctx.text_selection.end)
-					b := max(ctx.text_selection.start, ctx.text_selection.end)
-					delete_range(text_view, a, b)
-					ctx.caret_index = a
-					ctx.text_selection = {}
+					caret = prev
 				}
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
+				set_caret_index(ctx, element, caret)
 			}
 			if key_pressed(ctx, .DELETE) {
-				if ctx.text_selection.start == ctx.text_selection.end {
+				if has_text_selection(ctx) {
+					caret := delete_text_selection(ctx, element)
+					set_caret_index(ctx, element, caret)
+				} else {
 					next := utf8_next(text_view, ctx.caret_index)
 					delete_range(text_view, ctx.caret_index, next)
-				} else {
-					a := min(ctx.text_selection.start, ctx.text_selection.end)
-					b := max(ctx.text_selection.start, ctx.text_selection.end)
-					delete_range(text_view, a, b)
-					ctx.caret_index = a
-					ctx.text_selection = {}
 				}
-				ctx.caret_time = 0
-				ensure_caret_visible(ctx, element, ctx.caret_index)
 			}
 
-			if key_pressed(ctx, .ENTER) {
-				if element.overflow == .Wrap {
-					if ctx.text_selection.start != ctx.text_selection.end {
-						a := min(ctx.text_selection.start, ctx.text_selection.end)
-						b := max(ctx.text_selection.start, ctx.text_selection.end)
-						delete_range(text_view, a, b)
-						ctx.caret_index = a
-						ctx.text_selection = {}
-					}
+			if key_pressed(ctx, .ENTER) && element.overflow == .Wrap {
+				caret := ctx.caret_index
+				if has_text_selection(ctx) {
+					caret = delete_text_selection(ctx, element)
+				}
+				char_bytes, char_len := utf8.encode_rune('\n')
+				bytes_inserted := insert_bytes(text_view, caret, char_bytes[:char_len])
+				set_caret_index(ctx, element, caret + bytes_inserted)
+			}
 
-					char_bytes, char_len := utf8.encode_rune('\n')
-					insert_bytes(text_view, ctx.caret_index, char_bytes[:char_len])
-					ctx.caret_index += char_len
-					ctx.caret_index = min(ctx.caret_index, text_view.length)
-					ctx.caret_time = 0
-					ensure_caret_visible(ctx, element, ctx.caret_index)
+			if rl.IsKeyPressed(.A) && (ctrl_down || cmd_down) {
+				ctx.text_selection.start = 0
+				ctx.text_selection.end = text_view.length
+				set_caret_index(ctx, element, text_view.length)
+			}
+
+			if rl.IsKeyPressed(.C) && (ctrl_down || cmd_down) {
+				if has_text_selection(ctx) {
+					a, b := get_text_selection(ctx)
+					selected_text := string(text_view.data[a:b])
+					rl.SetClipboardText(
+						strings.clone_to_cstring(selected_text, context.temp_allocator),
+					)
+				}
+			}
+
+			if rl.IsKeyPressed(.X) && (ctrl_down || cmd_down) {
+				if has_text_selection(ctx) {
+					a, b := get_text_selection(ctx)
+					selected_text := string(text_view.data[a:b])
+					rl.SetClipboardText(
+						strings.clone_to_cstring(selected_text, context.temp_allocator),
+					)
+					delete_range(text_view, a, b)
+					set_caret_index(ctx, element, a)
+					clear_text_selection(ctx)
+				}
+			}
+
+			if rl.IsKeyPressed(.V) && (ctrl_down || cmd_down) {
+				clipboard_text := rl.GetClipboardText()
+				if clipboard_text != nil {
+					text := string(clipboard_text)
+					caret := ctx.caret_index
+					if has_text_selection(ctx) {
+						caret = delete_text_selection(ctx, element)
+					}
+					text_bytes := transmute([]u8)text
+					bytes_inserted := insert_bytes(text_view, caret, text_bytes)
+					set_caret_index(ctx, element, caret + bytes_inserted)
 				}
 			}
 		}
@@ -378,4 +409,36 @@ key_pressed :: proc(ctx: ^Context, key: rl.KeyboardKey) -> bool {
 	}
 
 	return false
+}
+
+@(private)
+set_caret_index :: proc(ctx: ^Context, element: ^Element, index: int) {
+	ctx.caret_index = clamp(index, 0, element.text_view.length)
+	ctx.caret_time = 0
+	ensure_caret_visible(ctx, element, ctx.caret_index)
+}
+
+@(private)
+has_text_selection :: #force_inline proc(ctx: ^Context) -> bool {
+	return ctx.text_selection.start != ctx.text_selection.end
+}
+
+@(private)
+get_text_selection :: #force_inline proc(ctx: ^Context) -> (int, int) {
+	a := min(ctx.text_selection.start, ctx.text_selection.end)
+	b := max(ctx.text_selection.start, ctx.text_selection.end)
+	return a, b
+}
+
+@(private)
+clear_text_selection :: #force_inline proc(ctx: ^Context) {
+	ctx.text_selection = {}
+}
+
+@(private)
+delete_text_selection :: #force_inline proc(ctx: ^Context, element: ^Element) -> int {
+	a, b := get_text_selection(ctx)
+	delete_range(element.text_view, a, b)
+	clear_text_selection(ctx)
+	return a
 }

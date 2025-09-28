@@ -39,9 +39,10 @@ Features:
   - Wrapping
   - Alignment
 - Text inputs
-  - Click, move with arrow keys, home+end, insert, backspace
+  - Click, move with arrow keys, home+end, insert, backspace, select all
   - Single line and multi line
   - Mouse and keyboard text selection
+  - Copy/cut/paste
 - Custom render events
   - Interleave your own rendering with the UI
 
@@ -51,9 +52,6 @@ To do:
 - 9-slice scaling
 - Grid justify/align
 - Text inputs
-  - Copy/paste
-	- Select all
-	- More standard motion shortcuts
 	- Double click, triple click
   - Undo/redo (maybe)
   - Placeholder (maybe)
