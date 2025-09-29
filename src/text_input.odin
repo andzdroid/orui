@@ -1,22 +1,9 @@
 package orui
 
 import "core:math"
+import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
-
-TextView :: struct {
-	data:   []u8,
-	length: int,
-}
-
-TextEdit :: struct {
-	id:         Id,
-	last_frame: int,
-	caret:      int,
-	selection:  TextSelection,
-	blink_t:    f32,
-	scrolL_x:   f32,
-}
 
 TextSelection :: struct {
 	start: int,
@@ -34,111 +21,93 @@ is_space :: #force_inline proc(b: u8) -> bool {
 }
 
 @(private)
-utf8_prev :: proc(text: ^TextView, index: int) -> int {
+utf8_prev :: proc(text: ^strings.Builder, index: int) -> int {
 	if index <= 0 {
 		return 0
 	}
 
 	index := index
 	index -= 1
-	for index > 0 && is_continuation_byte(text.data[index]) {
+	for index > 0 && is_continuation_byte(text.buf[index]) {
 		index -= 1
 	}
 	return index
 }
 
 @(private)
-utf8_next :: proc(text: ^TextView, index: int) -> int {
-	if index >= text.length {
-		return text.length
+utf8_next :: proc(text: ^strings.Builder, index: int) -> int {
+	if index >= len(text.buf) {
+		return len(text.buf)
 	}
 
 	index := index
 	index += 1
-	for index < text.length && is_continuation_byte(text.data[index]) {
+	for index < len(text.buf) && is_continuation_byte(text.buf[index]) {
 		index += 1
 	}
 	return index
 }
 
 @(private)
-utf8_prev_word :: proc(text: ^TextView, index: int) -> int {
+utf8_prev_word :: proc(text: ^strings.Builder, index: int) -> int {
 	if index <= 0 {
 		return 0
 	}
 
 	index := index
-	for index > 0 && is_space(text.data[index - 1]) {
+	for index > 0 && is_space(text.buf[index - 1]) {
 		index -= 1
 	}
-	for index > 0 && !is_space(text.data[index - 1]) {
+	for index > 0 && !is_space(text.buf[index - 1]) {
 		index -= 1
 	}
 	return index
 }
 
 @(private)
-utf8_next_word :: proc(text: ^TextView, index: int) -> int {
-	if index >= text.length {
-		return text.length
+utf8_next_word :: proc(text: ^strings.Builder, index: int) -> int {
+	if index >= len(text.buf) {
+		return len(text.buf)
 	}
 
 	index := index
-	for index < text.length && is_space(text.data[index]) {
+	for index < len(text.buf) && is_space(text.buf[index]) {
 		index += 1
 	}
-	for index < text.length && !is_space(text.data[index]) {
+	for index < len(text.buf) && !is_space(text.buf[index]) {
 		index += 1
 	}
 	return index
 }
 
 @(private)
-insert_bytes :: proc(text_view: ^TextView, position: int, bytes: []u8) -> int {
-	if position < 0 || position > text_view.length {
+insert_bytes :: proc(builder: ^strings.Builder, position: int, text: string) -> int {
+	if position < 0 || position > len(builder.buf) {
 		return 0
 	}
 
-	available_space := len(text_view.data) - text_view.length
-	bytes_to_insert := min(len(bytes), available_space)
-	if bytes_to_insert <= 0 {
-		return 0
+	if ok, _ := inject_at(&builder.buf, position, text); !ok {
+		n := cap(builder.buf) - len(builder.buf)
+		for is_continuation_byte(text[n]) {
+			n -= 1
+		}
+		if ok2, _ := inject_at(&builder.buf, position, text[:n]); !ok2 {
+			n = 0
+		}
+		return n
 	}
 
-	bytes_to_move := text_view.length - position
-	if bytes_to_move > 0 {
-		src_start := position
-		src_end := position + bytes_to_move
-		dst_start := position + bytes_to_insert
-		dst_end := dst_start + bytes_to_move
-		copy(text_view.data[dst_start:dst_end], text_view.data[src_start:src_end])
-	}
-
-	copy(text_view.data[position:position + bytes_to_insert], bytes[:bytes_to_insert])
-	text_view.length += bytes_to_insert
-	return bytes_to_insert
+	return len(text)
 }
 
 @(private)
-delete_range :: proc(text_view: ^TextView, start: int, end: int) -> bool {
+delete_range :: proc(builder: ^strings.Builder, start: int, end: int) -> bool {
 	start := max(0, start)
-	end := min(end, text_view.length)
+	end := min(end, len(builder.buf))
 	if end <= start {
 		return true
 	}
-
-	bytes_after_deletion := text_view.length - end
-	if bytes_after_deletion > 0 {
-		source_start := end
-		source_end := end + bytes_after_deletion
-		destination_start := start
-		destination_end := destination_start + bytes_after_deletion
-		copy(
-			text_view.data[destination_start:destination_end],
-			text_view.data[source_start:source_end],
-		)
-	}
-	text_view.length -= (end - start)
+	remove_range(&builder.buf, start, end)
 	return true
 }
 

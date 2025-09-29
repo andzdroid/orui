@@ -217,26 +217,22 @@ This element displays text, and also allows the user to click into it to focus o
 
 A blinking caret is drawn using the element's `color`.
 
-You must define a `TextView` buffer to hold the user input. This can be done with the `text_view` helper function:
+You must define a `strings.Builder` to hold the user input.
 
 ```odin
-TextView :: struct {
-	data:   []u8,
-	length: int,
-}
-
-buffer := orui.text_view("Initial text value", max_length)
-value := string(buffer.data[buffer.length])
+buffer := strings.builder_make()
+strings.write_string(&buffer, "Initial text")
+value := strings.to_string(buffer)
 ```
 
-If this element does not wrap, it will return true and unfocus if the user presses the Enter key.
+If this element does not wrap (see `overflow`), it will unfocus if the user presses the Enter key.
 
-For wrapping elements, the Enter key will add a new line to the text. The return value will always be false.
+For wrapping elements, the Enter key will add a new line to the text.
 
 You can use the `focused()` function to change styles when the element is focused.
 
 ```odin
-orui.text_input(orui.id("input"), buffer, {
+orui.text_input(orui.id("input"), &buffer, {
 	background_color = orui.focused() ? rl.WHITE : rl.LIGHTGRAY,
 })
 ```

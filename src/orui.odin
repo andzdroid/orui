@@ -1,7 +1,6 @@
 package orui
 
-import "core:fmt"
-import "core:log"
+import "core:strings"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
@@ -260,7 +259,7 @@ label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementM
 
 text_input :: proc(
 	id: Id,
-	text: ^TextView,
+	text: ^strings.Builder,
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
 ) -> bool {
@@ -268,8 +267,8 @@ text_input :: proc(
 	configure_element(element, parent^, config)
 	element.layout = .None
 	element.has_text = true
-	element.text = string(text.data[:text.length])
-	element.text_view = text
+	element.text_input = text
+	element.text = string(text.buf[:])
 	element.editable = true
 
 	for modifier in modifiers {
@@ -530,15 +529,6 @@ anchor_point :: proc(point: AnchorPoint) -> rl.Vector2 {
 
 placement :: proc(anchor: AnchorPoint, origin: AnchorPoint) -> Placement {
 	return {anchor_point(anchor), anchor_point(origin)}
-}
-
-text_view :: proc(text: string, size: int, allocator := context.allocator) -> TextView {
-	text_view: TextView
-	buffer := make([]u8, size, allocator)
-	copy(buffer, text)
-	text_view.data = buffer
-	text_view.length = min(len(text), size)
-	return text_view
 }
 
 scroll :: proc(direction: ScrollDirection) -> ScrollConfig {

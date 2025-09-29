@@ -1,24 +1,25 @@
 package demo
 
 import orui "../src"
+import "core:strings"
 import rl "vendor:raylib"
 
-text_view1: orui.TextView
-text_view2: orui.TextView
+text_input1: strings.Builder
+text_input2: strings.Builder
 scroll_initialised := false
 
 render_test_scroll :: proc() {
 	if !scroll_initialised {
-		text_view1 = orui.text_view(
+		text_input1 = strings.builder_make()
+		strings.write_string(
+			&text_input1,
 			"Hello world! This is a single line text input. This is a single line text input.",
-			128,
 		)
-
-		text_view2 = orui.text_view(
+		text_input2 = strings.builder_make()
+		strings.write_string(
+			&text_input2,
 			"Hello world!\nThis is a multi-line text input.\nThere are multiple lines of text.",
-			512,
 		)
-
 		scroll_initialised = true
 	}
 
@@ -39,7 +40,7 @@ render_test_scroll :: proc() {
 
 	orui.text_input(
 		orui.id("text input 1"),
-		&text_view1,
+		&text_input1,
 		{
 			width = orui.fixed(300),
 			height = orui.fit(),
@@ -57,7 +58,7 @@ render_test_scroll :: proc() {
 
 	orui.text_input(
 		orui.id("text input 2"),
-		&text_view2,
+		&text_input2,
 		{
 			width = orui.fixed(300),
 			height = orui.fixed(300),

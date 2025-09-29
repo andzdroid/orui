@@ -1,6 +1,7 @@
 package orui
 
 import "core:hash"
+import "core:strings"
 import rl "vendor:raylib"
 
 Id :: distinct int
@@ -267,7 +268,7 @@ ElementConfig :: struct {
 	letter_spacing:   f32,
 	// The line height multiplier. Default is 1.
 	line_height:      f32,
-	text_view:        ^TextView,
+	text_input:       ^strings.Builder,
 
 	// Must be true if this element has a texture.
 	has_texture:      bool,
@@ -347,7 +348,7 @@ Element :: struct {
 	font_size:         f32,
 	letter_spacing:    f32,
 	line_height:       f32,
-	text_view:         ^TextView,
+	text_input:        ^strings.Builder,
 
 	// texture
 	has_texture:       bool,
@@ -447,7 +448,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.font_size = config.font_size
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
-	element.text_view = config.text_view
+	element.text_input = config.text_input
 
 	// texture
 	element.has_texture = config.has_texture

@@ -1,9 +1,10 @@
 package demo
 
 import orui "../src"
+import "core:strings"
 import rl "vendor:raylib"
 
-text_view: orui.TextView
+text_input: strings.Builder
 
 button_style :: proc(element: ^orui.Element) {
 	element.background_color =
@@ -16,8 +17,9 @@ button_style :: proc(element: ^orui.Element) {
 }
 
 render_test_text :: proc() {
-	if text_view.length == 0 {
-		text_view = orui.text_view("Hello world!", 128)
+	if cap(text_input.buf) == 0 {
+		text_input = strings.builder_make()
+		strings.write_string(&text_input, "Hello world!")
 	}
 
 	orui.container(
@@ -50,7 +52,7 @@ render_test_text :: proc() {
 
 	orui.text_input(
 		orui.id("text input"),
-		&text_view,
+		&text_input,
 		{
 			width = orui.fixed(300),
 			padding = orui.padding(8),
@@ -67,7 +69,7 @@ render_test_text :: proc() {
 
 	orui.label(
 		orui.id("text output"),
-		string(text_view.data[:text_view.length]),
+		strings.to_string(text_input),
 		{font_size = 16},
 		button_style,
 	)

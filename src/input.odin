@@ -168,7 +168,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			ctx.repeat_key = .KEY_NULL
 			ctx.text_selection = {}
 		} else {
-			text_view := element.text_view
+			text_input := element.text_input
 			ctrl_down := rl.IsKeyDown(.LEFT_CONTROL) || rl.IsKeyDown(.RIGHT_CONTROL)
 			cmd_down := rl.IsKeyDown(.LEFT_SUPER) || rl.IsKeyDown(.RIGHT_SUPER)
 			shift_down := rl.IsKeyDown(.LEFT_SHIFT) || rl.IsKeyDown(.RIGHT_SHIFT)
@@ -181,27 +181,29 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				line_modifier := false
 			}
 
-			if text_view.length < len(text_view.data) {
-				for char := rl.GetCharPressed(); char != 0; char = rl.GetCharPressed() {
-					if char == '\r' || char == '\n' {
-						continue
-					}
-					if has_text_selection(ctx) {
-						ctx.caret_index = delete_text_selection(ctx, element)
-					}
-					char_bytes, char_len := utf8.encode_rune(char)
-					bytes_inserted := insert_bytes(
-						text_view,
-						ctx.caret_index,
-						char_bytes[:char_len],
-					)
-					set_caret_index(ctx, element, ctx.caret_index + bytes_inserted)
+			for char := rl.GetCharPressed(); char != 0; char = rl.GetCharPressed() {
+				if char == '\r' || char == '\n' {
+					continue
+				}
+				if has_text_selection(ctx) {
+					ctx.caret_index = delete_text_selection(ctx, element)
+				}
+				char_bytes, char_len := utf8.encode_rune(char)
+				bytes_inserted := insert_bytes(
+					text_input,
+					ctx.caret_index,
+					string(char_bytes[:char_len]),
+				)
+				set_caret_index(ctx, element, ctx.caret_index + bytes_inserted)
+
+				if bytes_inserted == 0 {
+					break
 				}
 			}
 
 			if key_pressed(ctx, .LEFT) {
 				next :=
-					word_modifier ? utf8_prev_word(text_view, ctx.caret_index) : utf8_prev(text_view, ctx.caret_index)
+					word_modifier ? utf8_prev_word(text_input, ctx.caret_index) : utf8_prev(text_input, ctx.caret_index)
 				if shift_down {
 					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
@@ -214,7 +216,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			}
 			if key_pressed(ctx, .RIGHT) {
 				next :=
-					word_modifier ? utf8_next_word(text_view, ctx.caret_index) : utf8_next(text_view, ctx.caret_index)
+					word_modifier ? utf8_next_word(text_input, ctx.caret_index) : utf8_next(text_input, ctx.caret_index)
 				if shift_down {
 					if !has_text_selection(ctx) {
 						ctx.text_selection.start = ctx.caret_index
@@ -244,9 +246,9 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				set_caret_index(ctx, element, next_index)
 			}
 			if rl.IsKeyPressed(.END) {
-				next_index := text_view.length
+				next_index := len(text_input.buf)
 				if ctrl_down || cmd_down || element.overflow == .Visible {
-					next_index = text_view.length
+					next_index = len(text_input.buf)
 				} else {
 					next_index = caret_index_end_of_line(element, ctx.caret_index)
 				}
@@ -293,8 +295,8 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				if has_text_selection(ctx) {
 					caret = delete_text_selection(ctx, element)
 				} else {
-					prev := utf8_prev(text_view, ctx.caret_index)
-					delete_range(text_view, prev, ctx.caret_index)
+					prev := utf8_prev(text_input, ctx.caret_index)
+					delete_range(text_input, prev, ctx.caret_index)
 					caret = prev
 				}
 				set_caret_index(ctx, element, caret)
@@ -304,8 +306,8 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					caret := delete_text_selection(ctx, element)
 					set_caret_index(ctx, element, caret)
 				} else {
-					next := utf8_next(text_view, ctx.caret_index)
-					delete_range(text_view, ctx.caret_index, next)
+					next := utf8_next(text_input, ctx.caret_index)
+					delete_range(text_input, ctx.caret_index, next)
 				}
 			}
 
@@ -315,20 +317,20 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					caret = delete_text_selection(ctx, element)
 				}
 				char_bytes, char_len := utf8.encode_rune('\n')
-				bytes_inserted := insert_bytes(text_view, caret, char_bytes[:char_len])
+				bytes_inserted := insert_bytes(text_input, caret, string(char_bytes[:char_len]))
 				set_caret_index(ctx, element, caret + bytes_inserted)
 			}
 
 			if rl.IsKeyPressed(.A) && (ctrl_down || cmd_down) {
 				ctx.text_selection.start = 0
-				ctx.text_selection.end = text_view.length
-				set_caret_index(ctx, element, text_view.length)
+				ctx.text_selection.end = len(text_input.buf)
+				set_caret_index(ctx, element, len(text_input.buf))
 			}
 
 			if rl.IsKeyPressed(.C) && (ctrl_down || cmd_down) {
 				if has_text_selection(ctx) {
 					a, b := get_text_selection(ctx)
-					selected_text := string(text_view.data[a:b])
+					selected_text := string(text_input.buf[a:b])
 					rl.SetClipboardText(
 						strings.clone_to_cstring(selected_text, context.temp_allocator),
 					)
@@ -338,11 +340,11 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			if rl.IsKeyPressed(.X) && (ctrl_down || cmd_down) {
 				if has_text_selection(ctx) {
 					a, b := get_text_selection(ctx)
-					selected_text := string(text_view.data[a:b])
+					selected_text := string(text_input.buf[a:b])
 					rl.SetClipboardText(
 						strings.clone_to_cstring(selected_text, context.temp_allocator),
 					)
-					delete_range(text_view, a, b)
+					delete_range(text_input, a, b)
 					set_caret_index(ctx, element, a)
 					clear_text_selection(ctx)
 				}
@@ -356,8 +358,8 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					if has_text_selection(ctx) {
 						caret = delete_text_selection(ctx, element)
 					}
-					text_bytes := transmute([]u8)text
-					bytes_inserted := insert_bytes(text_view, caret, text_bytes)
+					bytes_inserted := insert_bytes(text_input, caret, text)
+					element.text = strings.to_string(text_input^)
 					set_caret_index(ctx, element, caret + bytes_inserted)
 				}
 			}
@@ -413,7 +415,7 @@ key_pressed :: proc(ctx: ^Context, key: rl.KeyboardKey) -> bool {
 
 @(private)
 set_caret_index :: proc(ctx: ^Context, element: ^Element, index: int) {
-	ctx.caret_index = clamp(index, 0, element.text_view.length)
+	ctx.caret_index = clamp(index, 0, len(element.text_input.buf))
 	ctx.caret_time = 0
 	ensure_caret_visible(ctx, element, ctx.caret_index)
 }
@@ -438,7 +440,7 @@ clear_text_selection :: #force_inline proc(ctx: ^Context) {
 @(private)
 delete_text_selection :: #force_inline proc(ctx: ^Context, element: ^Element) -> int {
 	a, b := get_text_selection(ctx)
-	delete_range(element.text_view, a, b)
+	delete_range(element.text_input, a, b)
 	clear_text_selection(ctx)
 	return a
 }
