@@ -93,12 +93,12 @@ render_test_scroll :: proc() {
 
 		for i in 0 ..< 50 {
 			orui.label(
-				orui.id(123456789 + i),
+				orui.id("element", i),
 				"Element",
 				{
 					width = orui.grow(),
 					height = orui.fixed(200),
-					background_color = {30, 60, 180, 255},
+					background_color = i % 2 == 0 ? {30, 60, 180, 255} : {180, 60, 30, 255},
 					font_size = 16,
 					color = rl.WHITE,
 					align = {.Center, .Center},

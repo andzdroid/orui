@@ -152,6 +152,7 @@ _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
 id :: proc {
 	_id,
 	_id_int,
+	_id_index,
 }
 
 _id :: proc(str: string) -> Id {
@@ -163,6 +164,13 @@ _id :: proc(str: string) -> Id {
 
 _id_int :: proc(id: int) -> Id {
 	id := Id(id)
+	ctx := current_context
+	ctx.current_id = id
+	return id
+}
+
+_id_index :: proc(str: string, index: int) -> Id {
+	id := to_id(str, u32(index))
 	ctx := current_context
 	ctx.current_id = id
 	return id

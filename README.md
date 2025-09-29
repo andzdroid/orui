@@ -117,6 +117,28 @@ for !rl.WindowShouldClose() {
 
 ## Declaring UI
 
+### Element IDs
+
+Every element should have a unique ID. You can create the ID in 3 ways:
+
+```odin
+// String:
+orui.id("container")
+// String literals will be hashed at compile time.
+
+// String + index:
+orui.id("row", i)
+
+// Int (fastest, no hashing):
+orui.id(1000000)
+```
+
+`orui.id` should ALWAYS be called inside element declarations, because it has side effects. If you only want to generate an ID, use `to_id` instead:
+
+```odin
+orui.to_id("row", i)
+```
+
 ### element
 
 `element` is the basic building block of orui. It can be used to build anything that orui can render.
@@ -225,9 +247,11 @@ strings.write_string(&buffer, "Initial text")
 value := strings.to_string(buffer)
 ```
 
-If this element does not wrap (see `overflow`), it will unfocus if the user presses the Enter key.
+Text inputs can be single-line (no wrapping) or multi-line (wrapping).
 
-For wrapping elements, the Enter key will add a new line to the text.
+For single-line text inputs, the Enter key will unfocus the input.
+
+For multi-line text inputs, the Enter key will add a new line to the text.
 
 You can use the `focused()` function to change styles when the element is focused.
 
