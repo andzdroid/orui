@@ -718,6 +718,11 @@ render_caret :: proc(
 		return
 	}
 
+	// caret at end of soft-wrapped line is rendered on the next line
+	if caret == line_end && line_end < len(text) && text[line_end] != '\n' {
+		return
+	}
+
 	line_height := measure_text_height(element.font_size, element.line_height)
 	if element._clip.height > 0 &&
 	   (y + line_height < f32(element._clip.y) ||

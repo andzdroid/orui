@@ -161,9 +161,38 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 			return line_start
 		}
 		if x >= width {
+			// step back one rune at the end of a soft-wrapped line
+			if line_end < len(text) && text[line_end] != '\n' {
+				if line_end == 0 {
+					return 0
+				}
+				prev := line_end - 1
+				for prev > 0 && is_continuation_byte(text[prev]) {
+					prev -= 1
+				}
+				if prev < line_start {
+					return line_start
+				}
+				return prev
+			}
 			return line_end
 		}
-		return caret_index_in_line(element, text, line_start, line_end, x, letter_spacing)
+		idx := caret_index_in_line(element, text, line_start, line_end, x, letter_spacing)
+		// step back one rune at the end of a soft-wrapped line
+		if idx == line_end && line_end < len(text) && text[line_end] != '\n' {
+			if line_end == 0 {
+				return 0
+			}
+			prev := line_end - 1
+			for prev > 0 && is_continuation_byte(text[prev]) {
+				prev -= 1
+			}
+			if prev < line_start {
+				return line_start
+			}
+			return prev
+		}
+		return idx
 	}
 
 	return 0
@@ -270,6 +299,19 @@ caret_index_end_of_line :: proc(element: ^Element, caret_index: int) -> int {
 	inner_width := inner_width(element)
 	current_line_index := find_caret_line(element, caret_index, inner_width, letter_spacing)
 	_, line_end, _ := wrapped_line_at(element, current_line_index, inner_width, letter_spacing)
+
+	// step back one rune at the end of a soft-wrapped line
+	if line_end < len(element.text) && element.text[line_end] != '\n' {
+		if line_end == 0 {
+			return 0
+		}
+		prev := line_end - 1
+		for prev > 0 && is_continuation_byte(element.text[prev]) {
+			prev -= 1
+		}
+		return prev
+	}
+
 	return line_end
 }
 
@@ -371,8 +413,16 @@ find_caret_line :: proc(
 		if !ok {
 			break
 		}
-		if caret_index <= line.end {
+
+		if caret_index < line.end {
 			return count
+		}
+
+		if caret_index == line.end {
+			if line.hard_break {
+				return count
+			}
+			// soft wrap: continue to next line
 		}
 		count += 1
 	}
