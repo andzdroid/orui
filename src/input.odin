@@ -23,8 +23,6 @@ handle_input_state :: proc(ctx: ^Context) {
 
 	if released {
 		ctx.pointer_capture = 0
-		// ctx.selecting = false
-
 		if ctx.focus != 0 && ctx.caret_index == -1 {
 			ctx.caret_index = text_caret_from_point(&ctx.elements[ctx.focus], position)
 		}
@@ -105,15 +103,26 @@ handle_input_state :: proc(ctx: ^Context) {
 
 				if pressed {
 					if element.editable {
-						ctx.focus = ctx.sorted[i]
-						ctx.focus_id = element.id
-						start := text_caret_from_point(element, position)
-						ctx.text_selection.start = start
-						ctx.text_selection.end = start
-						ctx.caret_index = start
-						ctx.caret_time = 0
-						ctx.selecting = true
-						ensure_caret_visible(ctx, element, ctx.caret_index)
+						if ctx.focus == ctx.sorted[i] &&
+						   (ctx.selecting ||
+								   rl.IsKeyDown(.LEFT_SHIFT) ||
+								   rl.IsKeyDown(.RIGHT_SHIFT)) {
+							// handle text selection with drag or shift click
+							ctx.text_selection.end = text_caret_from_point(element, position)
+							ctx.caret_index = ctx.text_selection.end
+							ctx.caret_time = 0
+							ensure_caret_visible(ctx, element, ctx.caret_index)
+						} else {
+							ctx.focus = ctx.sorted[i]
+							ctx.focus_id = element.id
+							start := text_caret_from_point(element, position)
+							ctx.text_selection.start = start
+							ctx.text_selection.end = start
+							ctx.caret_index = start
+							ctx.caret_time = 0
+							ctx.selecting = true
+							ensure_caret_visible(ctx, element, ctx.caret_index)
+						}
 					} else if ctx.focus != 0 {
 						ctx.focus = 0
 						ctx.focus_id = 0
