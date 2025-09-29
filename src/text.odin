@@ -16,17 +16,16 @@ TextLine :: struct {
 
 @(private)
 TextWrapIterator :: struct {
-	text:                    string,
-	font:                    ^rl.Font,
-	font_size:               f32,
-	letter_spacing:          f32,
-	inner_width:             f32,
-	index:                   int,
-	line_start:              int,
-	line_width:              f32,
-	pending_space:           f32,
-	line_started_by_newline: bool,
-	last_nonspace_end:       int,
+	text:              string,
+	font:              ^rl.Font,
+	font_size:         f32,
+	letter_spacing:    f32,
+	inner_width:       f32,
+	whitespace:        WhitespaceMode,
+	index:             int,
+	line_start:        int,
+	line_width:        f32,
+	last_nonspace_end: int,
 }
 
 @(private)
@@ -138,6 +137,14 @@ find_next_space :: proc(text: string, start_index: int) -> (start: int, end: int
 
 @(private)
 text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextLine) {
+	if it.whitespace == .Collapse {
+		return _text_wrap_iterator_next_collapse(it)
+	}
+	return _text_wrap_iterator_next_preserve(it)
+}
+
+@(private)
+_text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextLine) {
 	text_len := len(it.text)
 
 	if it.index >= text_len {
@@ -146,22 +153,22 @@ text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextL
 
 	for it.index < text_len {
 		if it.text[it.index] == '\n' {
-			joining_space := (it.line_width > 0 && it.pending_space > 0) ? it.letter_spacing : 0
-			actual_width := it.line_width + it.pending_space + joining_space
 			start := it.line_start
 			end := it.index
 
 			it.index += 1
 			it.line_start = it.index
 			it.line_width = 0
-			it.pending_space = 0
-			it.last_nonspace_end = it.index
-			it.line_started_by_newline = true
 
 			return true, TextLine {
 				start = start,
 				end = end,
-				width = actual_width,
+				width = measure_text_width(
+					it.text[start:end],
+					it.font,
+					it.font_size,
+					it.letter_spacing,
+				),
 				hard_break = true,
 			}
 		}
@@ -172,60 +179,26 @@ text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextL
 			is_space := it.text[word_start] == ' '
 			token_width := measure_text_width(token, it.font, it.font_size, it.letter_spacing)
 
-			if is_space {
-				// drop leading spaces on soft wrapped lines
-				if it.line_width == 0 && !it.line_started_by_newline {
-					it.index = word_end
-					it.line_start = it.index
-					it.last_nonspace_end = it.index
-					continue
-				}
+			join := it.line_width > 0 ? it.letter_spacing : 0
+			new_width := it.line_width + join + token_width
 
-				join := it.line_width > 0 ? it.letter_spacing : 0
-				new_width := it.line_width + join + token_width
+			if new_width <= it.inner_width + 0.0001 {
+				it.line_width = new_width
+				it.index = word_end
+				continue
+			}
 
-				if new_width > it.inner_width + 0.0001 {
-					if it.line_width > 0 {
-						start := it.line_start
-						end := it.last_nonspace_end
-						width := it.line_width
-
-						it.line_start = word_start
-						it.line_width = 0
-						it.pending_space = 0
-						it.last_nonspace_end = word_start
-						it.line_started_by_newline = false
-						it.index = word_start
-
-						return true, TextLine {
-							start = start,
-							end = end,
-							width = width,
-							hard_break = false,
-						}
-					}
-
-					// break whitespace
-					split_index, part_width := find_break_index(
-						it.text,
-						word_start,
-						word_end,
-						it.font,
-						it.font_size,
-						it.letter_spacing,
-						it.inner_width,
-					)
-
+			// If whitespace overflows, split the whitespace run mid-sequence
+			if is_space && it.line_width > 0 {
+				available := it.inner_width - it.line_width - join
+				if available <= 0 {
 					start := it.line_start
-					end := split_index
-					width := part_width
+					end := it.index
+					width := it.line_width
 
-					it.line_start = split_index
+					it.line_start = word_start
 					it.line_width = 0
-					it.pending_space = 0
-					it.last_nonspace_end = split_index
-					it.line_started_by_newline = false
-					it.index = split_index
+					it.index = word_start
 
 					return true, TextLine {
 						start = start,
@@ -235,43 +208,41 @@ text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextL
 					}
 				}
 
-				if it.line_width > 0 {
-					it.line_width += it.letter_spacing
-				}
-				it.pending_space = token_width
-				it.index = word_end
-				continue
-			}
+				split_index, part_width := find_break_index(
+					it.text,
+					word_start,
+					word_end,
+					it.font,
+					it.font_size,
+					it.letter_spacing,
+					available,
+				)
 
-			joining_space := it.pending_space > 0 ? it.letter_spacing : 0
-			next_width := it.line_width + it.pending_space + token_width + joining_space
-
-			if next_width <= it.inner_width + 0.0001 {
-				it.line_width = next_width
-				it.last_nonspace_end = word_end
-				it.pending_space = 0
-				it.index = word_end
-				it.line_started_by_newline = false
-				continue
-			}
-
-			// soft wrap
-			if it.line_start < it.last_nonspace_end {
 				start := it.line_start
-				end := it.last_nonspace_end
+				end := split_index
+				width := it.line_width + join + part_width
+
+				it.line_start = split_index
+				it.line_width = 0
+				it.index = split_index
+
+				return true, TextLine{start = start, end = end, width = width, hard_break = false}
+			}
+
+			// Soft wrap before this non-whitespace token
+			if it.line_width > 0 {
+				start := it.line_start
+				end := it.index
 				width := it.line_width
 
 				it.line_start = word_start
 				it.line_width = 0
-				it.pending_space = 0
-				it.last_nonspace_end = word_start
-				it.line_started_by_newline = false
 				it.index = word_start
 
 				return true, TextLine{start = start, end = end, width = width, hard_break = false}
 			}
 
-			// break mid-word
+			// Token itself doesn't fit on empty line: break mid-token
 			split_index, part_width := find_break_index(
 				it.text,
 				word_start,
@@ -288,9 +259,6 @@ text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextL
 
 			it.line_start = split_index
 			it.line_width = 0
-			it.pending_space = 0
-			it.last_nonspace_end = split_index
-			it.line_started_by_newline = false
 			it.index = split_index
 
 			return true, TextLine{start = start, end = end, width = width, hard_break = false}
@@ -298,22 +266,149 @@ text_wrap_iterator_next :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextL
 	}
 
 	if it.line_start < it.index {
-		joining_space := (it.line_width > 0 && it.pending_space > 0) ? it.letter_spacing : 0
-		actual_width := it.line_width + it.pending_space + joining_space
 		start := it.line_start
 		end := it.index
-
+		width := measure_text_width(it.text[start:end], it.font, it.font_size, it.letter_spacing)
 		it.line_start = it.index
-		return true, TextLine{start = start, end = end, width = actual_width, hard_break = false}
+		return true, TextLine{start = start, end = end, width = width, hard_break = false}
 	}
 
-	// // trailing empty line after a soft wrap with only whitespace
-	// if it.index >= text_len && it.line_start == it.index && !it.line_started_by_newline {
-	// 	start := it.line_start
-	// 	end := it.index
-	// 	it.line_start = it.index
-	// 	return true, TextLine{start = start, end = end, width = 0, hard_break = false}
-	// }
+	return false, {}
+}
+
+@(private)
+_text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, line: TextLine) {
+	text_len := len(it.text)
+
+	if it.index >= text_len {
+		return false, {}
+	}
+
+	for it.index < text_len {
+		if it.text[it.index] == '\n' {
+			start := it.line_start
+			end := it.last_nonspace_end > 0 ? it.last_nonspace_end : it.index
+
+			it.index += 1
+			it.line_start = it.index
+			it.line_width = 0
+			it.last_nonspace_end = it.index
+
+			return true, TextLine {
+				start = start,
+				end = end,
+				width = measure_text_width(
+					it.text[start:end],
+					it.font,
+					it.font_size,
+					it.letter_spacing,
+				),
+				hard_break = true,
+			}
+		}
+
+		for it.index < text_len && it.text[it.index] != '\n' {
+			token_start, token_end := find_next_space(it.text, it.index)
+			is_space := it.text[token_start] == ' '
+
+			if is_space {
+				// Collapse run to a single space if not at line start
+				if it.line_width == 0 {
+					// drop leading spaces
+					it.index = token_end
+					it.line_start = it.index
+					it.last_nonspace_end = it.index
+					continue
+				}
+
+				space_width := measure_text_width(" ", it.font, it.font_size, it.letter_spacing)
+				join := it.letter_spacing // there is always at least one previous glyph here
+				new_width := it.line_width + join + space_width
+
+				if new_width <= it.inner_width + 0.0001 {
+					it.line_width = new_width
+					// include only ONE space from the run in the displayed range
+					it.last_nonspace_end = token_start + 1
+					it.index = token_end
+					continue
+				}
+
+				// overflow on space: wrap before the space and drop it
+				start := it.line_start
+				end := it.last_nonspace_end
+				width := it.line_width
+
+				it.line_start = token_end // skip the collapsed space on next line
+				it.line_width = 0
+				it.last_nonspace_end = it.line_start
+
+				return true, TextLine{start = start, end = end, width = width, hard_break = false}
+			}
+
+			// non-space token
+			token_width := measure_text_width(
+				it.text[token_start:token_end],
+				it.font,
+				it.font_size,
+				it.letter_spacing,
+			)
+			join := it.line_width > 0 ? it.letter_spacing : 0
+			new_width := it.line_width + join + token_width
+
+			if new_width <= it.inner_width + 0.0001 {
+				it.line_width = new_width
+				it.last_nonspace_end = token_end
+				it.index = token_end
+				continue
+			}
+
+			if it.line_width > 0 {
+				// break before word
+				start := it.line_start
+				end := it.last_nonspace_end
+				width := it.line_width
+
+				it.line_start = token_start
+				it.line_width = 0
+				// keep last_nonspace_end as new line start initially
+				it.last_nonspace_end = token_start
+				it.index = token_start
+
+				return true, TextLine{start = start, end = end, width = width, hard_break = false}
+			}
+
+			// word too long for empty line: split mid-word
+			split_index, part_width := find_break_index(
+				it.text,
+				token_start,
+				token_end,
+				it.font,
+				it.font_size,
+				it.letter_spacing,
+				it.inner_width,
+			)
+
+			start := it.line_start
+			end := split_index
+			width := part_width
+
+			it.line_start = split_index
+			it.line_width = 0
+			it.last_nonspace_end = split_index
+			it.index = split_index
+
+			return true, TextLine{start = start, end = end, width = width, hard_break = false}
+		}
+	}
+
+	if it.line_start < it.index {
+		start := it.line_start
+		end := it.last_nonspace_end
+		width := measure_text_width(it.text[start:end], it.font, it.font_size, it.letter_spacing)
+
+		it.line_start = it.index
+		return true, TextLine{start = start, end = end, width = width, hard_break = false}
+	}
 
 	return false, {}
 }
@@ -369,6 +464,7 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 		font_size      = element.font_size,
 		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
 		inner_width    = width_definite ? inner_available : 1e30,
+		whitespace     = element.whitespace,
 	}
 	line_count, max_line_width := wrap_count_and_max_width(&it)
 
@@ -524,6 +620,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		font_size      = element.font_size,
 		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
 		inner_width    = inner_width,
+		whitespace     = element.whitespace,
 	}
 
 	y := y_start

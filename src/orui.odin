@@ -270,6 +270,7 @@ text_input :: proc(
 	element.text_input = text
 	element.text = string(text.buf[:])
 	element.editable = true
+	element.whitespace = .Preserve
 
 	for modifier in modifiers {
 		modifier(element)

@@ -123,6 +123,13 @@ Overflow :: enum {
 	Visible,
 }
 
+WhitespaceMode :: enum {
+	// Collapse sequences of spaces; typical for display text.
+	Collapse,
+	// Preserve all whitespace; typical for text input.
+	Preserve,
+}
+
 TextureFit :: enum {
 	// Image will be stretched or squashed to fill the container.
 	Fill,
@@ -268,6 +275,8 @@ ElementConfig :: struct {
 	letter_spacing:   f32,
 	// The line height multiplier. Default is 1.
 	line_height:      f32,
+	// How whitespace is handled when measuring and wrapping text.
+	whitespace:       WhitespaceMode,
 	text_input:       ^strings.Builder,
 
 	// Must be true if this element has a texture.
@@ -348,6 +357,7 @@ Element :: struct {
 	font_size:         f32,
 	letter_spacing:    f32,
 	line_height:       f32,
+	whitespace:        WhitespaceMode,
 	text_input:        ^strings.Builder,
 
 	// texture
@@ -448,6 +458,7 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.font_size = config.font_size
 	element.letter_spacing = config.letter_spacing
 	element.line_height = config.line_height
+	element.whitespace = config.whitespace
 	element.text_input = config.text_input
 
 	// texture

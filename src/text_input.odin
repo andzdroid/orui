@@ -191,6 +191,7 @@ wrapped_line_at :: proc(
 		font_size      = element.font_size,
 		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
 		inner_width    = inner_width,
+		whitespace     = element.whitespace,
 	}
 
 	count := 0
@@ -361,6 +362,7 @@ find_caret_line :: proc(
 		font_size      = element.font_size,
 		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
 		inner_width    = inner_width,
+		whitespace     = element.whitespace,
 	}
 
 	count := 0
