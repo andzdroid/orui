@@ -271,16 +271,16 @@ caret_index_in_line :: proc(
 }
 
 @(private)
-caret_index_up :: proc(element: ^Element, from: rl.Vector2) -> int {
+caret_index_up :: proc(element: ^Element, from: rl.Vector2, lines := 1) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
-	target := from - {0, line_height}
+	target := from - {0, line_height * f32(lines)}
 	return text_caret_from_point(element, target)
 }
 
 @(private)
-caret_index_down :: proc(element: ^Element, from: rl.Vector2) -> int {
+caret_index_down :: proc(element: ^Element, from: rl.Vector2, lines := 1) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
-	target := from + {0, line_height}
+	target := from + {0, line_height * f32(lines)}
 	return text_caret_from_point(element, target)
 }
 

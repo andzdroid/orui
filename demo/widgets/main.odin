@@ -274,6 +274,85 @@ checkbox :: proc(checked_state: ^bool) {
 	}
 }
 
+slider :: proc(value: ^f32) {
+	orui.container(
+		orui.id("slider container"),
+		{
+			width = orui.fixed(300),
+			height = orui.fixed(30),
+			align_cross = .Center,
+			direction = .LeftToRight,
+			position = {.Relative, {}},
+		},
+	)
+
+	orui.container(
+		orui.id("slider track"),
+		{
+			width = orui.grow(),
+			height = orui.fixed(10),
+			background_color = {240, 240, 240, 255},
+			corner_radius = orui.corner(4),
+		},
+	)
+
+	if orui.container(
+		orui.id("slider handle"),
+		{
+			width = orui.fixed(10),
+			height = orui.fixed(30),
+			background_color = orui.hovered() ? {200, 120, 120, 255} : {220, 120, 120, 255},
+			corner_radius = orui.corner(4),
+			position = {.Absolute, {}},
+			placement = {orui.anchor_point(.TopLeft), {value^ * 300, 0}},
+		},
+	) {
+		// TODO: set slider position
+	}
+}
+
+text_input :: proc(input_buffer: ^strings.Builder) {
+	orui.text_input(
+		orui.id("text input"),
+		input_buffer,
+		{
+			width = orui.fixed(300),
+			height = orui.fit(),
+			color = rl.BLACK,
+			font_size = 16,
+			overflow = .Visible,
+			clip = {.Self, {}},
+			scroll = orui.scroll(.Horizontal),
+			background_color = rl.WHITE,
+			border = orui.border(1),
+			border_color = orui.focused() ? rl.BLUE : rl.LIGHTGRAY,
+			padding = orui.padding(8),
+			corner_radius = orui.corner(4),
+		},
+	)
+}
+
+text_area :: proc(input_buffer: ^strings.Builder) {
+	orui.text_input(
+		orui.id("text area"),
+		input_buffer,
+		{
+			width = orui.fixed(300),
+			height = orui.fixed(150),
+			color = rl.BLACK,
+			font_size = 16,
+			overflow = .Wrap,
+			clip = {.Self, {}},
+			scroll = orui.scroll(.Vertical),
+			background_color = rl.WHITE,
+			border = orui.border(1),
+			border_color = orui.focused() ? rl.BLUE : rl.LIGHTGRAY,
+			padding = orui.padding(8),
+			corner_radius = orui.corner(4),
+		},
+	)
+}
+
 main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
@@ -290,6 +369,21 @@ main :: proc() {
 	dropdown_state := false
 	dropdown_value := 0
 	checkbox_state := false
+	slider_value := f32(0.0)
+
+	input_buffer := strings.builder_make()
+	defer strings.builder_destroy(&input_buffer)
+	strings.write_string(
+		&input_buffer,
+		"This is a single line text input, and it can scroll horizontally!",
+	)
+
+	input_buffer2 := strings.builder_make()
+	defer strings.builder_destroy(&input_buffer2)
+	strings.write_string(
+		&input_buffer2,
+		"This is a multi-line text input!\nThe Enter key will add a new line to the text. Any line that exceeds the element width will be wrapped.\n\nMore lines here.",
+	)
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -319,6 +413,9 @@ main :: proc() {
 			toggle_button2(&toggle_state2)
 			dropdown_menu(&dropdown_state, &dropdown_value)
 			checkbox(&checkbox_state)
+			// slider(&slider_value)
+			text_input(&input_buffer)
+			text_area(&input_buffer2)
 		}
 
 		render_commands := orui.end()

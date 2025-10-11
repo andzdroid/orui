@@ -109,7 +109,7 @@ main :: proc() {
 	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 
-	log.infof("orui struct size: %v MB", size_of(ctx^) / mem.Megabyte)
+	log.infof("orui struct size: %v KB", f32(size_of(ctx^)) / mem.Kilobyte)
 
 	elapsed1_samples: [SAMPLE_COUNT]time.Duration
 	elapsed2_samples: [SAMPLE_COUNT]time.Duration

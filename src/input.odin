@@ -223,6 +223,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				set_caret_index(ctx, element, next)
 			}
+
 			if key_pressed(ctx, .RIGHT) {
 				next :=
 					word_modifier ? utf8_next_word(text_input, ctx.caret_index) : utf8_next(text_input, ctx.caret_index)
@@ -254,6 +255,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				set_caret_index(ctx, element, next_index)
 			}
+
 			if rl.IsKeyPressed(.END) {
 				next_index := len(text_input.buf)
 				if ctrl_down || cmd_down || element.overflow == .Visible {
@@ -285,8 +287,35 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					}
 					set_caret_index(ctx, element, next)
 				}
+
 				if key_pressed(ctx, .DOWN) {
 					next := caret_index_down(element, ctx.caret_position)
+					if shift_down {
+						if !has_text_selection(ctx) {
+							ctx.text_selection.start = ctx.caret_index
+						}
+						ctx.text_selection.end = next
+					} else {
+						clear_text_selection(ctx)
+					}
+					set_caret_index(ctx, element, next)
+				}
+
+				if key_pressed(ctx, .PAGE_UP) {
+					next := caret_index_up(element, ctx.caret_position, 5)
+					if shift_down {
+						if !has_text_selection(ctx) {
+							ctx.text_selection.start = ctx.caret_index
+						}
+						ctx.text_selection.end = next
+					} else {
+						clear_text_selection(ctx)
+					}
+					set_caret_index(ctx, element, next)
+				}
+
+				if key_pressed(ctx, .PAGE_DOWN) {
+					next := caret_index_down(element, ctx.caret_position, 5)
 					if shift_down {
 						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
@@ -310,6 +339,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				set_caret_index(ctx, element, caret)
 			}
+
 			if key_pressed(ctx, .DELETE) {
 				if has_text_selection(ctx) {
 					caret := delete_text_selection(ctx, element)

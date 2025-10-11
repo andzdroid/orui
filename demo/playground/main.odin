@@ -79,7 +79,7 @@ main :: proc() {
 	ctx.default_font = rl.GetFontDefault()
 	defer rl.UnloadFont(ctx.default_font)
 
-	log.infof("orui struct size: %v MB", size_of(ctx^) / f32(1024 * 1024))
+	log.infof("orui struct size: %v KB", f32(size_of(ctx^)) / mem.Kilobyte)
 
 	texture := rl.LoadTexture("icon.png")
 	defer rl.UnloadTexture(texture)

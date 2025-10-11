@@ -27,11 +27,7 @@ ScrollData :: struct {
 Context :: struct {
 	elements:             [MAX_ELEMENTS]Element,
 	element_count:        int,
-	// TODO: lookup table of Id => index
-	current:              int,
-	current_id:           Id,
-	previous:             int,
-	parent:               int,
+	// TODO: lookup table of Id => index?
 	frame:                int,
 	time:                 f64,
 	default_font:         rl.Font,
@@ -41,6 +37,12 @@ Context :: struct {
 	render_command_count: int,
 	scroll_data:          [MAX_ELEMENTS]ScrollData,
 	scroll_count:         int,
+
+	// current element index - used while building up the UI
+	current:              int,
+	current_id:           Id,
+	previous:             int,
+	parent:               int,
 
 	// mouse input
 	pointer_capture:      int,
