@@ -157,6 +157,19 @@ main :: proc() {
 			render_test_scroll()
 		}
 
+		orui.label(
+			orui.id("instructions"),
+			"D: next scene, A: previous scene, Q: toggle info",
+			{
+				position = {.Fixed, {}},
+				font_size = 16,
+				color = rl.WHITE,
+				background_color = {0, 0, 0, 220},
+				padding = orui.padding(8),
+				placement = orui.placement(.BottomLeft, .BottomLeft),
+			},
+		)
+
 		when !PROFILE {
 			if debug {
 				{orui.container(

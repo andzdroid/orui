@@ -52,16 +52,18 @@ To do:
 - 9-slice scaling
 - Grid justify/align
 - Text inputs
+	- Character filtering
 	- Double click, triple click
   - Undo/redo (maybe)
+	- Drag and drop (maybe)
   - Placeholder (maybe)
-- Number inputs (maybe)
 - Other widgets (maybe)
 - Grid row/column start (maybe)
 - Scroll with drag
 - Scroll momentum
 - Scroll bounce
 - Scrollbar (maybe)
+- Optimisations
 
 ## Table of Contents
 
