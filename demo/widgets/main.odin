@@ -400,14 +400,14 @@ main :: proc() {
 		{orui.container(
 				orui.id("container"),
 				{
-					direction   = .TopToBottom,
-					width       = orui.grow(),
-					height      = orui.grow(),
-					gap         = 16,
-					padding     = orui.padding(50),
-					// align_main = .Center,
+					direction = .TopToBottom,
+					width = orui.grow(),
+					height = orui.grow(),
+					gap = 16,
+					padding = orui.padding(50),
+					align_main = .Center,
 					align_cross = .Center,
-					scroll      = orui.scroll(.Vertical),
+					scroll = orui.scroll(.Vertical),
 				},
 			)
 

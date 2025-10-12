@@ -48,6 +48,9 @@ Features:
 
 To do:
 
+- Box sizing
+  - Choose between border box and content box sizing
+	- Current border box sizing is not suitable for many situations
 - Flex wrap
 - 9-slice scaling
 - Grid justify/align
@@ -57,6 +60,7 @@ To do:
   - Undo/redo (maybe)
 	- Drag and drop (maybe)
   - Placeholder (maybe)
+	- Customise text select background colour
 - Other widgets (maybe)
 - Grid row/column start (maybe)
 - Scroll with drag

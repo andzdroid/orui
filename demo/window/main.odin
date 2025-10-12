@@ -224,12 +224,12 @@ main :: proc() {
 			}
 		}
 
-		if rl.IsMouseButtonDown(.LEFT) && orui.hovered("window1 top bar") {
+		if rl.IsMouseButtonPressed(.LEFT) && orui.hovered("window1 top bar") {
 			dragging1 = true
 			layer1 = 3
 			layer2 = 2
 		}
-		if rl.IsMouseButtonDown(.LEFT) && orui.hovered("window2 top bar") {
+		if rl.IsMouseButtonPressed(.LEFT) && orui.hovered("window2 top bar") {
 			dragging2 = true
 			layer1 = 2
 			layer2 = 3

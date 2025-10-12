@@ -381,7 +381,7 @@ flex_clamp_height :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	total_size, child_count := content_size(ctx, element)
+	total_size, child_count := _content_size(ctx, element)
 	available_space := inner_main(element) - total_size
 
 	main_axis_offset := main_offset(element.align_main, available_space, child_count)
@@ -433,8 +433,8 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	}
 }
 
-@(private)
-content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
+@(private = "file")
+_content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	size: f32 = 0
 	count := 0
@@ -468,6 +468,10 @@ main_offset :: proc(
 	available_space: f32,
 	child_count: int,
 ) -> MainAxisOffset {
+	if available_space <= 0 {
+		return {}
+	}
+
 	switch alignment {
 	case .Start:
 		return {0, 0}
