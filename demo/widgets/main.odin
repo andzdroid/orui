@@ -312,6 +312,10 @@ slider :: proc(value: ^f32) {
 }
 
 text_input :: proc(input_buffer: ^strings.Builder) {
+	orui.container(orui.id("text input container"), {direction = .TopToBottom, gap = 2})
+
+	orui.label(orui.id("text input label"), "Input label", {font_size = 16, color = rl.BLACK})
+
 	orui.text_input(
 		orui.id("text input"),
 		input_buffer,

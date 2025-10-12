@@ -51,6 +51,7 @@ render_command :: proc(command: RenderCommand) {
 
 @(private)
 render :: proc(ctx: ^Context) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	ctx.sorted_count = 0
 	collect_elements(ctx, 0, 0)
 	sort_elements(ctx)
@@ -59,7 +60,7 @@ render :: proc(ctx: ^Context) {
 	ctx.render_command_count = 0
 	for i := 0; i < ctx.sorted_count; i += 1 {
 		index := ctx.sorted[i]
-		element := &ctx.elements[index]
+		element := &elements[index]
 
 		if element._clip != current_clip {
 			if current_clip.width > 0 && current_clip.height > 0 {
@@ -95,8 +96,9 @@ render :: proc(ctx: ^Context) {
 
 @(private = "file")
 collect_elements :: proc(ctx: ^Context, index: int, parent_index: int) {
-	element := &ctx.elements[index]
-	parent := &ctx.elements[parent_index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
+	parent := &elements[parent_index]
 	element._layer = element.layer == 0 ? parent._layer : element.layer
 
 	switch element.clip.type {
@@ -139,20 +141,21 @@ collect_elements :: proc(ctx: ^Context, index: int, parent_index: int) {
 	ctx.sorted[ctx.sorted_count] = index
 	ctx.sorted_count += 1
 
-	child := ctx.elements[index].children
+	child := elements[index].children
 	for child != 0 {
 		collect_elements(ctx, child, index)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 }
 
 @(private = "file")
 sort_elements :: proc(ctx: ^Context) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	for i := 1; i < ctx.sorted_count; i += 1 {
 		key := ctx.sorted[i]
-		layer := ctx.elements[key]._layer
+		layer := elements[key]._layer
 		j := i - 1
-		for j >= 0 && ctx.elements[ctx.sorted[j]]._layer > layer {
+		for j >= 0 && elements[ctx.sorted[j]]._layer > layer {
 			ctx.sorted[j + 1] = ctx.sorted[j]
 			j -= 1
 		}
@@ -162,7 +165,8 @@ sort_elements :: proc(ctx: ^Context) {
 
 @(private)
 render_element :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 
 	if element._clip.width > 0 || element._clip.height > 0 {
 		clip_right := element._clip.x + element._clip.width

@@ -3,6 +3,7 @@ package orui
 @(private)
 // Assign child elements to grid cells.
 grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	col_limit := element.cols > 0 ? clamp(element.cols, 1, MAX_GRID_TRACKS) : MAX_GRID_TRACKS
 	row_limit := element.rows > 0 ? clamp(element.rows, 1, MAX_GRID_TRACKS) : MAX_GRID_TRACKS
 
@@ -16,7 +17,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
@@ -83,6 +84,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Calculate column fixed/fit widths. NOT the widths of the grid cells.
 grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	col_count := element.cols > 0 ? element.cols : grid_used_columns(ctx, element)
 	col_count = clamp(col_count, 1, MAX_GRID_TRACKS)
 	element.cols = col_count
@@ -96,7 +98,7 @@ grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
 			max_width: f32 = 0
 			child := element.children
 			for child != 0 {
-				child_element := &ctx.elements[child]
+				child_element := &elements[child]
 				if child_element.position.type != .Absolute &&
 				   child_element.position.type != .Fixed &&
 				   child_element._grid_col_index == i &&
@@ -192,11 +194,12 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 // Set width of grid cells.
 // Flex and grow sizes are relative to the column/row size, not the parent size.
 grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	col_gap := element.col_gap > 0 ? element.col_gap : element.gap
 
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
@@ -240,6 +243,7 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Calculate row heights. NOT the heights of the grid cells.
 grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	row_count := element.rows > 0 ? element.rows : grid_used_rows(ctx, element)
 	row_count = clamp(row_count, 1, MAX_GRID_TRACKS)
 	element.rows = row_count
@@ -253,7 +257,7 @@ grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
 			max_height: f32 = 0
 			child := element.children
 			for child != 0 {
-				child_element := &ctx.elements[child]
+				child_element := &elements[child]
 				if child_element.position.type != .Absolute &&
 				   child_element.position.type != .Fixed &&
 				   child_element._grid_row_index == i &&
@@ -349,11 +353,12 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 // Set heights of grid cells.
 // Flex and grow sizes are relative to the column/row size, not the parent size.
 grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	row_gap := element.row_gap > 0 ? element.row_gap : element.gap
 
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
@@ -395,12 +400,13 @@ grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 
 @(private)
 grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	start_x := element.padding.left + element.border.left
 	start_y := element.padding.top + element.border.top
 
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
 			continue
@@ -425,10 +431,11 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 @(private = "file")
 grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> int {
+	elements := &ctx.elements[current_buffer(ctx)]
 	used := 0
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			span := max(child_element.col_span, 1)
 			end_index := child_element._grid_col_index + span
@@ -441,10 +448,11 @@ grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> int {
 
 @(private = "file")
 grid_used_rows :: proc(ctx: ^Context, element: ^Element) -> int {
+	elements := &ctx.elements[current_buffer(ctx)]
 	used := 0
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			span := max(child_element.row_span, 1)
 			end_index := child_element._grid_row_index + span

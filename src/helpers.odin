@@ -53,12 +53,13 @@ inner_main :: proc(e: ^Element) -> f32 {
 
 @(private)
 parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: bool) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if e.parent == 0 {
-		root := &ctx.elements[0]
+		root := &elements[0]
 		return root._size.x, true
 	}
 
-	parent := &ctx.elements[e.parent]
+	parent := &elements[e.parent]
 	if parent.layout == .Grid {
 		width: f32 = 0
 		col_span := max(e.col_span, 1)
@@ -76,12 +77,13 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 
 @(private)
 parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bool) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if e.parent == 0 {
-		root := &ctx.elements[0]
+		root := &elements[0]
 		return root._size.y, true
 	}
 
-	parent := &ctx.elements[e.parent]
+	parent := &elements[e.parent]
 	if parent.layout == .Grid {
 		height: f32 = 0
 		row_span := max(e.row_span, 1)

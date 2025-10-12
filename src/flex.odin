@@ -3,6 +3,7 @@ package orui
 @(private)
 // Set width of element to fit its children
 flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if element._size.x > 0 || element.width.type == .Percent {
 		return
 	}
@@ -13,7 +14,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		child_count := 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -36,7 +37,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		max_child: f32 = 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -62,6 +63,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set widths of children to grow into their parent
 flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if element.direction == .LeftToRight {
 		// sum child widths, then distribute remaining space according to weight
 		element_inner_width := inner_width(element)
@@ -71,7 +73,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		child_count := 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -104,7 +106,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		if remaining > 0 && total_weight > 0 {
 			child = element.children
 			for child != 0 {
-				child_element := &ctx.elements[child]
+				child_element := &elements[child]
 				if child_element.width.type == .Grow {
 					weight := child_element.width.value
 					if weight <= 0 {weight = 1}
@@ -124,7 +126,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		max_width: f32 = 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
@@ -154,6 +156,7 @@ flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set height of element to fit its children
 flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if element._size.y > 0 || element.height.type == .Percent {
 		return
 	}
@@ -164,7 +167,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		child_count := 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -187,7 +190,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		max_child: f32 = 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -213,6 +216,7 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set heights of children to grow into their parent
 flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if element.direction == .TopToBottom {
 		// sum child heights, then distribute remaining space according to weight
 		element_inner_height := inner_height(element)
@@ -222,7 +226,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		child_count := 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
 				continue
@@ -255,7 +259,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		if remaining > 0 && total_weight > 0 {
 			child = element.children
 			for child != 0 {
-				child_element := &ctx.elements[child]
+				child_element := &elements[child]
 				if child_element.height.type == .Grow {
 					weight := child_element.height.value
 					if weight <= 0 {weight = 1}
@@ -275,7 +279,7 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		max_height: f32 = 0
 		child := element.children
 		for child != 0 {
-			child_element := &ctx.elements[child]
+			child_element := &elements[child]
 
 			if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 				child = child_element.next
@@ -376,6 +380,7 @@ flex_clamp_height :: proc(ctx: ^Context, element: ^Element) {
 
 @(private)
 flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	total_size, child_count := content_size(ctx, element)
 	available_space := inner_main(element) - total_size
 
@@ -386,7 +391,7 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	y := element.padding.top + element.border.top + main_axis_offset.initial
 	index := 0
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 			child = child_element.next
@@ -430,11 +435,12 @@ flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 @(private)
 content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	size: f32 = 0
 	count := 0
 	child := element.children
 	for child != 0 {
-		child_element := &ctx.elements[child]
+		child_element := &elements[child]
 		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			count += 1
 			if element.direction == .LeftToRight {

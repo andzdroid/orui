@@ -25,8 +25,8 @@ ScrollData :: struct {
 }
 
 Context :: struct {
-	elements:             [MAX_ELEMENTS]Element,
-	element_count:        int,
+	elements:             [2][MAX_ELEMENTS]Element,
+	element_count:        [2]int,
 	// TODO: lookup table of Id => index?
 	frame:                int,
 	time:                 f64,
@@ -62,12 +62,10 @@ Context :: struct {
 	selecting:            bool,
 }
 
-@(private)
 current_buffer :: #force_inline proc(ctx: ^Context) -> int {
 	return ctx.frame % 2
 }
 
-@(private)
 previous_buffer :: #force_inline proc(ctx: ^Context) -> int {
 	return (ctx.frame + 1) % 2
 }
@@ -98,8 +96,8 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 
 	handle_input_state(ctx)
 
-	ctx.element_count = 0
-	ctx.elements[0] = {
+	ctx.element_count[current_buffer(ctx)] = 0
+	ctx.elements[current_buffer(ctx)][0] = {
 		id       = to_id("root"),
 		width    = fixed(width),
 		height   = fixed(height),
@@ -109,7 +107,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 		block    = .True,
 		capture  = .False,
 	}
-	ctx.element_count += 1
+	ctx.element_count[current_buffer(ctx)] += 1
 
 	ctx.current = 0
 	ctx.previous = 0
@@ -184,16 +182,17 @@ _id_index :: proc(str: string, index: int) -> Id {
 // Must be closed with end_element().
 begin_element :: proc(id: Id) -> (^Element, ^Element) {
 	ctx := current_context
+	elements := &ctx.elements[current_buffer(ctx)]
 	assert(
 		ctx.current_id == id,
 		"id mismatch. id() must always be called in the element declaration",
 	)
 	parent_index := ctx.current
-	parent := &ctx.elements[parent_index]
+	parent := &elements[parent_index]
 
-	index := ctx.element_count
-	ctx.element_count += 1
-	element := &ctx.elements[index]
+	index := ctx.element_count[current_buffer(ctx)]
+	ctx.element_count[current_buffer(ctx)] += 1
+	element := &elements[index]
 	element^ = Element{}
 
 	ctx.current = index
@@ -205,7 +204,7 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 	if parent.children == 0 {
 		parent.children = index
 	} else {
-		previous := &ctx.elements[ctx.previous]
+		previous := &elements[ctx.previous]
 		previous.next = index
 	}
 	parent.children_count += 1
@@ -216,10 +215,11 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 // Closes the current element.
 end_element :: proc() {
 	ctx := current_context
-	element := &ctx.elements[ctx.current]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[ctx.current]
 	ctx.previous = ctx.current
 	ctx.current = ctx.parent
-	current := ctx.elements[ctx.current]
+	current := elements[ctx.current]
 	ctx.parent = current.parent
 }
 

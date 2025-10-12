@@ -7,7 +7,7 @@ import rl "vendor:raylib"
 
 @(private)
 handle_input_state :: proc(ctx: ^Context) {
-
+	elements := &ctx.elements[current_buffer(ctx)]
 	position := rl.GetMousePosition()
 	mouse_down := rl.IsMouseButtonDown(.LEFT)
 	pressed := rl.IsMouseButtonPressed(.LEFT)
@@ -24,12 +24,12 @@ handle_input_state :: proc(ctx: ^Context) {
 	if released {
 		ctx.pointer_capture = 0
 		if ctx.focus != 0 && ctx.caret_index == -1 {
-			ctx.caret_index = text_caret_from_point(&ctx.elements[ctx.focus], position)
+			ctx.caret_index = text_caret_from_point(&elements[ctx.focus], position)
 		}
 	}
 
 	// if ctx.pointer_capture != 0 && mouse_down {
-	// 	el := &ctx.elements[ctx.pointer_capture]
+	// 	el := &elements[ctx.pointer_capture]
 	// 	count := ctx.active[current].count
 	// 	ctx.active[current].ids[count] = el.id
 	// 	ctx.active[current].count += 1
@@ -40,7 +40,7 @@ handle_input_state :: proc(ctx: ^Context) {
 	click_consumed := false
 
 	for i := ctx.sorted_count - 1; i >= 0; i -= 1 {
-		element := &ctx.elements[ctx.sorted[i]]
+		element := &elements[ctx.sorted[i]]
 
 		if ctx.pointer_capture != 0 && ctx.pointer_capture != ctx.sorted[i] {
 			continue
@@ -147,7 +147,7 @@ handle_input_state :: proc(ctx: ^Context) {
 	}
 
 	if ctx.selecting && mouse_down && ctx.focus != 0 {
-		el := &ctx.elements[ctx.focus]
+		el := &elements[ctx.focus]
 		end := text_caret_from_point(el, position)
 		ctx.text_selection.end = end
 		ctx.caret_index = end
@@ -164,8 +164,9 @@ handle_input_state :: proc(ctx: ^Context) {
 
 @(private)
 handle_keyboard_input :: proc(ctx: ^Context) {
+	elements := &ctx.elements[current_buffer(ctx)]
 	if ctx.focus != 0 {
-		element := &ctx.elements[ctx.focus]
+		element := &elements[ctx.focus]
 		if !element.editable {
 			ctx.focus = 0
 			ctx.focus_id = 0

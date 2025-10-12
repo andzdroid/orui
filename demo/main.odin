@@ -194,7 +194,10 @@ main :: proc() {
 					)
 					orui.label(
 						orui.id("debug element count"),
-						fmt.tprintf("Element count: %v", ctx.element_count),
+						fmt.tprintf(
+							"Element count: %v",
+							ctx.element_count[orui.current_buffer(ctx)],
+						),
 						{font_size = 16, color = rl.WHITE},
 					)
 				}
@@ -244,8 +247,8 @@ main :: proc() {
 	}
 
 	when !PROFILE {
-		for i in 0 ..< ctx.element_count {
-			element := &ctx.elements[i]
+		for i in 0 ..< ctx.element_count[orui.current_buffer(ctx)] {
+			element := &ctx.elements[orui.current_buffer(ctx)][i]
 			log.infof("%v", element)
 		}
 	}

@@ -9,7 +9,8 @@ Margin box: border box + margin
 @(private)
 // Set fixed widths and fit widths
 fit_widths :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 
 	if element.width.type == .Fixed {
 		element._size.x = element.width.value
@@ -40,7 +41,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	child := element.children
 	for child != 0 {
 		fit_widths(ctx, child)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 
 	if element.layout == .Flex {
@@ -54,7 +55,8 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 @(private)
 // Set widths that depend on parent width (percent, grow)
 distribute_widths :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 
 	if element.width.type == .Percent {
 		percent_width, definite := parent_inner_width(ctx, element)
@@ -74,14 +76,15 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 	child := element.children
 	for child != 0 {
 		distribute_widths(ctx, child)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 }
 
 @(private)
 wrap :: proc(ctx: ^Context) {
-	for i in 0 ..< ctx.element_count {
-		element := &ctx.elements[i]
+	elements := &ctx.elements[current_buffer(ctx)]
+	for i in 0 ..< ctx.element_count[current_buffer(ctx)] {
+		element := &elements[i]
 		if element.overflow != .Wrap {
 			continue
 		}
@@ -98,7 +101,8 @@ wrap :: proc(ctx: ^Context) {
 @(private)
 // Set fixed heights and fit heights.
 fit_heights :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 
 	if element.height.type == .Fixed {
 		element._size.y = element.height.value
@@ -118,7 +122,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	child := element.children
 	for child != 0 {
 		fit_heights(ctx, child)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 
 	if element.layout == .Flex {
@@ -132,7 +136,8 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 @(private)
 // Set heights that depend on parent height (percent, grow)
 distribute_heights :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 
 	if element.height.type == .Percent {
 		percent_height, definite := parent_inner_height(ctx, element)
@@ -152,6 +157,6 @@ distribute_heights :: proc(ctx: ^Context, index: int) {
 	child := element.children
 	for child != 0 {
 		distribute_heights(ctx, child)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 }

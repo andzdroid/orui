@@ -2,31 +2,33 @@ package orui
 
 @(private)
 compute_layout :: proc(ctx: ^Context, index: int) {
-	element := &ctx.elements[index]
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
 	compute_position(ctx, element)
 
 	child := element.children
 	for child != 0 {
 		compute_layout(ctx, child)
-		child = ctx.elements[child].next
+		child = elements[child].next
 	}
 }
 
 @(private)
 compute_position :: proc(ctx: ^Context, element: ^Element) {
-	parent := &ctx.elements[element.parent]
+	elements := &ctx.elements[current_buffer(ctx)]
+	parent := &elements[element.parent]
 
 	if element.position.type == .Fixed {
 		element._position = element.position.value
-		apply_placement(element, &ctx.elements[0])
+		apply_placement(element, &elements[0])
 	}
 
 	if element.position.type == .Absolute {
 		// absolute position is relative to the nearest parent with a non-auto position
 		parent := element.parent
-		nearest := &ctx.elements[parent]
+		nearest := &elements[parent]
 		for parent != 0 {
-			parent_element := &ctx.elements[parent]
+			parent_element := &elements[parent]
 			if parent_element.position.type != .Auto {
 				nearest = parent_element
 				break
@@ -36,7 +38,7 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 		if parent == 0 {
 			element._position = element.position.value
-			apply_placement(element, &ctx.elements[0])
+			apply_placement(element, &elements[0])
 		} else {
 			element._position = nearest._position + element.position.value
 			apply_placement(element, nearest)
