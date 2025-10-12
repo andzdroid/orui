@@ -1,21 +1,23 @@
 package orui
 
-import "core:log"
 import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 
 @(private)
 handle_input_state :: proc(ctx: ^Context) {
-	elements := &ctx.elements[current_buffer(ctx)]
+	current := current_buffer(ctx)
+	previous := previous_buffer(ctx)
+	// processing previous frame's elements
+	// input runs at the start of the frame, before the current frame's elements are declared
+	// previous elements are the latest available state of the elements
+	elements := &ctx.elements[previous]
+
 	position := rl.GetMousePosition()
 	mouse_down := rl.IsMouseButtonDown(.LEFT)
 	pressed := rl.IsMouseButtonPressed(.LEFT)
 	released := rl.IsMouseButtonReleased(.LEFT)
 	scroll := rl.GetMouseWheelMoveV()
-
-	current := current_buffer(ctx)
-	previous := previous_buffer(ctx)
 
 	ctx.prev_focus_id = ctx.focus_id
 	ctx.hover[current].count = 0
@@ -63,7 +65,7 @@ handle_input_state :: proc(ctx: ^Context) {
 					0,
 					element._content_size.x - inner_width(element),
 				)
-				set_scroll_offset(element.id, scroll_offset)
+				element.scroll.offset = scroll_offset
 				if element.block == .True {
 					scroll_consumed = true
 				}
@@ -76,7 +78,7 @@ handle_input_state :: proc(ctx: ^Context) {
 					0,
 					element._content_size.y - inner_height(element),
 				)
-				set_scroll_offset(element.id, scroll_offset)
+				element.scroll.offset = scroll_offset
 				if element.block == .True {
 					scroll_consumed = true
 				}

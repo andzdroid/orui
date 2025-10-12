@@ -354,7 +354,7 @@ ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_
 
 	max_scroll := max(0, element._content_size.x - inner_width)
 	scroll_offset.x = clamp(scroll_offset.x, 0, max_scroll)
-	set_scroll_offset(element.id, scroll_offset)
+	element.scroll.offset = scroll_offset
 }
 
 @(private)
@@ -385,7 +385,7 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 	needed_max := max(0, caret_y + line_height - inner_height)
 	max_scroll := max(prev_max, needed_max)
 	scroll_offset.y = clamp(scroll_offset.y, 0, max_scroll)
-	set_scroll_offset(element.id, scroll_offset)
+	element.scroll.offset = scroll_offset
 }
 
 @(private)

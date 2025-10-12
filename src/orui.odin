@@ -19,11 +19,6 @@ IdBuffer :: struct {
 	count: int,
 }
 
-ScrollData :: struct {
-	id:     Id,
-	offset: rl.Vector2,
-}
-
 Context :: struct {
 	elements:             [2][MAX_ELEMENTS]Element,
 	element_count:        [2]int,
@@ -35,8 +30,6 @@ Context :: struct {
 	sorted_count:         int,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
 	render_command_count: int,
-	scroll_data:          [MAX_ELEMENTS]ScrollData,
-	scroll_count:         int,
 
 	// current element index - used while building up the UI
 	current:              int,
@@ -553,30 +546,18 @@ scroll_offset :: proc {
 
 @(private)
 _scroll_offset :: proc() -> rl.Vector2 {
-	return scroll_offset(current_context.current_id)
+	return _scroll_offset_id(current_context.current_id)
 }
 
 @(private)
 _scroll_offset_id :: proc(id: Id) -> rl.Vector2 {
 	ctx := current_context
-	for i := 0; i < ctx.scroll_count; i += 1 {
-		if ctx.scroll_data[i].id == id {
-			return ctx.scroll_data[i].offset
+	elements := &ctx.elements[previous_buffer(ctx)]
+	element_count := ctx.element_count[previous_buffer(ctx)]
+	for i in 0 ..< element_count {
+		if elements[i].id == id {
+			return elements[i].scroll.offset
 		}
 	}
 	return {}
-}
-
-set_scroll_offset :: proc(id: Id, offset: rl.Vector2) {
-	ctx := current_context
-	for i in 0 ..< ctx.scroll_count {
-		if ctx.scroll_data[i].id == id {
-			ctx.scroll_data[i].offset = offset
-			return
-		}
-	}
-	if ctx.scroll_count < MAX_ELEMENTS {
-		ctx.scroll_data[ctx.scroll_count] = {id, offset}
-		ctx.scroll_count += 1
-	}
 }
