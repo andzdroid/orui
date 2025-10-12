@@ -166,7 +166,7 @@ handle_input_state :: proc(ctx: ^Context) {
 
 @(private)
 handle_keyboard_input :: proc(ctx: ^Context) {
-	elements := &ctx.elements[current_buffer(ctx)]
+	elements := &ctx.elements[previous_buffer(ctx)]
 	if ctx.focus != 0 {
 		element := &elements[ctx.focus]
 		if !element.editable {
