@@ -96,6 +96,7 @@ main :: proc() {
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
+	defer rl.CloseWindow()
 	rl.SetTargetFPS(120)
 
 	texture_path := filepath.join({#directory, "assets", "icon.png"})
@@ -265,6 +266,4 @@ main :: proc() {
 			log.infof("%v", element)
 		}
 	}
-
-	rl.CloseWindow()
 }
