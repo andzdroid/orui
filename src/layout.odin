@@ -45,6 +45,8 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 		}
 	}
 
+	clamp_scroll_offset(element)
+
 	if element.layout == .Flex {
 		flex_compute_position(ctx, element)
 	} else if element.layout == .Grid {

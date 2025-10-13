@@ -485,8 +485,9 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 to_id :: proc {
 	to_id_compiled,
 	to_id_runtime,
-	to_id_indexed,
 	to_id_int,
+	to_id_string_index,
+	to_id_id_index,
 }
 
 to_id_compiled :: proc($S: string) -> Id {
@@ -497,10 +498,16 @@ to_id_runtime :: proc(str: string) -> Id {
 	return Id(hash.fnv32a(transmute([]u8)str))
 }
 
-to_id_indexed :: proc(str: string, index: u32) -> Id {
-	return Id(hash.fnv32a(transmute([]u8)str, index))
+to_id_string_index :: proc(str: string, index: int) -> Id {
+	return Id(hash.fnv32a(transmute([]u8)str, u32(index)))
 }
 
 to_id_int :: proc(id: int) -> Id {
 	return Id(id)
+}
+
+to_id_id_index :: proc(id: Id, index: int) -> Id {
+	id_u32 := u32(id)
+	id_bytes := transmute([4]u8)id_u32
+	return Id(hash.fnv32a(id_bytes[:], u32(index)))
 }

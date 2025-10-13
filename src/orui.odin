@@ -1,6 +1,5 @@
 package orui
 
-import "core:strings"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
@@ -39,6 +38,7 @@ Context :: struct {
 
 	// mouse input
 	pointer_capture:      int,
+	pointer_capture_id:   Id,
 	hover:                [2]IdBuffer,
 	active:               [2]IdBuffer,
 
@@ -144,26 +144,46 @@ _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
 // This should not be used outside of element declarations. Use to_id() instead.
 id :: proc {
 	_id,
+	_id_string,
 	_id_int,
-	_id_index,
+	_id_string_index,
+	_id_id_index,
 }
 
-_id :: proc(str: string) -> Id {
+@(private)
+_id :: proc(id: Id) -> Id {
+	ctx := current_context
+	ctx.current_id = id
+	return id
+}
+
+@(private)
+_id_string :: proc(str: string) -> Id {
 	id := to_id(str)
 	ctx := current_context
 	ctx.current_id = id
 	return id
 }
 
+@(private)
 _id_int :: proc(id: int) -> Id {
-	id := Id(id)
+	id := to_id(id)
 	ctx := current_context
 	ctx.current_id = id
 	return id
 }
 
-_id_index :: proc(str: string, index: int) -> Id {
-	id := to_id(str, u32(index))
+@(private)
+_id_string_index :: proc(str: string, index: int) -> Id {
+	id := to_id(str, index)
+	ctx := current_context
+	ctx.current_id = id
+	return id
+}
+
+@(private)
+_id_id_index :: proc(id: Id, index: int) -> Id {
+	id := to_id(id, index)
 	ctx := current_context
 	ctx.current_id = id
 	return id
@@ -218,6 +238,8 @@ end_element :: proc() {
 
 ElementModifier :: proc(element: ^Element)
 
+// The basic building block of the UI.
+// Must have a matching end_element() call.
 element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
 	element, parent := begin_element(id)
 	configure_element(element, parent^, config)
@@ -227,337 +249,15 @@ element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> 
 	return true
 }
 
-@(deferred_none = end_element)
-// The basic building block of the UI.
-container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
-	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
-	for modifier in modifiers {
-		modifier(element)
-	}
-	return true
-}
-
-// A label is a text element that can be use to display text.
-// This element cannot have children.
-label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
-	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
-	element.layout = .None
-	element.has_text = true
-	element.text = text
-
-	for modifier in modifiers {
-		modifier(element)
-	}
-
-	if element.font == nil && current_context.default_font != {} {
-		element.font = &current_context.default_font
-	}
-
-	end_element()
-
-	return clicked()
-}
-
-text_input :: proc(
-	id: Id,
-	text: ^strings.Builder,
-	config: ElementConfig,
-	modifiers: ..ElementModifier,
-) -> bool {
-	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
-	element.layout = .None
-	element.has_text = true
-	element.text_input = text
-	element.text = string(text.buf[:])
-	element.editable = true
-	element.whitespace = .Preserve
-
-	for modifier in modifiers {
-		modifier(element)
-	}
-
-	if element.font == nil && current_context.default_font != {} {
-		element.font = &current_context.default_font
-	}
-
-	end_element()
-
-	return current_context.prev_focus_id == id && current_context.focus_id != id
-}
-
-// An image is an element that displays a texture.
-// This element cannot have children.
-image :: proc(
-	id: Id,
-	texture: ^rl.Texture2D,
-	config: ElementConfig,
-	modifiers: ..ElementModifier,
-) -> bool {
-	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
-	element.layout = .None
-	element.has_texture = true
-	element.texture = texture
-
-	for modifier in modifiers {
-		modifier(element)
-	}
-
-	end_element()
-
-	return clicked()
-}
-
-hovered :: proc {
-	_hovered,
-	_hovered_id,
-}
-
-@(private)
-// Whether the mouse is over the current element.
-// Should only be used inside an element declaration.
-_hovered :: proc() -> bool {
-	ctx := current_context
-	if ctx.current == 0 {
-		return false
-	}
-
-	buffer := current_buffer(ctx)
-	count := ctx.hover[buffer].count
-	for i := 0; i < count; i += 1 {
-		if ctx.hover[buffer].ids[i] == ctx.current_id {
-			return true
-		}
-	}
-
-	return false
-}
-
-@(private)
-// Whether the mouse is over the element with the given ID.
-_hovered_id :: proc(id: string) -> bool {
-	ctx := current_context
-	id := to_id(id)
-	buffer := current_buffer(ctx)
-	count := ctx.hover[buffer].count
-	for i := 0; i < count; i += 1 {
-		if ctx.hover[buffer].ids[i] == id {
-			return true
-		}
-	}
-
-	return false
-}
-
-// Whether an element is active (mouse down).
-active :: proc {
-	_active,
-	_active_id,
-}
-
-@(private)
-// Whether the current declared element is active (mouse down).
-_active :: proc() -> bool {
-	ctx := current_context
-	if ctx.current == 0 {
-		return false
-	}
-
-	buffer := previous_buffer(ctx)
-	count := ctx.active[buffer].count
-	for i := 0; i < count; i += 1 {
-		if ctx.active[buffer].ids[i] == ctx.current_id {
-			return true
-		}
-	}
-
-	return false
-}
-
-@(private)
-// Whether the specified element is active (mouse down).
-_active_id :: proc(id: string) -> bool {
-	ctx := current_context
-	id := to_id(id)
-	buffer := previous_buffer(ctx)
-	count := ctx.active[buffer].count
-	for i := 0; i < count; i += 1 {
-		if ctx.active[buffer].ids[i] == id {
-			return true
-		}
-	}
-
-	return false
-}
-
-clicked :: proc {
-	_clicked,
-	_clicked_id,
-}
-
-@(private)
-_clicked :: proc() -> bool {
-	return rl.IsMouseButtonReleased(.LEFT) && active()
-}
-
-@(private)
-_clicked_id :: proc(id: string) -> bool {
-	return rl.IsMouseButtonReleased(.LEFT) && active(id)
-}
-
-focused :: proc {
-	_focused,
-	_focused_id,
-}
-
-@(private)
-_focused :: proc() -> bool {
-	ctx := current_context
-	return ctx.focus_id == ctx.current_id
-}
-
-@(private)
-_focused_id :: proc(id: string) -> bool {
-	ctx := current_context
-	id := to_id(id)
-	return ctx.focus_id == id
-}
-
-padding :: proc {
-	padding_all,
-	padding_axis,
-}
-
-@(private)
-// Equal padding on all sides.
-padding_all :: proc(p: f32) -> Edges {
-	return {p, p, p, p}
-}
-
-@(private)
-// Padding on the x and y axis.
-padding_axis :: proc(x: f32, y: f32) -> Edges {
-	return {y, x, y, x}
-}
-
-margin :: proc {
-	margin_all,
-	margin_axis,
-}
-
-@(private)
-// Equal margin on all sides.
-margin_all :: proc(m: f32) -> Edges {
-	return {m, m, m, m}
-}
-
-@(private)
-// Margin on the x and y axis.
-margin_axis :: proc(x: f32, y: f32) -> Edges {
-	return {y, x, y, x}
-}
-
-// Equal border width on all sides.
-border :: proc(b: f32) -> Edges {
-	return {b, b, b, b}
-}
-
-// Equal corner radius on all sides.
-corner :: proc(r: f32) -> Corners {
-	return {r, r, r, r}
-}
-
-fixed :: proc {
-	fixed_f32,
-	fixed_i32,
-}
-@(private)
-fixed_f32 :: proc(value: f32) -> Size {
-	return {.Fixed, value, 0, 0}
-}
-@(private)
-fixed_i32 :: proc(value: i32) -> Size {
-	return {.Fixed, f32(value), 0, 0}
-}
-
-percent :: proc(value: f32) -> Size {
-	return {.Percent, value, 0, 0}
-}
-
-fit :: proc() -> Size {
-	return {.Fit, 0, 0, 0}
-}
-
-grow :: proc(base: f32 = 0) -> Size {
-	return {.Grow, base, 0, 0}
-}
-
-AnchorPoint :: enum {
-	TopLeft,
-	TopRight,
-	Top,
-	Left,
-	Right,
-	Center,
-	BottomLeft,
-	BottomRight,
-	Bottom,
-}
-
-anchor_point :: proc(point: AnchorPoint) -> rl.Vector2 {
-	switch point {
-	case .TopLeft:
-		return {0, 0}
-	case .TopRight:
-		return {1, 0}
-	case .Top:
-		return {0.5, 0}
-	case .Left:
-		return {0, 0.5}
-	case .Right:
-		return {1, 0.5}
-	case .BottomLeft:
-		return {0, 1}
-	case .BottomRight:
-		return {1, 1}
-	case .Bottom:
-		return {0.5, 1}
-	case .Center:
-		return {0.5, 0.5}
-	}
-	return {0, 0}
-}
-
-placement :: proc(anchor: AnchorPoint, origin: AnchorPoint) -> Placement {
-	return {anchor_point(anchor), anchor_point(origin)}
-}
-
-scroll :: proc(direction: ScrollDirection) -> ScrollConfig {
-	return {direction, scroll_offset()}
-}
-
-scroll_offset :: proc {
-	_scroll_offset,
-	_scroll_offset_id,
-}
-
-@(private)
-_scroll_offset :: proc() -> rl.Vector2 {
-	return _scroll_offset_id(current_context.current_id)
-}
-
-@(private)
-_scroll_offset_id :: proc(id: Id) -> rl.Vector2 {
+// Get an element from the previous frame.
+get_element :: proc(id: Id) -> ^Element {
 	ctx := current_context
 	elements := &ctx.elements[previous_buffer(ctx)]
 	element_count := ctx.element_count[previous_buffer(ctx)]
 	for i in 0 ..< element_count {
 		if elements[i].id == id {
-			return elements[i].scroll.offset
+			return &elements[i]
 		}
 	}
-	return {}
+	return nil
 }

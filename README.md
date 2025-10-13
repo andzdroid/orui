@@ -30,6 +30,7 @@ Features:
 - Layers (z-index)
 - Padding, margin, borders, rounded corners, overflow, clipping
 - Scroll (with mouse wheel)
+  - Horizontal/vertical scrollbars
 - Images (textures)
   - Alignment
   - Content fit (fill, contain, cover, none, scale-down)
@@ -66,7 +67,6 @@ To do:
 - Scroll with drag
 - Scroll momentum
 - Scroll bounce
-- Scrollbar (maybe)
 - Optimisations
 
 ## Table of Contents
@@ -147,7 +147,7 @@ orui.id(1000000)
 orui.to_id("row", i)
 ```
 
-### element
+### element(id, config, ..modifiers)
 
 `element` is the basic building block of orui. It can be used to build anything that orui can render.
 
@@ -180,7 +180,7 @@ my_container :: proc(id: string) {
 }
 ```
 
-### container
+### container(id, config, ..modifiers)
 
 `container` is exactly like `element` except it automatically ends the element when it goes out of scope. You should not manually call `end_element()` for containers.
 
@@ -211,7 +211,7 @@ Make sure containers always have their own scope. In the following example, labe
 }
 ```
 
-### label
+### label(id, text, config, ...modifiers)
 
 A label element displays text.
 
@@ -241,7 +241,7 @@ if orui.label(orui.id("button"), "Button text", {
 
 **Rendering text makes use of the temp allocator. Make sure you free the temp allocator each frame.**
 
-### text_input
+### text_input(id, buffer, config, ...modifiers)
 
 This element displays text, and also allows the user to click into it to focus on it, and edit the text.
 
@@ -269,7 +269,7 @@ orui.text_input(orui.id("input"), &buffer, {
 })
 ```
 
-### image
+### image(id, config, ...modifiers)
 
 Display an image. Takes a pointer to a raylib Texture2D.
 
@@ -279,6 +279,38 @@ This element does not need the surrounding curly braces because it cannot hold c
 orui.image(orui.id("image"), &texture, {
 	color = rl.WHITE, // optional tint
 	texture_source = rl.Rectangle{}, // optional, draw part of the texture
+})
+```
+
+### scrollbar(parent_id, background_config, handle_config, index := 0)
+
+Display a scrollbar for a scrolling container.
+
+Note that this element takes very different parameters from the other widgets:
+
+- parent_id: this should be the ID of the scrolling container that you want to draw a scrollbar for.
+- background_config : this is the element config for the scrollbar background.
+- handle_config: this is the element config for the scrollbar handle. The scrollbar handle will be a child of the scrollbar background and positioned relatively. The `direction` field will control the direction of the scrollbar.
+- index: required if you have more than 1 scrollbar for a single container. Each scrollbar for the same container must have a unique index.
+
+I recommend setting the scrolling container to be relatively positioned, the scrollbar to be an absolutely positioned child, and using the `placement` config to place the scrollbar.
+
+For horizontal scrollbars, you MUST set a handle height. For vertical scrollbars, you MUST set a vertical height.
+
+orui will overwrite the handle width and relative x position if it's a horizontal scrollbar and vice versa for vertical scrollbars.
+
+```odin
+orui.scrollbar(orui.to_id("container id"), {
+  position = {.Absolute, {-5, 0}}
+  placement = placement(.Right, .Right),
+  width = orui.fixed(6),
+  height = orui.percent(0.9),
+  corner_radius = corner(4),
+  background_color = rl.BLACK,
+}, {
+  width = orui.percent(1),
+  background_color = rl.LIGHTGRAY,
+  corner_radius = corner(4),
 })
 ```
 
@@ -330,7 +362,7 @@ orui.label(orui.id("label"), "Test", {
 })
 ```
 
-Same as the above two functions, you can ask about a specific element by passing in the ID:
+You can ask about a specific element by passing in the ID:
 
 ```odin
 if orui.clicked("label") {
@@ -345,6 +377,28 @@ Returns true if the text input element is currently focused (active and receivin
 Only one element can be focused at a time.
 
 Clicking outside of the element or focusing another element will unfocus the element.
+
+You can ask about a specific element by passing in the ID:
+
+```odin
+if orui.focused("input element") {
+  // is focused
+}
+```
+
+### captured()
+
+Returns true if an element has captured mouse input. This means the left mouse button is currently held down, and until it's released, only the capturing element will handle mouse input.
+
+This is useful for scrollbar/slider handles, moveable windows/dialogs, etc.
+
+You can ask about a specific element by passing in the ID:
+
+```odin
+if orui.captured("some element") {
+  // is capturing input
+}
+```
 
 ## Element config
 

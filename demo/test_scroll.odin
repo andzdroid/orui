@@ -56,54 +56,113 @@ render_test_scroll :: proc() {
 		},
 	)
 
-	orui.text_input(
-		orui.id("text input 2"),
-		&text_input2,
-		{
-			width = orui.fixed(300),
-			height = orui.fixed(300),
-			padding = orui.padding(8),
-			background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
-			color = rl.BLACK,
-			font_size = 16,
-			overflow = .Wrap,
-			clip = {.Self, {}},
-			scroll = orui.scroll(.Auto),
-			border = orui.border(1),
-			border_color = orui.focused() ? rl.BLACK : rl.LIGHTGRAY,
-		},
-	)
+	{orui.container(
+			orui.id("text input 2 container"),
+			{width = orui.fixed(300), height = orui.fixed(300), position = {.Relative, {}}},
+		)
+
+		orui.text_input(
+			orui.id("text input 2"),
+			&text_input2,
+			{
+				width = orui.fixed(300),
+				height = orui.fixed(300),
+				padding = orui.padding(8),
+				background_color = orui.hovered() || orui.focused() ? rl.WHITE : {240, 240, 240, 255},
+				color = rl.BLACK,
+				font_size = 16,
+				overflow = .Wrap,
+				clip = {.Self, {}},
+				scroll = orui.scroll(.Auto),
+				border = orui.border(1),
+				border_color = orui.focused() ? rl.BLACK : rl.LIGHTGRAY,
+			},
+		)
+
+		orui.scrollbar(
+			orui.to_id("text input 2"),
+			{
+				position = {.Absolute, {-5, 0}},
+				placement = orui.placement(.Right, .Right),
+				width = orui.fixed(6),
+				height = orui.percent(0.9),
+			},
+			{direction = .TopToBottom, width = orui.percent(1), background_color = rl.LIGHTGRAY},
+		)
+	}
 
 
 	{orui.container(
 			orui.id("scroll container"),
 			{
+				position = {.Relative, {}},
 				layout = .Flex,
 				direction = .TopToBottom,
-				width = orui.percent(0.5),
-				height = orui.percent(0.75),
-				padding = orui.padding(16),
+				width = orui.fixed(400),
+				height = orui.fixed(400),
+				padding = orui.padding(0, 0),
 				background_color = rl.LIGHTGRAY,
-				gap = 16,
+				gap = 8,
 				clip = {.Self, {}},
 				scroll = orui.scroll(.Auto),
 				corner_radius = orui.corner(8),
 			},
 		)
 
-		for i in 0 ..< 50 {
+		for i in 0 ..< 25 {
+			background: rl.Color =
+				i % 3 == 0 ? {4, 41, 64, 255} : i % 3 == 1 ? {0, 92, 83, 255} : {159, 193, 49, 255}
 			orui.label(
 				orui.id("element", i),
 				"Element",
 				{
-					width = orui.grow(),
+					width = orui.fixed(800),
 					height = orui.fixed(200),
-					background_color = i % 2 == 0 ? {30, 60, 180, 255} : {180, 60, 30, 255},
+					background_color = background,
 					font_size = 16,
 					color = rl.WHITE,
 					align = {.Center, .Center},
+					margin = orui.margin(16),
 				},
 			)
 		}
+
+		orui.scrollbar(
+			orui.to_id("scroll container"),
+			{
+				position = {.Absolute, {5, 0}},
+				placement = orui.placement(.Right, .Left),
+				width = orui.fixed(10),
+				height = orui.percent(1),
+				background_color = {214, 213, 142, 255},
+				corner_radius = orui.corner(4),
+			},
+			{
+				direction = .TopToBottom,
+				width = orui.percent(1),
+				background_color = rl.DARKGRAY,
+				corner_radius = orui.corner(4),
+			},
+			0,
+		)
+
+		orui.scrollbar(
+			orui.to_id("scroll container"),
+			{
+				position = {.Absolute, {0, 15}},
+				placement = orui.placement(.Bottom, .Bottom),
+				width = orui.percent(1),
+				height = orui.fixed(10),
+				background_color = {214, 213, 142, 255},
+				corner_radius = orui.corner(4),
+			},
+			{
+				direction = .LeftToRight,
+				height = orui.percent(1),
+				background_color = rl.DARKGRAY,
+				corner_radius = orui.corner(4),
+			},
+			1,
+		)
 	}
 }

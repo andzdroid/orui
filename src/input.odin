@@ -25,6 +25,7 @@ handle_input_state :: proc(ctx: ^Context) {
 
 	if released {
 		ctx.pointer_capture = 0
+		ctx.pointer_capture_id = 0
 		if ctx.focus != 0 && ctx.caret_index == -1 {
 			ctx.caret_index = text_caret_from_point(&elements[ctx.focus], position)
 		}
@@ -135,6 +136,7 @@ handle_input_state :: proc(ctx: ^Context) {
 
 				if element.capture == .True {
 					ctx.pointer_capture = ctx.sorted[i]
+					ctx.pointer_capture_id = element.id
 				}
 			}
 
