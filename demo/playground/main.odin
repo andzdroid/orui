@@ -72,6 +72,7 @@ main :: proc() {
 
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
+	defer rl.CloseWindow()
 
 	ctx := new(orui.Context)
 	defer free(ctx)
@@ -374,5 +375,4 @@ main :: proc() {
 
 	log.infof("elapsed 1: %v", elapsed1 / time.Duration(iterations))
 	log.infof("elapsed 2: %v", elapsed2 / time.Duration(iterations))
-	rl.CloseWindow()
 }

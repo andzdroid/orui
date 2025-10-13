@@ -360,6 +360,7 @@ text_area :: proc(input_buffer: ^strings.Builder) {
 main :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
 	rl.InitWindow(1280, 900, "orui")
+	defer rl.CloseWindow()
 
 	ctx := new(orui.Context)
 	defer free(ctx)
@@ -431,6 +432,4 @@ main :: proc() {
 
 		free_all(context.temp_allocator)
 	}
-
-	rl.CloseWindow()
 }
