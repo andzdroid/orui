@@ -5,6 +5,9 @@ import "core:path/filepath"
 import "core:strings"
 import rl "vendor:raylib"
 
+font1: rl.Font
+font2: rl.Font
+
 Skin :: enum {
 	Dark,
 	Light,
@@ -27,6 +30,7 @@ dark_button_style :: proc(element: ^orui.Element) {
 	element.border_color = {100, 100, 120, 255}
 	element.corner_radius = orui.corner(4)
 	element.color = rl.WHITE
+	element.font = &font1
 }
 
 light_button_style :: proc(element: ^orui.Element) {
@@ -36,6 +40,7 @@ light_button_style :: proc(element: ^orui.Element) {
 	element.border_color = {100, 100, 100, 255}
 	element.corner_radius = orui.corner(4)
 	element.color = rl.BLACK
+	element.font = &font2
 }
 
 window_style :: proc(skin: Skin) -> proc(element: ^orui.Element) {
@@ -79,9 +84,12 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
+	font1 = rl.GetFontDefault()
+	defer rl.UnloadFont(font1)
+
 	font_path := filepath.join({#directory, "..", "assets", "Inter-Regular.ttf"})
-	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
-	defer rl.UnloadFont(ctx.default_font)
+	font2 = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
+	defer rl.UnloadFont(font2)
 
 	skin := Skin.Dark
 
@@ -148,7 +156,11 @@ main :: proc() {
 					orui.label(
 						orui.id("title"),
 						"Window title",
-						{font_size = 16, color = skin == .Dark ? rl.WHITE : rl.BLACK},
+						{
+							font_size = 16,
+							color = skin == .Dark ? rl.WHITE : rl.BLACK,
+							font = skin == .Dark ? &font1 : &font2,
+						},
 					)
 				}
 
@@ -169,6 +181,7 @@ main :: proc() {
 							width = orui.grow(),
 							height = orui.grow(),
 							font_size = 16,
+							font = skin == .Dark ? &font1 : &font2,
 							color = skin == .Dark ? rl.WHITE : rl.BLACK,
 							padding = orui.padding(16),
 							align = {.Start, .Start},

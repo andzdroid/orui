@@ -9,8 +9,8 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 orui is a work in progress. **Requires odin 2025-09 release!**
 
 <img src="demo/test_flex.png" width="45%" /><img src="demo/test_grid.png" width="45%" />
-<img src="demo/skinning/screenshot1.png" width="45%" /><img src="demo/window/screenshot.png" width="43%" />
-<img src="demo/test_text.png" width="40%" /><img src="demo/widgets/screenshot.png" width="45%">
+<img src="demo/skinning/screenshot.gif" width="45%" /><img src="demo/window/screenshot.gif" width="42%" />
+<img src="demo/test_scroll.gif" width="40%" /><img src="demo/widgets/screenshot.png" width="45%">
 
 Features:
 
@@ -63,6 +63,7 @@ To do:
   - Placeholder (maybe)
   - Customise text select background colour
 - Other widgets (maybe)
+  - Slider
 - Grid row/column start (maybe)
 - Scroll with drag
 - Scroll momentum
