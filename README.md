@@ -50,17 +50,17 @@ To do:
 
 - Box sizing
   - Choose between border box and content box sizing
-	- Current border box sizing is not suitable for many situations
+ - Current border box sizing is not suitable for many situations
 - Flex wrap
 - 9-slice scaling
 - Grid justify/align
 - Text inputs
-	- Character filtering
-	- Double click, triple click
+  - Character filtering
+  - Double click, triple click
   - Undo/redo (maybe)
-	- Drag and drop (maybe)
+  - Drag and drop (maybe)
   - Placeholder (maybe)
-	- Customise text select background colour
+  - Customise text select background colour
 - Other widgets (maybe)
 - Grid row/column start (maybe)
 - Scroll with drag
@@ -100,6 +100,8 @@ ctx := new(orui.Context)
 ```odin
 ctx.default_font = rl.GetFontDefault()
 ```
+
+If you don't set a default font, you must pass a font to each element that displays text. The default font is a fallback for when the element font is missing.
 
 In your render loop:
 
