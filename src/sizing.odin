@@ -19,6 +19,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	if element.has_text &&
 	   (element.overflow != .Wrap || element.width.type == .Fit || element.width.type == .Grow) {
 		text_width := measure_text_width(
+			ctx,
 			element.text,
 			element.font,
 			element.font_size,

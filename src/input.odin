@@ -27,7 +27,7 @@ handle_input_state :: proc(ctx: ^Context) {
 		ctx.pointer_capture = 0
 		ctx.pointer_capture_id = 0
 		if ctx.focus != 0 && ctx.caret_index == -1 {
-			ctx.caret_index = text_caret_from_point(&elements[ctx.focus], position)
+			ctx.caret_index = text_caret_from_point(ctx, &elements[ctx.focus], position)
 		}
 	}
 
@@ -111,14 +111,14 @@ handle_input_state :: proc(ctx: ^Context) {
 								   rl.IsKeyDown(.LEFT_SHIFT) ||
 								   rl.IsKeyDown(.RIGHT_SHIFT)) {
 							// handle text selection with drag or shift click
-							ctx.text_selection.end = text_caret_from_point(element, position)
+							ctx.text_selection.end = text_caret_from_point(ctx, element, position)
 							ctx.caret_index = ctx.text_selection.end
 							ctx.caret_time = 0
 							ensure_caret_visible(ctx, element, ctx.caret_index)
 						} else {
 							ctx.focus = ctx.sorted[i]
 							ctx.focus_id = element.id
-							start := text_caret_from_point(element, position)
+							start := text_caret_from_point(ctx, element, position)
 							ctx.text_selection.start = start
 							ctx.text_selection.end = start
 							ctx.caret_index = start
@@ -152,7 +152,7 @@ handle_input_state :: proc(ctx: ^Context) {
 
 	if ctx.selecting && mouse_down && ctx.focus != 0 {
 		el := &elements[ctx.focus]
-		end := text_caret_from_point(el, position)
+		end := text_caret_from_point(ctx, el, position)
 		ctx.text_selection.end = end
 		ctx.caret_index = end
 		ctx.caret_time = 0
@@ -248,7 +248,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				if ctrl_down || cmd_down || element.overflow == .Visible {
 					next_index = 0
 				} else {
-					next_index = caret_index_start_of_line(element, ctx.caret_index)
+					next_index = caret_index_start_of_line(ctx, element, ctx.caret_index)
 				}
 				if shift_down {
 					if !has_text_selection(ctx) {
@@ -266,7 +266,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				if ctrl_down || cmd_down || element.overflow == .Visible {
 					next_index = len(text_input.buf)
 				} else {
-					next_index = caret_index_end_of_line(element, ctx.caret_index)
+					next_index = caret_index_end_of_line(ctx, element, ctx.caret_index)
 				}
 				if shift_down {
 					if !has_text_selection(ctx) {
@@ -281,7 +281,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 
 			if element.overflow == .Wrap {
 				if key_pressed(ctx, .UP) {
-					next := caret_index_up(element, ctx.caret_position)
+					next := caret_index_up(ctx, element, ctx.caret_position)
 					if shift_down {
 						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
@@ -294,7 +294,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 
 				if key_pressed(ctx, .DOWN) {
-					next := caret_index_down(element, ctx.caret_position)
+					next := caret_index_down(ctx, element, ctx.caret_position)
 					if shift_down {
 						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
@@ -307,7 +307,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 
 				if key_pressed(ctx, .PAGE_UP) {
-					next := caret_index_up(element, ctx.caret_position, 5)
+					next := caret_index_up(ctx, element, ctx.caret_position, 5)
 					if shift_down {
 						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index
@@ -320,7 +320,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 
 				if key_pressed(ctx, .PAGE_DOWN) {
-					next := caret_index_down(element, ctx.caret_position, 5)
+					next := caret_index_down(ctx, element, ctx.caret_position, 5)
 					if shift_down {
 						if !has_text_selection(ctx) {
 							ctx.text_selection.start = ctx.caret_index

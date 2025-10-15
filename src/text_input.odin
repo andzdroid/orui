@@ -111,7 +111,7 @@ delete_range :: proc(builder: ^strings.Builder, start: int, end: int) -> bool {
 	return true
 }
 
-text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
+text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector2) -> int {
 	text := element.text
 	if len(text) == 0 {
 		return 0
@@ -131,7 +131,13 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 		element.scroll.offset.y
 
 	if element.overflow == .Visible {
-		line_width := measure_text_width(text, element.font, element.font_size, letter_spacing)
+		line_width := measure_text_width(
+			ctx,
+			text,
+			element.font,
+			element.font_size,
+			letter_spacing,
+		)
 		line_offset := calculate_line_offset(element, line_width, inner_width)
 		local_x := point.x - (x_start + line_offset)
 
@@ -150,6 +156,7 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 		target_line = clamp(target_line, 0, total_lines - 1)
 
 		line_start, line_end, width := wrapped_line_at(
+			ctx,
 			element,
 			target_line,
 			inner_width,
@@ -202,6 +209,7 @@ text_caret_from_point :: proc(element: ^Element, point: rl.Vector2) -> int {
 // Get a specific line from wrapped text.
 // Returns the start index, end index, and width of the line.
 wrapped_line_at :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	target_line: int,
 	inner_width: f32,
@@ -215,6 +223,7 @@ wrapped_line_at :: proc(
 	text_len := len(text)
 
 	it := TextWrapIterator {
+		ctx            = ctx,
 		text           = text,
 		font           = element.font,
 		font_size      = element.font_size,
@@ -271,34 +280,46 @@ caret_index_in_line :: proc(
 }
 
 @(private)
-caret_index_up :: proc(element: ^Element, from: rl.Vector2, lines := 1) -> int {
+caret_index_up :: proc(ctx: ^Context, element: ^Element, from: rl.Vector2, lines := 1) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
 	target := from - {0, line_height * f32(lines)}
-	return text_caret_from_point(element, target)
+	return text_caret_from_point(ctx, element, target)
 }
 
 @(private)
-caret_index_down :: proc(element: ^Element, from: rl.Vector2, lines := 1) -> int {
+caret_index_down :: proc(ctx: ^Context, element: ^Element, from: rl.Vector2, lines := 1) -> int {
 	line_height := measure_text_height(element.font_size, element.line_height)
 	target := from + {0, line_height * f32(lines)}
-	return text_caret_from_point(element, target)
+	return text_caret_from_point(ctx, element, target)
 }
 
 @(private)
-caret_index_start_of_line :: proc(element: ^Element, caret_index: int) -> int {
+caret_index_start_of_line :: proc(ctx: ^Context, element: ^Element, caret_index: int) -> int {
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
-	current_line_index := find_caret_line(element, caret_index, inner_width, letter_spacing)
-	line_start, _, _ := wrapped_line_at(element, current_line_index, inner_width, letter_spacing)
+	current_line_index := find_caret_line(ctx, element, caret_index, inner_width, letter_spacing)
+	line_start, _, _ := wrapped_line_at(
+		ctx,
+		element,
+		current_line_index,
+		inner_width,
+		letter_spacing,
+	)
 	return line_start
 }
 
 @(private)
-caret_index_end_of_line :: proc(element: ^Element, caret_index: int) -> int {
+caret_index_end_of_line :: proc(ctx: ^Context, element: ^Element, caret_index: int) -> int {
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
-	current_line_index := find_caret_line(element, caret_index, inner_width, letter_spacing)
-	_, line_end, _ := wrapped_line_at(element, current_line_index, inner_width, letter_spacing)
+	current_line_index := find_caret_line(ctx, element, caret_index, inner_width, letter_spacing)
+	_, line_end, _ := wrapped_line_at(
+		ctx,
+		element,
+		current_line_index,
+		inner_width,
+		letter_spacing,
+	)
 
 	// step back one rune at the end of a soft-wrapped line
 	if line_end < len(element.text) && element.text[line_end] != '\n' {
@@ -337,6 +358,7 @@ ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_
 	caret_index := clamp(caret_index, 0, len(element.text))
 	text_before_caret := element.text[:caret_index]
 	caret_x := measure_text_width(
+		ctx,
 		text_before_caret,
 		element.font,
 		element.font_size,
@@ -368,7 +390,7 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 	inner_width := inner_width(element)
 	inner_height := inner_height(element)
 
-	caret_line := find_caret_line(element, caret_index, inner_width, letter_spacing)
+	caret_line := find_caret_line(ctx, element, caret_index, inner_width, letter_spacing)
 	caret_y := f32(caret_line) * line_height
 
 	scroll_offset := get_scroll_offset(element)
@@ -390,6 +412,7 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 
 @(private)
 find_caret_line :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	caret_index: int,
 	inner_width: f32,
@@ -399,6 +422,7 @@ find_caret_line :: proc(
 	text_len := len(text)
 
 	it := TextWrapIterator {
+		ctx            = ctx,
 		text           = text,
 		font           = element.font,
 		font_size      = element.font_size,

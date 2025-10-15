@@ -334,12 +334,9 @@ _set_scroll_offset :: proc(offset: rl.Vector2) {
 _set_scroll_offset_id :: proc(id: Id, offset: rl.Vector2) {
 	ctx := current_context
 	elements := &ctx.elements[current_buffer(ctx)]
-	element_count := ctx.element_count[current_buffer(ctx)]
-	for i in 0 ..< element_count {
-		if elements[i].id == id {
-			elements[i].scroll.offset = offset
-			break
-		}
+	index := ctx.element_map[current_buffer(ctx)][id]
+	if index != 0 {
+		elements[index].scroll.offset = offset
 	}
 }
 

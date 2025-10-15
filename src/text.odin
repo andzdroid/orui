@@ -16,6 +16,7 @@ TextLine :: struct {
 
 @(private)
 TextWrapIterator :: struct {
+	ctx:               ^Context,
 	text:              string,
 	font:              ^rl.Font,
 	font_size:         f32,
@@ -30,6 +31,7 @@ TextWrapIterator :: struct {
 
 @(private)
 measure_text_width :: proc(
+	ctx: ^Context,
 	text: string,
 	font: ^rl.Font,
 	font_size: f32,
@@ -37,6 +39,11 @@ measure_text_width :: proc(
 ) -> f32 {
 	if len(text) == 0 {
 		return 0
+	}
+
+	if width, ok := ctx.text_width_cache[previous_buffer(ctx)][text]; ok {
+		ctx.text_width_cache[current_buffer(ctx)][text] = width
+		return width
 	}
 
 	width: f32 = 0
@@ -49,7 +56,9 @@ measure_text_width :: proc(
 	}
 
 	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
-	return width + letter_spacing * f32(count - 1)
+	width = width + letter_spacing * f32(count - 1)
+	ctx.text_width_cache[current_buffer(ctx)][text] = width
+	return width
 }
 
 @(private)
@@ -74,6 +83,7 @@ glyph_advance :: proc(font: ^rl.Font, r: rune, font_size: f32) -> (adv: f32) {
 
 @(private)
 find_break_index :: proc(
+	ctx: ^Context,
 	text: string,
 	start: int,
 	end: int,
@@ -88,7 +98,7 @@ find_break_index :: proc(
 	if start >= end || max_width <= 0 {
 		_, size := utf8.decode_rune(text[start:end])
 		sub := text[start:start + size]
-		width = measure_text_width(sub, font, font_size, letter_spacing)
+		width = measure_text_width(ctx, sub, font, font_size, letter_spacing)
 		return start + size, width
 	}
 
@@ -164,6 +174,7 @@ _text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 				start = start,
 				end = end,
 				width = measure_text_width(
+					it.ctx,
 					it.text[start:end],
 					it.font,
 					it.font_size,
@@ -177,7 +188,13 @@ _text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 			word_start, word_end := find_next_space(it.text, it.index)
 			token := it.text[word_start:word_end]
 			is_space := it.text[word_start] == ' '
-			token_width := measure_text_width(token, it.font, it.font_size, it.letter_spacing)
+			token_width := measure_text_width(
+				it.ctx,
+				token,
+				it.font,
+				it.font_size,
+				it.letter_spacing,
+			)
 
 			join := it.line_width > 0 ? it.letter_spacing : 0
 			new_width := it.line_width + join + token_width
@@ -209,6 +226,7 @@ _text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 				}
 
 				split_index, part_width := find_break_index(
+					it.ctx,
 					it.text,
 					word_start,
 					word_end,
@@ -244,6 +262,7 @@ _text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 
 			// Token itself doesn't fit on empty line: break mid-token
 			split_index, part_width := find_break_index(
+				it.ctx,
 				it.text,
 				word_start,
 				word_end,
@@ -268,7 +287,13 @@ _text_wrap_iterator_next_preserve :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 	if it.line_start < it.index {
 		start := it.line_start
 		end := it.index
-		width := measure_text_width(it.text[start:end], it.font, it.font_size, it.letter_spacing)
+		width := measure_text_width(
+			it.ctx,
+			it.text[start:end],
+			it.font,
+			it.font_size,
+			it.letter_spacing,
+		)
 		it.line_start = it.index
 		return true, TextLine{start = start, end = end, width = width, hard_break = false}
 	}
@@ -298,6 +323,7 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 				start = start,
 				end = end,
 				width = measure_text_width(
+					it.ctx,
 					it.text[start:end],
 					it.font,
 					it.font_size,
@@ -321,7 +347,13 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 					continue
 				}
 
-				space_width := measure_text_width(" ", it.font, it.font_size, it.letter_spacing)
+				space_width := measure_text_width(
+					it.ctx,
+					" ",
+					it.font,
+					it.font_size,
+					it.letter_spacing,
+				)
 				join := it.letter_spacing // there is always at least one previous glyph here
 				new_width := it.line_width + join + space_width
 
@@ -347,6 +379,7 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 
 			// non-space token
 			token_width := measure_text_width(
+				it.ctx,
 				it.text[token_start:token_end],
 				it.font,
 				it.font_size,
@@ -379,6 +412,7 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 
 			// word too long for empty line: split mid-word
 			split_index, part_width := find_break_index(
+				it.ctx,
 				it.text,
 				token_start,
 				token_end,
@@ -404,7 +438,13 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 	if it.line_start < it.index {
 		start := it.line_start
 		end := it.last_nonspace_end
-		width := measure_text_width(it.text[start:end], it.font, it.font_size, it.letter_spacing)
+		width := measure_text_width(
+			it.ctx,
+			it.text[start:end],
+			it.font,
+			it.font_size,
+			it.letter_spacing,
+		)
 
 		it.line_start = it.index
 		return true, TextLine{start = start, end = end, width = width, hard_break = false}
@@ -459,6 +499,7 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	it := TextWrapIterator {
+		ctx            = ctx,
 		text           = text,
 		font           = element.font,
 		font_size      = element.font_size,
@@ -550,7 +591,13 @@ _render_text_line :: proc(
 @(private)
 render_text :: proc(ctx: ^Context, element: ^Element) {
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	line_width := measure_text_width(element.text, element.font, element.font_size, letter_spacing)
+	line_width := measure_text_width(
+		ctx,
+		element.text,
+		element.font,
+		element.font_size,
+		letter_spacing,
+	)
 	inner_width := inner_width(element)
 
 	x := element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
@@ -563,6 +610,7 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 
 	if current_context.focus_id == element.id {
 		render_selection(
+			ctx,
 			element,
 			element.text,
 			0,
@@ -579,6 +627,7 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 	_render_text_line(ctx, element, element.text, line_width, x, y, letter_spacing, inner_width)
 
 	render_caret(
+		ctx,
 		element,
 		element.text,
 		0,
@@ -607,7 +656,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	inner_width := inner_width(element)
 
 	if text_len == 0 {
-		render_caret(element, "", 0, 0, 0, x_start, y_start, letter_spacing, inner_width)
+		render_caret(ctx, element, "", 0, 0, 0, x_start, y_start, letter_spacing, inner_width)
 		return
 	}
 
@@ -615,6 +664,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	active := current_context.focus_id == element.id
 
 	it := TextWrapIterator {
+		ctx            = ctx,
 		text           = text,
 		font           = element.font,
 		font_size      = element.font_size,
@@ -632,6 +682,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 
 		if active {
 			render_selection(
+				ctx,
 				element,
 				text,
 				line.start,
@@ -657,6 +708,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		)
 
 		render_caret(
+			ctx,
 			element,
 			text,
 			line.start,
@@ -672,7 +724,18 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	if text[text_len - 1] == '\n' {
-		render_caret(element, text, text_len, text_len, 0, x_start, y, letter_spacing, inner_width)
+		render_caret(
+			ctx,
+			element,
+			text,
+			text_len,
+			text_len,
+			0,
+			x_start,
+			y,
+			letter_spacing,
+			inner_width,
+		)
 	}
 }
 
@@ -694,6 +757,7 @@ calculate_line_offset :: proc(element: ^Element, line_width: f32, available_widt
 
 @(private)
 render_caret :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	text: string,
 	line_start: int,
@@ -731,6 +795,7 @@ render_caret :: proc(
 	}
 
 	prefix_width := measure_text_width(
+		ctx,
 		text[line_start:caret],
 		element.font,
 		element.font_size,
@@ -752,6 +817,7 @@ render_caret :: proc(
 
 @(private)
 render_selection :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	text: string,
 	line_start: int,
@@ -785,12 +851,14 @@ render_selection :: proc(
 	}
 
 	prefix_width := measure_text_width(
+		ctx,
 		text[line_start:start],
 		element.font,
 		element.font_size,
 		letter_spacing,
 	)
 	selection_width := measure_text_width(
+		ctx,
 		text[start:end],
 		element.font,
 		element.font_size,

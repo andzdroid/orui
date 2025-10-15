@@ -1,5 +1,8 @@
 package orui
 
+import "base:runtime"
+import "core:log"
+import "core:mem/virtual"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
@@ -18,13 +21,21 @@ IdBuffer :: struct {
 	count: int,
 }
 
+TextCache :: struct {
+	lines: []string,
+}
+
 Context :: struct {
+	arena:                [2]virtual.Arena,
+	allocator:            [2]runtime.Allocator,
 	elements:             [2][MAX_ELEMENTS]Element,
 	element_count:        [2]int,
-	// TODO: lookup table of Id => index?
+	element_map:          [2]map[Id]int,
 	frame:                int,
 	time:                 f64,
 	default_font:         rl.Font,
+	text_cache:           [2]map[string]TextCache,
+	text_width_cache:     [2]map[string]f32,
 	sorted:               [MAX_ELEMENTS]int,
 	sorted_count:         int,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
@@ -53,6 +64,22 @@ Context :: struct {
 	repeat_time:          f64,
 	text_selection:       TextSelection,
 	selecting:            bool,
+}
+
+init :: proc(ctx: ^Context) {
+	for i in 0 ..< 2 {
+		err := virtual.arena_init_growing(&ctx.arena[i])
+		if err != nil {
+			log.panicf("Failed to initialize arena: %v", err)
+		}
+		ctx.allocator[i] = virtual.arena_allocator(&ctx.arena[i])
+	}
+}
+
+destroy :: proc(ctx: ^Context) {
+	for i in 0 ..< 2 {
+		virtual.arena_destroy(&ctx.arena[i])
+	}
 }
 
 current_buffer :: #force_inline proc(ctx: ^Context) -> int {
@@ -87,11 +114,18 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 
 	ctx.frame += 1
 
+	i := current_buffer(ctx)
+	virtual.arena_free_all(&ctx.arena[i])
+	ctx.element_map[i] = make(map[Id]int, 1024, ctx.allocator[i])
+	ctx.text_cache[i] = make(map[string]TextCache, 1024, ctx.allocator[i])
+	ctx.text_width_cache[i] = make(map[string]f32, 1024, ctx.allocator[i])
+
 	handle_input_state(ctx)
 
+	root_id := to_id("root")
 	ctx.element_count[current_buffer(ctx)] = 0
 	ctx.elements[current_buffer(ctx)][0] = {
-		id       = to_id("root"),
+		id       = root_id,
 		width    = fixed(width),
 		height   = fixed(height),
 		_size    = {width, height},
@@ -101,6 +135,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 		capture  = .False,
 	}
 	ctx.element_count[current_buffer(ctx)] += 1
+	ctx.element_map[current_buffer(ctx)][root_id] = 0
 
 	ctx.current = 0
 	ctx.previous = 0
@@ -205,12 +240,12 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 
 	index := ctx.element_count[current_buffer(ctx)]
 	ctx.element_count[current_buffer(ctx)] += 1
-	element := &elements[index]
-	element^ = Element{}
-
+	ctx.element_map[current_buffer(ctx)][id] = index
 	ctx.current = index
 	ctx.parent = parent_index
 
+	element := &elements[index]
+	element^ = Element{}
 	element.id = id
 	element.parent = parent_index
 
@@ -253,11 +288,9 @@ element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> 
 get_element :: proc(id: Id) -> ^Element {
 	ctx := current_context
 	elements := &ctx.elements[previous_buffer(ctx)]
-	element_count := ctx.element_count[previous_buffer(ctx)]
-	for i in 0 ..< element_count {
-		if elements[i].id == id {
-			return &elements[i]
-		}
+	index := ctx.element_map[previous_buffer(ctx)][id]
+	if index != 0 {
+		return &elements[index]
 	}
 	return nil
 }

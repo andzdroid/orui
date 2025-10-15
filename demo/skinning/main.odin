@@ -84,6 +84,9 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
+	orui.init(ctx)
+	defer orui.destroy(ctx)
+
 	font1 = rl.GetFontDefault()
 	defer rl.UnloadFont(font1)
 

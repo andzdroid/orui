@@ -106,6 +106,9 @@ main :: proc() {
 	ctx := new(orui.Context)
 	defer free(ctx)
 
+	orui.init(ctx)
+	defer orui.destroy(ctx)
+
 	font_path := filepath.join({#directory, "assets", "Inter-Regular.ttf"})
 	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
@@ -211,6 +214,24 @@ main :: proc() {
 						fmt.tprintf(
 							"Element count: %v",
 							ctx.element_count[orui.current_buffer(ctx)],
+						),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("arena 1"),
+						fmt.tprintf(
+							"Arena 1: %v / %v",
+							ctx.arena[0].total_used,
+							ctx.arena[0].total_reserved,
+						),
+						{font_size = 16, color = rl.WHITE},
+					)
+					orui.label(
+						orui.id("arena 2"),
+						fmt.tprintf(
+							"Arena 2: %v / %v",
+							ctx.arena[1].total_used,
+							ctx.arena[1].total_reserved,
 						),
 						{font_size = 16, color = rl.WHITE},
 					)

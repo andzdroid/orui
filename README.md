@@ -77,7 +77,9 @@ To do:
   - [element](#elementid-config-modifiers)
   - [container](#containerid-config-modifiers)
   - [label](#labelid-text-config-modifiers)
+  - [text_input](#text_inputid-buffer-config-modifiers)
   - [image](#imageid-config-modifiers)
+  - [scrollbar](#scrollbarparent_id-background_config-handle_config-index--0)
 - [Other functions](#other-functions)
   - [hovered()](#hovered)
   - [active()](#active)
@@ -90,10 +92,12 @@ To do:
 
 ## Usage
 
-Allocate the orui Context up front:
+Allocate the orui Context up front and initialize:
 
 ```odin
 ctx := new(orui.Context)
+orui.init(ctx)
+defer orui.destroy(ctx)
 ```
 
 (Optional) Set a default font:
@@ -296,7 +300,7 @@ Note that this element takes very different parameters from the other widgets:
 
 I recommend setting the scrolling container to be relatively positioned, the scrollbar to be an absolutely positioned child, and using the `placement` config to place the scrollbar.
 
-For horizontal scrollbars, you MUST set a handle height. For vertical scrollbars, you MUST set a vertical height.
+For horizontal scrollbars, you MUST set a handle height. For vertical scrollbars, you MUST set a handle width.
 
 orui will overwrite the handle width and relative x position if it's a horizontal scrollbar and vice versa for vertical scrollbars.
 
