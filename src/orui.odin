@@ -21,10 +21,6 @@ IdBuffer :: struct {
 	count: int,
 }
 
-TextCache :: struct {
-	lines: []string,
-}
-
 Context :: struct {
 	arena:                [2]virtual.Arena,
 	allocator:            [2]runtime.Allocator,
@@ -34,8 +30,8 @@ Context :: struct {
 	frame:                int,
 	time:                 f64,
 	default_font:         rl.Font,
-	text_cache:           [2]map[string]TextCache,
-	text_width_cache:     [2]map[string]f32,
+	text_cache:           [2]map[TextCacheKey]TextCache,
+	text_width_cache:     [2]map[TextWidthKey]f32,
 	sorted:               [MAX_ELEMENTS]int,
 	sorted_count:         int,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
@@ -117,8 +113,8 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	i := current_buffer(ctx)
 	virtual.arena_free_all(&ctx.arena[i])
 	ctx.element_map[i] = make(map[Id]int, 1024, ctx.allocator[i])
-	ctx.text_cache[i] = make(map[string]TextCache, 1024, ctx.allocator[i])
-	ctx.text_width_cache[i] = make(map[string]f32, 1024, ctx.allocator[i])
+	ctx.text_cache[i] = make(map[TextCacheKey]TextCache, 1024, ctx.allocator[i])
+	ctx.text_width_cache[i] = make(map[TextWidthKey]f32, 1024, ctx.allocator[i])
 
 	handle_input_state(ctx)
 

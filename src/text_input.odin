@@ -155,13 +155,11 @@ text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 		target_line := int(math.floor((point.y - y_start) / line_height))
 		target_line = clamp(target_line, 0, total_lines - 1)
 
-		line_start, line_end, width := wrapped_line_at(
-			ctx,
-			element,
-			target_line,
-			inner_width,
-			letter_spacing,
-		)
+		cache := get_text_cache(ctx, element, inner_width, letter_spacing)
+		line := cache.lines[target_line]
+		line_start := line.start
+		line_end := line.end
+		width := line.width
 		line_offset := calculate_line_offset(element, width, inner_width)
 		x := point.x - (x_start + line_offset)
 		if x <= 0 {
@@ -219,31 +217,12 @@ wrapped_line_at :: proc(
 	end: int,
 	width: f32,
 ) {
-	text := element.text
-	text_len := len(text)
-
-	it := TextWrapIterator {
-		ctx            = ctx,
-		text           = text,
-		font           = element.font,
-		font_size      = element.font_size,
-		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
-		inner_width    = inner_width,
-		whitespace     = element.whitespace,
+	cache := get_text_cache(ctx, element, inner_width, letter_spacing)
+	if target_line >= 0 && target_line < len(cache.lines) {
+		l := cache.lines[target_line]
+		return l.start, l.end, l.width
 	}
-
-	count := 0
-	for {
-		ok, line := text_wrap_iterator_next(&it)
-		if !ok {
-			break
-		}
-		if count == target_line {
-			return line.start, line.end, line.width
-		}
-		count += 1
-	}
-
+	text_len := len(element.text)
 	return text_len, text_len, 0
 }
 
@@ -420,40 +399,21 @@ find_caret_line :: proc(
 ) -> int {
 	text := element.text
 	text_len := len(text)
-
-	it := TextWrapIterator {
-		ctx            = ctx,
-		text           = text,
-		font           = element.font,
-		font_size      = element.font_size,
-		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
-		inner_width    = inner_width,
-		whitespace     = element.whitespace,
-	}
-
-	count := 0
-	for {
-		ok, line := text_wrap_iterator_next(&it)
-		if !ok {
-			break
-		}
-
+	cache := get_text_cache(ctx, element, inner_width, letter_spacing)
+	for i := 0; i < len(cache.lines); i += 1 {
+		line := cache.lines[i]
 		if caret_index < line.end {
-			return count
+			return i
 		}
-
 		if caret_index == line.end {
 			if line.hard_break {
-				return count
+				return i
 			}
 			// soft wrap: continue to next line
 		}
-		count += 1
 	}
-
 	if text_len > 0 && text[text_len - 1] == '\n' && caret_index == text_len {
-		return count
+		return len(cache.lines)
 	}
-
-	return max(count - 1, 0)
+	return max(len(cache.lines) - 1, 0)
 }

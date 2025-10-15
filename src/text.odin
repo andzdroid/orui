@@ -6,6 +6,159 @@ import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 
+TextCacheLine :: struct {
+	start:      int,
+	end:        int,
+	width:      f32,
+	hard_break: bool,
+}
+
+TextCache :: struct {
+	lines:          []TextCacheLine,
+	max_line_width: f32,
+}
+
+TextCacheKey :: struct {
+	text:           string,
+	font:           ^rl.Font,
+	font_size:      f32,
+	letter_spacing: f32,
+	inner_width:    f32,
+	whitespace:     WhitespaceMode,
+}
+
+TextWidthKey :: struct {
+	text:           string,
+	font:           ^rl.Font,
+	font_size:      f32,
+	letter_spacing: f32,
+}
+
+@(private)
+_letter_spacing :: #force_inline proc(letter_spacing: f32) -> f32 {
+	return letter_spacing > 0 ? letter_spacing : 1
+}
+
+@(private)
+quantize :: #force_inline proc(x: f32) -> f32 {
+	// Round to 3 decimal places to avoid key churn from tiny differences
+	return f32(math.floor(f64(x) * 1000.0 + 0.5)) / 1000.0
+}
+
+@(private)
+make_text_cache_key :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	inner_width: f32,
+	letter_spacing: f32,
+) -> TextCacheKey {
+	return TextCacheKey {
+		text = element.text,
+		font = element.font,
+		font_size = quantize(element.font_size),
+		letter_spacing = quantize(_letter_spacing(letter_spacing)),
+		inner_width = quantize(inner_width),
+		whitespace = element.whitespace,
+	}
+}
+
+@(private)
+build_text_cache :: proc(
+	ctx: ^Context,
+	text: string,
+	font: ^rl.Font,
+	font_size: f32,
+	letter_spacing: f32,
+	inner_width: f32,
+	whitespace: WhitespaceMode,
+) -> TextCache {
+	text_len := len(text)
+	if text_len == 0 {
+		return TextCache{lines = make([]TextCacheLine, 0, ctx.allocator[current_buffer(ctx)])}
+	}
+
+	it := TextWrapIterator {
+		ctx            = ctx,
+		text           = text,
+		font           = font,
+		font_size      = font_size,
+		letter_spacing = _letter_spacing(letter_spacing),
+		inner_width    = inner_width,
+		whitespace     = whitespace,
+	}
+
+	lines, _ := make([dynamic]TextCacheLine, ctx.allocator[current_buffer(ctx)])
+	max_width: f32 = 0
+
+	for {
+		ok, line := text_wrap_iterator_next(&it)
+		if !ok {
+			break
+		}
+
+		append(
+			&lines,
+			TextCacheLine {
+				start = line.start,
+				end = line.end,
+				width = line.width,
+				hard_break = line.hard_break,
+			},
+		)
+
+		if line.width > max_width {
+			max_width = line.width
+		}
+	}
+
+	if text[text_len - 1] == '\n' {
+		append(
+			&lines,
+			TextCacheLine{start = text_len, end = text_len, width = 0, hard_break = true},
+		)
+	}
+
+	return TextCache{lines = lines[:], max_line_width = max_width}
+}
+
+@(private)
+get_text_cache :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	inner_width: f32,
+	letter_spacing: f32,
+) -> TextCache {
+	key := make_text_cache_key(ctx, element, inner_width, letter_spacing)
+	curr := current_buffer(ctx)
+	prev := previous_buffer(ctx)
+
+	if cache, ok := ctx.text_cache[curr][key]; ok {
+		return cache
+	}
+	if cache_prev, ok := ctx.text_cache[prev][key]; ok {
+		lines_copy := make([]TextCacheLine, len(cache_prev.lines), ctx.allocator[curr])
+		copy(lines_copy, cache_prev.lines)
+		cache_curr := TextCache {
+			lines          = lines_copy,
+			max_line_width = cache_prev.max_line_width,
+		}
+		ctx.text_cache[curr][key] = cache_curr
+		return cache_curr
+	}
+
+	built := build_text_cache(
+		ctx,
+		element.text,
+		element.font,
+		element.font_size,
+		letter_spacing,
+		inner_width,
+		element.whitespace,
+	)
+	ctx.text_cache[curr][key] = built
+	return built
+}
+
 @(private)
 TextLine :: struct {
 	start:      int,
@@ -41,8 +194,17 @@ measure_text_width :: proc(
 		return 0
 	}
 
-	if width, ok := ctx.text_width_cache[previous_buffer(ctx)][text]; ok {
-		ctx.text_width_cache[current_buffer(ctx)][text] = width
+	letter_spacing := _letter_spacing(letter_spacing)
+
+	cache_key := TextWidthKey {
+		text           = text,
+		font           = font,
+		font_size      = quantize(font_size),
+		letter_spacing = quantize(letter_spacing),
+	}
+
+	if width, ok := ctx.text_width_cache[previous_buffer(ctx)][cache_key]; ok {
+		ctx.text_width_cache[current_buffer(ctx)][cache_key] = width
 		return width
 	}
 
@@ -55,9 +217,8 @@ measure_text_width :: proc(
 		}
 	}
 
-	letter_spacing := letter_spacing > 0 ? letter_spacing : 1
-	width = width + letter_spacing * f32(count - 1)
-	ctx.text_width_cache[current_buffer(ctx)][text] = width
+	width += letter_spacing * f32(count - 1)
+	ctx.text_width_cache[current_buffer(ctx)][cache_key] = width
 	return width
 }
 
@@ -454,32 +615,11 @@ _text_wrap_iterator_next_collapse :: proc(it: ^TextWrapIterator) -> (ok: bool, l
 }
 
 @(private)
-wrap_count_and_max_width :: proc(it: ^TextWrapIterator) -> (count: int, max_width: f32) {
-	for {
-		ok, line := text_wrap_iterator_next(it)
-		if !ok {
-			break
-		}
-		count += 1
-		if line.width > max_width {
-			max_width = line.width
-		}
-	}
-	if len(it.text) == 0 {
-		count = 1
-	}
-	if len(it.text) > 0 && it.text[it.index - 1] == '\n' {
-		count += 1
-	}
-	return count, max_width
-}
-
-@(private)
 wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 	text := element.text
 	text_len := len(text)
 
-	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	letter_spacing := _letter_spacing(element.letter_spacing)
 	inner_available: f32 = 0
 	width_definite := false
 
@@ -498,16 +638,12 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 		}
 	}
 
-	it := TextWrapIterator {
-		ctx            = ctx,
-		text           = text,
-		font           = element.font,
-		font_size      = element.font_size,
-		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
-		inner_width    = width_definite ? inner_available : 1e30,
-		whitespace     = element.whitespace,
+	wrap_inner := width_definite ? inner_available : 1e30
+	cache := get_text_cache(ctx, element, wrap_inner, letter_spacing)
+	line_count := len(cache.lines)
+	if text_len == 0 {
+		line_count = 1
 	}
-	line_count, max_line_width := wrap_count_and_max_width(&it)
 
 	element._line_count = line_count
 
@@ -527,11 +663,11 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	if element.width.type == .Fit {
-		element._size.x = max_line_width + x_padding(element) + x_border(element)
+		element._size.x = cache.max_line_width + x_padding(element) + x_border(element)
 		flex_clamp_width(ctx, element)
 	}
 
-	element._content_size.x = max_line_width
+	element._content_size.x = cache.max_line_width
 }
 
 @(private)
@@ -652,7 +788,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		element.border.top +
 		calculate_text_offset(element) -
 		element.scroll.offset.y
-	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	letter_spacing := _letter_spacing(element.letter_spacing)
 	inner_width := inner_width(element)
 
 	if text_len == 0 {
@@ -662,24 +798,9 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 
 	line_height := measure_text_height(element.font_size, element.line_height)
 	active := current_context.focus_id == element.id
-
-	it := TextWrapIterator {
-		ctx            = ctx,
-		text           = text,
-		font           = element.font,
-		font_size      = element.font_size,
-		letter_spacing = letter_spacing > 0 ? letter_spacing : 1,
-		inner_width    = inner_width,
-		whitespace     = element.whitespace,
-	}
-
+	cache := get_text_cache(ctx, element, inner_width, letter_spacing)
 	y := y_start
-	for {
-		ok, line := text_wrap_iterator_next(&it)
-		if !ok {
-			break
-		}
-
+	for line in cache.lines {
 		if active {
 			render_selection(
 				ctx,
@@ -721,21 +842,6 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		)
 
 		y += line_height
-	}
-
-	if text[text_len - 1] == '\n' {
-		render_caret(
-			ctx,
-			element,
-			text,
-			text_len,
-			text_len,
-			0,
-			x_start,
-			y,
-			letter_spacing,
-			inner_width,
-		)
 	}
 }
 
