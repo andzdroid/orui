@@ -208,6 +208,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					ctx.caret_index,
 					string(char_bytes[:char_len]),
 				)
+				element.text = strings.to_string(text_input^)
 				set_caret_index(ctx, element, ctx.caret_index + bytes_inserted)
 
 				if bytes_inserted == 0 {
@@ -342,6 +343,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					delete_range(text_input, prev, ctx.caret_index)
 					caret = prev
 				}
+				element.text = strings.to_string(text_input^)
 				set_caret_index(ctx, element, caret)
 			}
 
@@ -353,6 +355,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					next := utf8_next(text_input, ctx.caret_index)
 					delete_range(text_input, ctx.caret_index, next)
 				}
+				element.text = strings.to_string(text_input^)
 			}
 
 			if key_pressed(ctx, .ENTER) && element.overflow == .Wrap {
@@ -362,6 +365,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 				}
 				char_bytes, char_len := utf8.encode_rune('\n')
 				bytes_inserted := insert_bytes(text_input, caret, string(char_bytes[:char_len]))
+				element.text = strings.to_string(text_input^)
 				set_caret_index(ctx, element, caret + bytes_inserted)
 			}
 
@@ -389,6 +393,7 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 						strings.clone_to_cstring(selected_text, context.temp_allocator),
 					)
 					delete_range(text_input, a, b)
+					element.text = strings.to_string(text_input^)
 					set_caret_index(ctx, element, a)
 					clear_text_selection(ctx)
 				}
