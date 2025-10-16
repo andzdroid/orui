@@ -142,7 +142,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 }
 
 // Ends UI declaration.
-// Renders the declared UI.
+// Returns a list of render commands to draw the UI.
 end :: proc {
 	_end,
 	_end_with_context,

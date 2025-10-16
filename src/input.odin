@@ -380,7 +380,10 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					a, b := get_text_selection(ctx)
 					selected_text := string(text_input.buf[a:b])
 					rl.SetClipboardText(
-						strings.clone_to_cstring(selected_text, context.temp_allocator),
+						strings.clone_to_cstring(
+							selected_text,
+							ctx.allocator[current_buffer(ctx)],
+						),
 					)
 				}
 			}
@@ -390,7 +393,10 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 					a, b := get_text_selection(ctx)
 					selected_text := string(text_input.buf[a:b])
 					rl.SetClipboardText(
-						strings.clone_to_cstring(selected_text, context.temp_allocator),
+						strings.clone_to_cstring(
+							selected_text,
+							ctx.allocator[current_buffer(ctx)],
+						),
 					)
 					delete_range(text_input, a, b)
 					element.text = strings.to_string(text_input^)

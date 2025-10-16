@@ -49,9 +49,6 @@ Features:
 
 To do:
 
-- Box sizing
-  - Choose between border box and content box sizing
- - Current border box sizing is not suitable for many situations
 - Flex wrap
 - 9-slice scaling
 - Grid justify/align
@@ -68,7 +65,6 @@ To do:
 - Scroll with drag
 - Scroll momentum
 - Scroll bounce
-- Optimisations
 
 ## Table of Contents
 
@@ -122,6 +118,9 @@ for !rl.WindowShouldClose() {
 	for render_command in render_commands {
 		// optional: use orui's built-in helper
 		orui.render_command(render_command)
+		// important: the built-in renderer uses the temp allocator when rendering strings!
+		// remember to free the temp allocator at the end of each frame, or implement your
+		// own renderer
 	}
 
 	rl.EndDrawing()
@@ -243,8 +242,6 @@ if orui.label(orui.id("button"), "Button text", {
   // handle button click
 }
 ```
-
-**Rendering text makes use of the temp allocator. Make sure you free the temp allocator each frame.**
 
 ### text_input(id, buffer, config, ...modifiers)
 
@@ -483,7 +480,7 @@ Layout :: enum {
 
 ### direction
 
-Only relevant if the layout is set to Flex.
+Set flex/grid layout direction, and scrollbar direction.
 
 ```odin
 LayoutDirection :: enum {
