@@ -334,9 +334,12 @@ _set_scroll_offset :: proc(offset: rl.Vector2) {
 _set_scroll_offset_id :: proc(id: Id, offset: rl.Vector2) {
 	ctx := current_context
 	elements := &ctx.elements[current_buffer(ctx)]
-	index := ctx.element_map[current_buffer(ctx)][id]
-	if index != 0 {
-		elements[index].scroll.offset = offset
+	count := ctx.element_count[current_buffer(ctx)]
+	for i in 0 ..< count {
+		if elements[i].id == id {
+			elements[i].scroll.offset = offset
+			return
+		}
 	}
 }
 
@@ -372,42 +375,42 @@ size :: proc(id: Id) -> rl.Vector2 {
 
 
 @(private)
-x_padding :: proc(e: ^Element) -> f32 {
+x_padding :: #force_inline proc(e: ^Element) -> f32 {
 	return e.padding.left + e.padding.right
 }
 
 @(private)
-y_padding :: proc(e: ^Element) -> f32 {
+y_padding :: #force_inline proc(e: ^Element) -> f32 {
 	return e.padding.top + e.padding.bottom
 }
 
 @(private)
-x_margin :: proc(e: ^Element) -> f32 {
+x_margin :: #force_inline proc(e: ^Element) -> f32 {
 	return e.margin.left + e.margin.right
 }
 
 @(private)
-y_margin :: proc(e: ^Element) -> f32 {
+y_margin :: #force_inline proc(e: ^Element) -> f32 {
 	return e.margin.top + e.margin.bottom
 }
 
 @(private)
-x_border :: proc(e: ^Element) -> f32 {
+x_border :: #force_inline proc(e: ^Element) -> f32 {
 	return e.border.left + e.border.right
 }
 
 @(private)
-y_border :: proc(e: ^Element) -> f32 {
+y_border :: #force_inline proc(e: ^Element) -> f32 {
 	return e.border.top + e.border.bottom
 }
 
 @(private)
-inner_width :: proc(e: ^Element) -> f32 {
+inner_width :: #force_inline proc(e: ^Element) -> f32 {
 	return max(0, e._size.x - x_padding(e) - x_border(e))
 }
 
 @(private)
-inner_height :: proc(e: ^Element) -> f32 {
+inner_height :: #force_inline proc(e: ^Element) -> f32 {
 	return max(0, e._size.y - y_padding(e) - y_border(e))
 }
 

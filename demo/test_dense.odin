@@ -5,6 +5,25 @@ import rl "vendor:raylib"
 
 render_dense :: proc() {
 	orui.container(
+		orui.id("container"),
+		{
+			direction = .TopToBottom,
+			width = orui.grow(),
+			height = orui.grow(),
+			padding = orui.padding(16),
+			background_color = rl.BEIGE,
+			gap = 16,
+			scroll = orui.scroll(.Vertical),
+		},
+	)
+
+	orui.label(
+		orui.id("title"),
+		"Dense",
+		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
+	)
+
+	orui.container(
 		orui.id("dense"),
 		{
 			direction = .LeftToRight,

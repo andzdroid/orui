@@ -25,7 +25,14 @@ render_test_grid :: proc() {
 			width = orui.grow(),
 			height = orui.grow(),
 			background_color = rl.BEIGE,
+			padding = orui.padding(16),
 		},
+	)
+
+	orui.label(
+		orui.id("title"),
+		"Grid",
+		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
 	)
 
 	{orui.container(

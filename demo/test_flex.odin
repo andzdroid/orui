@@ -1,7 +1,6 @@
 package demo
 
 import orui "../src"
-import "core:fmt"
 import rl "vendor:raylib"
 
 render_test_flex :: proc() {
@@ -9,8 +8,8 @@ render_test_flex :: proc() {
 		orui.id("container"),
 		{
 			direction = .TopToBottom,
-			width = orui.percent(1),
-			height = orui.percent(1),
+			width = orui.grow(),
+			height = orui.grow(),
 			padding = {16, 24, 16, 16},
 			background_color = rl.BEIGE,
 			gap = 16,
@@ -32,6 +31,12 @@ render_test_flex :: proc() {
 			background_color = rl.DARKGRAY,
 			corner_radius = orui.corner(4),
 		},
+	)
+
+	orui.label(
+		orui.id("title"),
+		"Flex",
+		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
 	)
 
 	{orui.container(orui.id("group 1"), {width = orui.grow(), direction = .LeftToRight, gap = 8})

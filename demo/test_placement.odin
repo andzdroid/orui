@@ -11,8 +11,26 @@ render_test_placement :: proc() {
 			direction = .TopToBottom,
 			width = orui.grow(),
 			height = orui.grow(),
-			padding = orui.padding(16),
+			padding = {16, 24, 16, 16},
 			background_color = rl.BEIGE,
+			gap = 16,
+			scroll = orui.scroll(.Vertical),
+		},
+	)
+
+	orui.label(
+		orui.id("title"),
+		"Placement",
+		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
+	)
+
+	orui.container(
+		orui.id("placement container"),
+		{
+			direction = .TopToBottom,
+			width = orui.grow(),
+			height = orui.grow(),
+			padding = orui.padding(16),
 			gap = 16,
 			align_main = .Center,
 			align_cross = .Center,
@@ -52,7 +70,7 @@ render_test_placement :: proc() {
 		placement("bottom right", {.Absolute, {8, 8}}, orui.placement(.BottomRight, .TopLeft))
 
 		placement("fixed top left", {.Fixed, {8, 8}}, orui.placement(.TopLeft, .TopLeft))
-		placement("fixed top", {.Fixed, {0, 8}}, orui.placement(.Top, .Top))
+		// placement("fixed top", {.Fixed, {0, 8}}, orui.placement(.Top, .Top))
 		placement("fixed top right", {.Fixed, {-8, 8}}, orui.placement(.TopRight, .TopRight))
 		placement("fixed left", {.Fixed, {8, 0}}, orui.placement(.Left, .Left))
 		placement("fixed right", {.Fixed, {-8, 0}}, orui.placement(.Right, .Right))
@@ -68,7 +86,7 @@ render_test_placement :: proc() {
 
 placement :: proc(id: string, position: orui.Position, placement: orui.Placement) {
 	orui.container(
-		orui.id(fmt.tprintf("%v container", id)),
+		orui.id(id, 1),
 		{
 			position = position,
 			placement = placement,
@@ -79,5 +97,5 @@ placement :: proc(id: string, position: orui.Position, placement: orui.Placement
 		},
 	)
 
-	orui.label(orui.id(id), id, {font_size = 16, color = rl.WHITE, align = {.Center, .Center}})
+	orui.label(orui.id(id, 2), id, {font_size = 16, color = rl.WHITE, align = {.Center, .Center}})
 }

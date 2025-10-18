@@ -26,7 +26,6 @@ Context :: struct {
 	allocator:            [2]runtime.Allocator,
 	elements:             [2][MAX_ELEMENTS]Element,
 	element_count:        [2]int,
-	element_map:          [2]map[Id]int,
 	frame:                int,
 	time:                 f64,
 	default_font:         rl.Font,
@@ -112,7 +111,6 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 
 	i := current_buffer(ctx)
 	virtual.arena_free_all(&ctx.arena[i])
-	ctx.element_map[i] = make(map[Id]int, 1024, ctx.allocator[i])
 	ctx.text_cache[i] = make(map[TextCacheKey]TextCache, 1024, ctx.allocator[i])
 	ctx.text_width_cache[i] = make(map[TextWidthKey]f32, 1024, ctx.allocator[i])
 
@@ -131,7 +129,6 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 		capture  = .False,
 	}
 	ctx.element_count[current_buffer(ctx)] += 1
-	ctx.element_map[current_buffer(ctx)][root_id] = 0
 
 	ctx.current = 0
 	ctx.previous = 0
@@ -236,7 +233,6 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 
 	index := ctx.element_count[current_buffer(ctx)]
 	ctx.element_count[current_buffer(ctx)] += 1
-	ctx.element_map[current_buffer(ctx)][id] = index
 	ctx.current = index
 	ctx.parent = parent_index
 
@@ -284,9 +280,11 @@ element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> 
 get_element :: proc(id: Id) -> ^Element {
 	ctx := current_context
 	elements := &ctx.elements[previous_buffer(ctx)]
-	index := ctx.element_map[previous_buffer(ctx)][id]
-	if index != 0 {
-		return &elements[index]
+	count := ctx.element_count[previous_buffer(ctx)]
+	for i in 0 ..< count {
+		if elements[i].id == id {
+			return &elements[i]
+		}
 	}
 	return nil
 }

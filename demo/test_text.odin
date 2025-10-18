@@ -29,8 +29,7 @@ render_test_text :: proc() {
 			width = orui.grow(),
 			height = orui.grow(),
 			gap = 16,
-			padding = orui.padding(50),
-			align_main = .Center,
+			padding = {16, 24, 16, 16},
 			align_cross = .Center,
 			background_color = rl.BEIGE,
 			scroll = orui.scroll(.Vertical),
@@ -51,6 +50,12 @@ render_test_text :: proc() {
 			background_color = rl.DARKGRAY,
 			corner_radius = orui.corner(4),
 		},
+	)
+
+	orui.label(
+		orui.id("title"),
+		"Text",
+		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
 	)
 
 	orui.label(

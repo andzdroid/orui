@@ -42,13 +42,13 @@ SAMPLE_COUNT :: 60
 texture: rl.Texture2D
 
 Scene :: enum {
-	Test_Scroll,
-	Test_Text,
 	Test_Flex,
 	Test_Grid,
 	Test_Image,
 	Test_Placement,
 	Test_Dense,
+	Test_Text,
+	Test_Scroll,
 }
 
 main :: proc() {
