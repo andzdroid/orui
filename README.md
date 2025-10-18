@@ -404,70 +404,7 @@ if orui.captured("some element") {
 
 ## Element config
 
-The element functions take an element config where you can set any of these fields:
-
-```odin
-ElementConfig :: struct {
-	// layout
-	layout:           Layout,
-	direction:        LayoutDirection,
-	position:         Position,
-	placement:        Placement,
-	width:            Size,
-	height:           Size,
-	padding:          Edges,
-	margin:           Edges,
-	gap:              f32,
-	align_main:       MainAlignment,
-	align_cross:      CrossAlignment,
-	overflow:         Overflow,
-	layer:             int,
-
-	// grid
-	cols:             int,
-	col_sizes:        []Size,
-	rows:             int,
-	row_sizes:        []Size,
-	col_gap:          f32,
-	row_gap:          f32,
-	col_span:         int,
-	row_span:         int,
-
-	// style
-	color:            rl.Color,
-	background_color: rl.Color,
-	border_color:     rl.Color,
-	corner_radius:    Corners,
-
-	// text
-	has_text:         bool,
-	text:             string,
-	font:             ^rl.Font,
-	font_size:        f32,
-	letter_spacing:   f32,
-	line_height:      f32,
-
-	// texture
-	has_texture:      bool,
-	texture:          ^rl.Texture2D,
-	texture_source:   rl.Rectangle,
-	texture_fit:      TextureFit,
-
-	// content layout
-	align:            [2]ContentAlignment,
-
-	// input
-	disabled:         InheritedBool,
-	block:            InheritedBool,
-	capture:          InheritedBool,
-
-	// scroll
-	scroll:           ScrollConfig,
-
-	// custom event
-	custom_event:     rawptr,
-}
-```
+Each element can be configured with these fields:
 
 ### layout
 ```odin
@@ -628,6 +565,8 @@ Control how a flex container handles its child elements overflowing its size.
 
 - **NoWrap**: child elements will not wrap, they will overflow the container and render outside of it. This is the default.
 - **Wrap**: child elements will wrap to the next line/column.
+
+**flex_wrap will only apply to LeftToRight flex elements.**
 
 ```odin
 FlexWrap :: enum {
