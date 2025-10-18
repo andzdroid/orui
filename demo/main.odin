@@ -128,7 +128,7 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.BLACK)
+		rl.ClearBackground(rl.RED)
 
 		update_timer += rl.GetFrameTime()
 		if update_timer > 1 {

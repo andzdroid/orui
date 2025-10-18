@@ -26,15 +26,14 @@ render_test_scroll :: proc() {
 	orui.container(
 		orui.id("container"),
 		{
-			direction        = .TopToBottom,
-			width            = orui.grow(),
-			height           = orui.grow(),
-			padding          = orui.padding(16),
+			direction = .TopToBottom,
+			width = orui.grow(),
+			height = orui.grow(),
+			padding = orui.padding(16),
 			background_color = rl.BEIGE,
-			gap              = 16,
-			// align_main       = .Center,
-			align_cross      = .Center,
-			scroll           = orui.scroll(.Vertical),
+			gap = 16,
+			align_cross = .Center,
+			scroll = orui.scroll(.Vertical),
 		},
 	)
 

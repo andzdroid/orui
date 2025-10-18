@@ -15,18 +15,19 @@ orui is a work in progress. **Requires odin 2025-09 release!**
 Features:
 
 - Flex layout
-	- Fit (shrink) and grow
-	- Justify and align
-	- Child gap
+  - Fit (shrink) and grow
+  - Justify and align
+  - Child gap
+  - Flex wrap (horizontal wrap only)
 - Grid layout
-	- Auto rows/columns
-	- Fixed rows/columns
-	- Flow direction
-	- Column/row gaps
-	- Column/row spans
-	- Column/row sizes
+  - Auto rows/columns
+  - Fixed rows/columns
+  - Flow direction
+  - Column/row gaps
+  - Column/row spans
+  - Column/row sizes
 - Absolute, relative and fixed positioning
-	- Anchor and origin
+  - Anchor and origin
 - Layers (z-index)
 - Padding, margin, borders, rounded corners, overflow, clipping
 - Scroll (with mouse wheel)
@@ -49,7 +50,6 @@ Features:
 
 To do:
 
-- Flex wrap
 - 9-slice scaling
 - Grid justify/align
 - Text inputs
@@ -613,12 +613,35 @@ CrossAlignment :: enum {
 }
 ```
 
+### align_content
+
+How wrapped lines/columns are distributed along the cross axis.
+Same as align-content in css. Used when flex_wrap = .Wrap.
+
+`gap` is applied between lines/columns.
+
+Takes the same options as `align_main`.
+
+### flex_wrap
+
+Control how a flex container handles its child elements overflowing its size.
+
+- **NoWrap**: child elements will not wrap, they will overflow the container and render outside of it. This is the default.
+- **Wrap**: child elements will wrap to the next line/column.
+
+```odin
+FlexWrap :: enum {
+	NoWrap,
+	Wrap,
+}
+```
+
 ### overflow
 
-Control how an element handles its content overflowing its size.
+Control how an element handles its text overflowing its size.
 
-- **Wrap**: overflowing content will wrap around. This is the default.
-- **Visible**: content will not wrap, it will overflow the container and render outside of it.
+- **Wrap**: overflowing text will wrap to the next line. This is the default.
+- **Visible**: text will not wrap, it will overflow the container and render outside of it.
 
 ```odin
 Overflow :: enum {

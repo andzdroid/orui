@@ -412,15 +412,6 @@ inner_height :: proc(e: ^Element) -> f32 {
 }
 
 @(private)
-inner_main :: proc(e: ^Element) -> f32 {
-	if e.direction == .LeftToRight {
-		return inner_width(e)
-	} else {
-		return inner_height(e)
-	}
-}
-
-@(private)
 parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: bool) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	if e.parent == 0 {

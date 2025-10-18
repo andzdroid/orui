@@ -109,6 +109,11 @@ ContentAlignment :: enum {
 	End,
 }
 
+FlexWrap :: enum {
+	NoWrap,
+	Wrap,
+}
+
 InheritedBool :: enum {
 	Inherit,
 	False,
@@ -210,10 +215,17 @@ ElementConfig :: struct {
 	// Only used for Flex and Grid layouts.
 	gap:              f32,
 	// How child elements are aligned along the main axis.
+	// Equivalent to justify-content in css.
 	align_main:       MainAlignment,
 	// How child elements are aligned along the cross axis.
+	// Equivalent to align-items in css.
 	align_cross:      CrossAlignment,
-	// How the element handles its content overflowing its size.
+	// How wrapped lines/columns are distributed along the cross axis.
+	// Equivalent to align-content in css. Used when flex_wrap = .Wrap.
+	align_content:    MainAlignment,
+	// How child elements are wrapped along the main axis.
+	flex_wrap:        FlexWrap,
+	// How the element handles overflowing text content.
 	overflow:         Overflow,
 	// Control the render order of the element.
 	// Inherited from parent by default.
@@ -330,6 +342,8 @@ Element :: struct {
 	gap:               f32,
 	align_main:        MainAlignment,
 	align_cross:       CrossAlignment,
+	align_content:     MainAlignment,
+	flex_wrap:         FlexWrap,
 	overflow:          Overflow,
 	layer:             int,
 	clip:              Clip,
@@ -387,6 +401,7 @@ Element :: struct {
 	_content_size:     rl.Vector2,
 	_layer:            int,
 	_line_count:       int,
+	_line:             int,
 	_grid_col_index:   int,
 	_grid_row_index:   int,
 	_grid_row_sizes:   [MAX_GRID_TRACKS]f32,
@@ -411,6 +426,8 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.gap = config.gap
 	element.align_main = config.align_main
 	element.align_cross = config.align_cross
+	element.align_content = config.align_content
+	element.flex_wrap = config.flex_wrap
 	element.overflow = config.overflow
 	element.layer = config.layer
 	element.clip = config.clip

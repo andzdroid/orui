@@ -33,13 +33,30 @@ render_test_text :: proc() {
 			align_main = .Center,
 			align_cross = .Center,
 			background_color = rl.BEIGE,
+			scroll = orui.scroll(.Vertical),
+		},
+	)
+
+	orui.scrollbar(
+		orui.to_id("container"),
+		{
+			position = {.Absolute, {-5, 0}},
+			placement = orui.placement(.Right, .Right),
+			width = orui.fixed(8),
+			height = orui.percent(0.98),
+		},
+		{
+			direction = .TopToBottom,
+			width = orui.percent(1),
+			background_color = rl.DARKGRAY,
+			corner_radius = orui.corner(4),
 		},
 	)
 
 	orui.label(
 		orui.id("3"),
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam vitae libero eu velit ultrices porta eget eu felis. Ut est mi, tempor vel ullamcorper non, mollis eget ante. Donec tempus ex facilisis lorem elementum, nec tempor justo euismod. Ut vehicula at mauris at accumsan. Morbi id faucibus libero, sit amet finibus mauris. Fusce mauris quam, elementum ut consequat sit amet, vehicula ut nisl. Pellentesque in nibh efficitur, posuere velit sit amet, suscipit diam.",
-		{font_size = 16, width = orui.grow(), overflow = .Wrap, align = {.End, .End}},
+		{font_size = 14, width = orui.grow(), overflow = .Wrap, align = {.End, .End}},
 		button_style,
 	)
 
@@ -78,7 +95,7 @@ render_test_text :: proc() {
 	orui.label(
 		orui.id("5"),
 		"Line 1\nLine 2",
-		{font_size = 16, width = orui.fixed(200)},
+		{font_size = 24, width = orui.fixed(200)},
 		button_style,
 	)
 
