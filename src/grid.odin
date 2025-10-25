@@ -4,13 +4,12 @@ package orui
 // Assign child elements to grid cells.
 grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	col_limit := element.cols > 0 ? clamp(element.cols, 1, MAX_GRID_TRACKS) : MAX_GRID_TRACKS
-	row_limit := element.rows > 0 ? clamp(element.rows, 1, MAX_GRID_TRACKS) : MAX_GRID_TRACKS
+	allocator := ctx.allocator[current_buffer(ctx)]
+	col_limit := element.cols
+	row_limit := element.rows
 
-	occupied: [MAX_GRID_TRACKS * MAX_GRID_TRACKS]bool
-	for i in 0 ..< MAX_GRID_TRACKS * MAX_GRID_TRACKS {
-		occupied[i] = false
-	}
+	cells := col_limit * row_limit
+	occupied := make([]bool, cells, allocator)
 
 	current_row := 0
 	current_col := 0
@@ -30,8 +29,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 		col := current_col
 		found := false
 		attempts := 0
-		max_attempts := MAX_GRID_TRACKS * MAX_GRID_TRACKS
-		for attempts < max_attempts {
+		for attempts < cells {
 			free := true
 			for r in row ..< row + row_span {
 				if r >= row_limit {
@@ -43,7 +41,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 						free = false
 						break
 					}
-					if occupied[r * MAX_GRID_TRACKS + c] {
+					if occupied[r * col_limit + c] {
 						free = false
 						break
 					}
@@ -67,7 +65,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 
 		for r in row ..< min(row + row_span, row_limit) {
 			for c in col ..< min(col + col_span, col_limit) {
-				occupied[r * MAX_GRID_TRACKS + c] = true
+				occupied[r * col_limit + c] = true
 			}
 		}
 
@@ -85,12 +83,10 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 // Calculate column fixed/fit widths. NOT the widths of the grid cells.
 grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	col_count := element.cols > 0 ? element.cols : grid_used_columns(ctx, element)
-	col_count = clamp(col_count, 1, MAX_GRID_TRACKS)
-	element.cols = col_count
+	element.cols = grid_used_columns(ctx, element)
 
 	for i in 0 ..< element.cols {
-		track := element.col_sizes[i]
+		track := element.col_sizes[min(i, len(element.col_sizes) - 1)]
 		if track.type == .Fixed {
 			width := grid_clamp_size(track.value, track)
 			element._grid_col_sizes[i] = width
@@ -148,7 +144,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 	sum_with_margins: f32 = 0
 	total_weight: f32 = 0
 	for i in 0 ..< element.cols {
-		track := element.col_sizes[i]
+		track := element.col_sizes[min(i, len(element.col_sizes) - 1)]
 		base: f32 = 0
 
 		switch track.type {
@@ -171,7 +167,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 	remaining := element_inner_width - sum_with_margins
 	if remaining > 0 && total_weight > 0 {
 		for i in 0 ..< element.cols {
-			track := element.col_sizes[i]
+			track := element.col_sizes[min(i, len(element.col_sizes) - 1)]
 			if track.type == .Grow {
 				weight := track.value
 				if weight <= 0 {weight = 1}
@@ -244,12 +240,10 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 // Calculate row heights. NOT the heights of the grid cells.
 grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	row_count := element.rows > 0 ? element.rows : grid_used_rows(ctx, element)
-	row_count = clamp(row_count, 1, MAX_GRID_TRACKS)
-	element.rows = row_count
+	element.rows = grid_used_rows(ctx, element)
 
 	for i in 0 ..< element.rows {
-		track := element.row_sizes[i]
+		track := element.row_sizes[min(i, len(element.row_sizes) - 1)]
 		if track.type == .Fixed {
 			height := grid_clamp_size(track.value, track)
 			element._grid_row_sizes[i] = height
@@ -307,7 +301,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 	sum_with_margins: f32 = 0
 	total_weight: f32 = 0
 	for i in 0 ..< element.rows {
-		track := element.row_sizes[i]
+		track := element.row_sizes[min(i, len(element.row_sizes) - 1)]
 		base: f32 = 0
 
 		switch track.type {
@@ -330,7 +324,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 	remaining := element_inner_height - sum_with_margins
 	if remaining > 0 && total_weight > 0 {
 		for i in 0 ..< element.rows {
-			track := element.row_sizes[i]
+			track := element.row_sizes[min(i, len(element.row_sizes) - 1)]
 			if track.type == .Grow {
 				weight := track.value
 				if weight <= 0 {weight = 1}

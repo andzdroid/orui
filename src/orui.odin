@@ -7,7 +7,6 @@ import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
 MAX_COMMANDS :: 8192
-MAX_GRID_TRACKS :: 12
 
 KEY_REPEAT_DELAY: f64 : 0.45
 KEY_REPEAT_INTERVAL: f64 : 0.1
@@ -268,8 +267,9 @@ ElementModifier :: proc(element: ^Element)
 // The basic building block of the UI.
 // Must have a matching end_element() call.
 element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+	ctx := current_context
 	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
+	configure_element(ctx, element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)
 	}

@@ -7,8 +7,9 @@ import rl "vendor:raylib"
 // An element that can contain children.
 // Must have its own scope.
 container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+	ctx := current_context
 	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
+	configure_element(ctx, element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)
 	}
@@ -18,8 +19,9 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 // A text element that can be use to display text.
 // This element cannot have children.
 label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+	ctx := current_context
 	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
+	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_text = true
 	element.text = text
@@ -45,8 +47,9 @@ text_input :: proc(
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
 ) -> bool {
+	ctx := current_context
 	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
+	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_text = true
 	element.text_input = text
@@ -75,8 +78,9 @@ image :: proc(
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
 ) -> bool {
+	ctx := current_context
 	element, parent := begin_element(id)
-	configure_element(element, parent^, config)
+	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_texture = true
 	element.texture = texture
@@ -91,12 +95,13 @@ image :: proc(
 }
 
 scrollbar :: proc(parent: Id, config: ElementConfig, handle_config: ElementConfig, index := 0) {
+	ctx := current_context
 	background_id := to_id(parent, (index * 2) + 1)
 	handle_id := to_id(parent, (index * 2) + 2)
 
 	// scrollbar background
 	background_element, background_parent := begin_element(id(background_id))
-	configure_element(background_element, background_parent^, config)
+	configure_element(ctx, background_element, background_parent^, config)
 	background_element.clip = {.None, {}}
 	background_element.capture = .True
 
@@ -106,7 +111,7 @@ scrollbar :: proc(parent: Id, config: ElementConfig, handle_config: ElementConfi
 
 	// scrollbar handle
 	handle_element, handle_parent := begin_element(id(handle_id))
-	configure_element(handle_element, handle_parent^, handle_config)
+	configure_element(ctx, handle_element, handle_parent^, handle_config)
 	handle_element.layout = .None
 	if handle_config.direction == .TopToBottom {
 		handle_element.height = fixed(handle_size.y)

@@ -350,9 +350,9 @@ Element :: struct {
 
 	// grid
 	cols:              int,
-	col_sizes:         [MAX_GRID_TRACKS]Size,
+	col_sizes:         []Size,
 	rows:              int,
-	row_sizes:         [MAX_GRID_TRACKS]Size,
+	row_sizes:         []Size,
 	col_gap:           f32,
 	row_gap:           f32,
 	col_span:          int,
@@ -404,15 +404,22 @@ Element :: struct {
 	_line:             int,
 	_grid_col_index:   int,
 	_grid_row_index:   int,
-	_grid_row_sizes:   [MAX_GRID_TRACKS]f32,
-	_grid_col_sizes:   [MAX_GRID_TRACKS]f32,
-	_grid_row_offsets: [MAX_GRID_TRACKS]f32,
-	_grid_col_offsets: [MAX_GRID_TRACKS]f32,
+	_grid_row_sizes:   []f32,
+	_grid_col_sizes:   []f32,
+	_grid_row_offsets: []f32,
+	_grid_col_offsets: []f32,
 	_clip:             ClipRectangle,
 }
 
 @(private)
-configure_element :: proc(element: ^Element, parent: Element, config: ElementConfig) {
+configure_element :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	parent: Element,
+	config: ElementConfig,
+) {
+	allocator := ctx.allocator[current_buffer(ctx)]
+
 	// layout
 	element.layout = config.layout
 	element.direction = config.direction
@@ -433,30 +440,28 @@ configure_element :: proc(element: ^Element, parent: Element, config: ElementCon
 	element.clip = config.clip
 
 	// grid
-	element.cols = config.cols
-	{
-		provided := len(config.col_sizes)
-		copy_count := min(provided, MAX_GRID_TRACKS)
-		for i in 0 ..< copy_count {
-			element.col_sizes[i] = config.col_sizes[i]
+	if element.layout == .Grid {
+		element.cols = config.cols
+		element.rows = config.rows
+
+		col_sizes := min(config.cols, len(config.col_sizes))
+		if col_sizes > 0 {
+			element.col_sizes = make([]Size, col_sizes, allocator)
+			copy(element.col_sizes, config.col_sizes[:col_sizes])
 		}
-		last := provided > 0 ? config.col_sizes[provided - 1] : {}
-		for i in copy_count ..< element.cols {
-			element.col_sizes[i] = last
+
+		row_sizes := min(config.rows, len(config.row_sizes))
+		if row_sizes > 0 {
+			element.row_sizes = make([]Size, row_sizes, allocator)
+			copy(element.row_sizes, config.row_sizes[:row_sizes])
 		}
+
+		element._grid_col_sizes = make([]f32, element.cols, allocator)
+		element._grid_col_offsets = make([]f32, element.cols, allocator)
+		element._grid_row_sizes = make([]f32, element.rows, allocator)
+		element._grid_row_offsets = make([]f32, element.rows, allocator)
 	}
-	element.rows = config.rows
-	{
-		provided := len(config.row_sizes)
-		copy_count := min(provided, MAX_GRID_TRACKS)
-		for i in 0 ..< copy_count {
-			element.row_sizes[i] = config.row_sizes[i]
-		}
-		last := provided > 0 ? config.row_sizes[provided - 1] : {}
-		for i in copy_count ..< element.rows {
-			element.row_sizes[i] = last
-		}
-	}
+
 	element.col_gap = config.col_gap
 	element.row_gap = config.row_gap
 	element.col_span = config.col_span

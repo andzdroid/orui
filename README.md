@@ -633,9 +633,7 @@ ClipType :: enum {
 
 Set the number of columns and rows for a grid layout. Only used if the layout is set to `.Grid`.
 
-Both are optional but usually you want to set at least one of these.
-
-The maximum number of columns/rows is 12. This is a constant defined as `MAX_GRID_TRACKS` in `orui.odin`. You can adjust this if needed but it will affect memory usage significantly. Before changing this, remember that grid cells can contain flex layouts and grids inside them as well, and that can probably handle your use case.
+Both are REQUIRED for grid layouts.
 
 ### col_sizes, row_sizes
 
