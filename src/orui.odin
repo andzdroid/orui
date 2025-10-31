@@ -1,5 +1,6 @@
 package orui
 
+import "base:intrinsics"
 import "base:runtime"
 import "core:log"
 import "core:mem/virtual"
@@ -115,9 +116,13 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 
 	handle_input_state(ctx)
 
+	elements := &ctx.elements[current_buffer(ctx)]
+	element_count := &ctx.element_count[current_buffer(ctx)]
+	intrinsics.mem_zero(elements, size_of(Element) * element_count^)
+
 	root_id := to_id("root")
-	ctx.element_count[current_buffer(ctx)] = 0
-	ctx.elements[current_buffer(ctx)][0] = {
+	element_count^ = 0
+	elements[0] = {
 		id       = root_id,
 		width    = fixed(width),
 		height   = fixed(height),
@@ -127,7 +132,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 		block    = .True,
 		capture  = .False,
 	}
-	ctx.element_count[current_buffer(ctx)] += 1
+	element_count^ += 1
 
 	ctx.current = 0
 	ctx.previous = 0
@@ -236,7 +241,6 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 	ctx.parent = parent_index
 
 	element := &elements[index]
-	element^ = Element{}
 	element.id = id
 	element.parent = parent_index
 
