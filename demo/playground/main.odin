@@ -37,12 +37,7 @@ grid_cell_style :: proc(element: ^orui.Element) {
 }
 
 main :: proc() {
-	mode: int = 0
-	when ODIN_OS == .Linux || ODIN_OS == .Darwin {
-		mode = os.S_IRUSR | os.S_IWUSR | os.S_IRGRP | os.S_IROTH
-	}
-
-	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR), mode)
+	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR))
 	if logh_err == os.ERROR_NONE {
 		os.stdout = logh
 		os.stderr = logh

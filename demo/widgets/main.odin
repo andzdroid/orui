@@ -368,7 +368,10 @@ main :: proc() {
 	orui.init(ctx)
 	defer orui.destroy(ctx)
 
-	font_path := filepath.join({#directory, "..", "assets", "Inter-Regular.ttf"})
+	font_path, _ := filepath.join(
+		{#directory, "..", "assets", "Inter-Regular.ttf"},
+		context.temp_allocator,
+	)
 	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 

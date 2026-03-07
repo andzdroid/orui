@@ -52,12 +52,7 @@ Scene :: enum {
 }
 
 main :: proc() {
-	mode: int = 0
-	when ODIN_OS == .Linux || ODIN_OS == .Darwin {
-		mode = os.S_IRUSR | os.S_IWUSR | os.S_IRGRP | os.S_IROTH
-	}
-
-	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR), mode)
+	logh, logh_err := os.open("log.txt", (os.O_CREATE | os.O_TRUNC | os.O_RDWR))
 	if logh_err == os.ERROR_NONE {
 		os.stdout = logh
 		os.stderr = logh
@@ -99,7 +94,7 @@ main :: proc() {
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(120)
 
-	texture_path := filepath.join({#directory, "assets", "icon.png"})
+	texture_path, _ := filepath.join({#directory, "assets", "icon.png"}, context.temp_allocator)
 	texture = rl.LoadTexture(strings.clone_to_cstring(texture_path, context.temp_allocator))
 	defer rl.UnloadTexture(texture)
 
@@ -109,7 +104,10 @@ main :: proc() {
 	orui.init(ctx)
 	defer orui.destroy(ctx)
 
-	font_path := filepath.join({#directory, "assets", "Inter-Regular.ttf"})
+	font_path, _ := filepath.join(
+		{#directory, "assets", "Inter-Regular.ttf"},
+		context.temp_allocator,
+	)
 	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))
 	defer rl.UnloadFont(ctx.default_font)
 
