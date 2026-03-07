@@ -97,21 +97,21 @@ handle_input_state :: proc(ctx: ^Context) {
 		}
 
 		if !click_consumed {
-			count := ctx.hover[current].count
-			ctx.hover[current].ids[count] = element.id
+			hover_count := ctx.hover[current].count
+			ctx.hover[current].ids[hover_count] = element.id
 			ctx.hover[current].count += 1
 
 			already_active := false
-			for i := 0; i < ctx.active[previous].count; i += 1 {
-				if ctx.active[previous].ids[i] == element.id {
+			for active_index := 0; active_index < ctx.active[previous].count; active_index += 1 {
+				if ctx.active[previous].ids[active_index] == element.id {
 					already_active = true
 					break
 				}
 			}
 
 			if mouse_down && (pressed || already_active) {
-				count := ctx.active[current].count
-				ctx.active[current].ids[count] = element.id
+				active_count := ctx.active[current].count
+				ctx.active[current].ids[active_count] = element.id
 				ctx.active[current].count += 1
 
 				if pressed {
@@ -199,10 +199,8 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 
 			when ODIN_OS == .Darwin {
 				word_modifier := rl.IsKeyDown(.LEFT_ALT) || rl.IsKeyDown(.RIGHT_ALT)
-				line_modifier := cmd_down
 			} else {
 				word_modifier := ctrl_down
-				line_modifier := false
 			}
 
 			for char := rl.GetCharPressed(); char != 0; char = rl.GetCharPressed() {

@@ -215,10 +215,10 @@ _id_string_index :: proc(str: string, index: int) -> Id {
 
 @(private)
 _id_id_index :: proc(id: Id, index: int) -> Id {
-	id := to_id(id, index)
+	indexed_id := to_id(id, index)
 	ctx := current_context
-	ctx.current_id = id
-	return id
+	ctx.current_id = indexed_id
+	return indexed_id
 }
 
 // Begins an element with the given ID.
@@ -259,7 +259,6 @@ begin_element :: proc(id: Id) -> (^Element, ^Element) {
 end_element :: proc() {
 	ctx := current_context
 	elements := &ctx.elements[current_buffer(ctx)]
-	element := &elements[ctx.current]
 	ctx.previous = ctx.current
 	ctx.current = ctx.parent
 	current := elements[ctx.current]

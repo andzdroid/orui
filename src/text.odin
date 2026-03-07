@@ -1,6 +1,5 @@
 package orui
 
-import "core:log"
 import "core:math"
 import "core:strings"
 import "core:unicode/utf8"
@@ -194,13 +193,13 @@ measure_text_width :: proc(
 		return 0
 	}
 
-	letter_spacing := _letter_spacing(letter_spacing)
+	resolved_letter_spacing := _letter_spacing(letter_spacing)
 
 	cache_key := TextWidthKey {
 		text           = text,
 		font           = font,
 		font_size      = quantize(font_size),
-		letter_spacing = quantize(letter_spacing),
+		letter_spacing = quantize(resolved_letter_spacing),
 	}
 
 	if width, ok := ctx.text_width_cache[previous_buffer(ctx)][cache_key]; ok {
@@ -217,7 +216,7 @@ measure_text_width :: proc(
 		}
 	}
 
-	width += letter_spacing * f32(count - 1)
+	width += resolved_letter_spacing * f32(count - 1)
 	ctx.text_width_cache[current_buffer(ctx)][cache_key] = width
 	return width
 }

@@ -459,11 +459,11 @@ grid_used_rows :: proc(ctx: ^Context, element: ^Element) -> int {
 
 @(private = "file")
 grid_clamp_size :: proc(size: f32, track: Size) -> f32 {
-	size := max(size, track.min)
+	clamped_size := max(size, track.min)
 	if track.max > 0 {
-		size = min(size, track.max)
+		clamped_size = min(clamped_size, track.max)
 	}
-	return size
+	return clamped_size
 }
 
 @(private = "file")

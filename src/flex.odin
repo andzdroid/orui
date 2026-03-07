@@ -22,7 +22,6 @@ flex_should_wrap :: proc(element: ^Element) -> bool {
 @(private)
 // Set width of element to fit its children
 flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
-	elements := &ctx.elements[current_buffer(ctx)]
 	if element._size.x > 0 || element.width.type == .Percent {
 		return
 	}
@@ -97,7 +96,6 @@ flex_fit_width_column :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set widths of children to grow into their parent
 flex_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
-	elements := &ctx.elements[current_buffer(ctx)]
 	if element.direction == .LeftToRight {
 		if flex_should_wrap(element) {
 			flex_distribute_widths_row_wrapped(ctx, element)
@@ -342,7 +340,6 @@ flex_distribute_widths_line :: proc(
 @(private)
 // Set height of element to fit its children
 flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
-	elements := &ctx.elements[current_buffer(ctx)]
 	if element._size.y > 0 || element.height.type == .Percent {
 		return
 	}
@@ -398,7 +395,6 @@ flex_fit_height_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	elements := &ctx.elements[current_buffer(ctx)]
-	element_inner_width := inner_width(element)
 	total_height: f32 = 0
 	current_line := 0
 	line_height: f32 = 0
@@ -464,7 +460,6 @@ flex_fit_height_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set heights of children to grow into their parent
 flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
-	elements := &ctx.elements[current_buffer(ctx)]
 	if element.direction == .TopToBottom {
 		flex_distribute_heights_column(ctx, element)
 	} else {
@@ -745,7 +740,6 @@ flex_clamp_height :: proc(ctx: ^Context, element: ^Element) {
 // MARK: compute position
 @(private)
 flex_compute_position :: proc(ctx: ^Context, element: ^Element) {
-	elements := &ctx.elements[current_buffer(ctx)]
 	if element.direction == .LeftToRight {
 		if flex_should_wrap(element) {
 			flex_compute_position_row_wrapped(ctx, element)
@@ -858,7 +852,6 @@ flex_compute_position_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	elements := &ctx.elements[current_buffer(ctx)]
-	element_inner_width := inner_width(element)
 	available := inner_height(element) - element._content_size.y
 	group_offset := main_offset(element.align_content, available, element._line_count)
 	line_y_offset := group_offset.initial
@@ -998,7 +991,6 @@ flex_compute_position_column_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	elements := &ctx.elements[current_buffer(ctx)]
-	element_inner_height := inner_height(element)
 	available := inner_width(element) - element._content_size.x
 	group_offset := main_offset(element.align_content, available, element._line_count)
 	line_x_offset: f32 = group_offset.initial
