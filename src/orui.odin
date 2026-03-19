@@ -225,12 +225,13 @@ _id_id_index :: proc(id: Id, index: int) -> Id {
 // Any elements declared after this will be added as children of this element.
 //
 // Must be closed with end_element().
-begin_element :: proc(id: Id) -> (^Element, ^Element) {
+begin_element :: proc(id: Id, loc := #caller_location) -> (^Element, ^Element) {
 	ctx := current_context
 	elements := &ctx.elements[current_buffer(ctx)]
 	assert(
 		ctx.current_id == id,
 		"id mismatch. id() must always be called in the element declaration",
+		loc = loc,
 	)
 	parent_index := ctx.current
 	parent := &elements[parent_index]
@@ -269,9 +270,14 @@ ElementModifier :: proc(element: ^Element)
 
 // The basic building block of the UI.
 // Must have a matching end_element() call.
-element :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+element :: proc(
+	id: Id,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+	loc := #caller_location,
+) -> bool {
 	ctx := current_context
-	element, parent := begin_element(id)
+	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)

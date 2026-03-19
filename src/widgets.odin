@@ -6,9 +6,14 @@ import rl "vendor:raylib"
 @(deferred_none = end_element)
 // An element that can contain children.
 // Must have its own scope.
-container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+container :: proc(
+	id: Id,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+	loc := #caller_location,
+) -> bool {
 	ctx := current_context
-	element, parent := begin_element(id)
+	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	for modifier in modifiers {
 		modifier(element)
@@ -18,9 +23,15 @@ container :: proc(id: Id, config: ElementConfig, modifiers: ..ElementModifier) -
 
 // A text element that can be use to display text.
 // This element cannot have children.
-label :: proc(id: Id, text: string, config: ElementConfig, modifiers: ..ElementModifier) -> bool {
+label :: proc(
+	id: Id,
+	text: string,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+	loc := #caller_location,
+) -> bool {
 	ctx := current_context
-	element, parent := begin_element(id)
+	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_text = true
@@ -46,9 +57,10 @@ text_input :: proc(
 	text: ^strings.Builder,
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
+	loc := #caller_location,
 ) -> bool {
 	ctx := current_context
-	element, parent := begin_element(id)
+	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_text = true
@@ -77,9 +89,10 @@ image :: proc(
 	texture: ^rl.Texture2D,
 	config: ElementConfig,
 	modifiers: ..ElementModifier,
+	loc := #caller_location,
 ) -> bool {
 	ctx := current_context
-	element, parent := begin_element(id)
+	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	element.layout = .None
 	element.has_texture = true
@@ -94,13 +107,19 @@ image :: proc(
 	return clicked()
 }
 
-scrollbar :: proc(parent: Id, config: ElementConfig, handle_config: ElementConfig, index := 0) {
+scrollbar :: proc(
+	parent: Id,
+	config: ElementConfig,
+	handle_config: ElementConfig,
+	index := 0,
+	loc := #caller_location,
+) {
 	ctx := current_context
 	background_id := to_id(parent, (index * 2) + 1)
 	handle_id := to_id(parent, (index * 2) + 2)
 
 	// scrollbar background
-	background_element, background_parent := begin_element(id(background_id))
+	background_element, background_parent := begin_element(id(background_id), loc)
 	configure_element(ctx, background_element, background_parent^, config)
 	background_element.clip = {.None, {}}
 	background_element.capture = .True
@@ -110,7 +129,7 @@ scrollbar :: proc(parent: Id, config: ElementConfig, handle_config: ElementConfi
 	handle_size := handle_percent * background_size
 
 	// scrollbar handle
-	handle_element, handle_parent := begin_element(id(handle_id))
+	handle_element, handle_parent := begin_element(id(handle_id), loc)
 	configure_element(ctx, handle_element, handle_parent^, handle_config)
 	handle_element.layout = .None
 	if handle_config.direction == .TopToBottom {

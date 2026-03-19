@@ -303,7 +303,7 @@ orui will overwrite the handle width and relative x position if it's a horizonta
 
 ```odin
 orui.scrollbar(orui.to_id("container id"), {
-  position = {.Absolute, {-5, 0}}
+  position = {.Absolute, {-5, 0}},
   placement = placement(.Right, .Right),
   width = orui.fixed(6),
   height = orui.percent(0.9),
