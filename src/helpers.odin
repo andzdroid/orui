@@ -415,6 +415,24 @@ inner_height :: #force_inline proc(e: ^Element) -> f32 {
 }
 
 @(private)
+scroll_x_enabled :: #force_inline proc(element: ^Element) -> bool {
+	return(
+		element.scroll.direction == .Auto ||
+		element.scroll.direction == .Horizontal ||
+		element.scroll.direction == .Manual \
+	)
+}
+
+@(private)
+scroll_y_enabled :: #force_inline proc(element: ^Element) -> bool {
+	return(
+		element.scroll.direction == .Auto ||
+		element.scroll.direction == .Vertical ||
+		element.scroll.direction == .Manual \
+	)
+}
+
+@(private)
 parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: bool) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	if e.parent == 0 {
@@ -432,9 +450,9 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 		gap := parent.col_gap > 0 ? parent.col_gap : parent.gap
 		gap_count := max(col_span - 1, 0)
 		width += gap * f32(gap_count)
-		return width, !scrolls_x(e)
+		return width, !scroll_x_enabled(parent)
 	} else {
-		return inner_width(parent), parent._size.x > 0 && !scrolls_x(e)
+		return inner_width(parent), parent._size.x > 0 && !scroll_x_enabled(parent)
 	}
 }
 
@@ -456,9 +474,9 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 		gap := parent.row_gap > 0 ? parent.row_gap : parent.gap
 		gap_count := max(row_span - 1, 0)
 		height += gap * f32(gap_count)
-		return height, !scrolls_y(e)
+		return height, !scroll_y_enabled(parent)
 	} else {
-		return inner_height(parent), parent._size.y > 0 && !scrolls_y(e)
+		return inner_height(parent), parent._size.y > 0 && !scroll_y_enabled(parent)
 	}
 }
 
