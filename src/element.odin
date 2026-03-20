@@ -21,10 +21,11 @@ Corners :: struct {
 }
 
 SizeType :: enum {
-	// Element shrinks to fit its content.
+	// Element uses its content size as its final size.
 	// Only used by children of Flex and Grid layouts.
 	Fit,
-	// Element grows to fill available space.
+	// Element uses its content size as a preferred/base size,
+	// then participates in flexible redistribution.
 	// Only used by children of Flex and Grid layouts.
 	Grow,
 	// Element is a percentage of its parent's size.

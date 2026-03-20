@@ -7,7 +7,7 @@ Margin box: border box + margin
 */
 
 @(private)
-// Set fixed widths and fit widths
+// Set fixed widths and content-sized preferred/final widths.
 fit_widths :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
@@ -54,7 +54,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
-// Set widths that depend on parent width (percent, grow)
+// Set widths that depend on parent width or later flexible redistribution.
 distribute_widths :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
@@ -100,7 +100,7 @@ wrap :: proc(ctx: ^Context) {
 }
 
 @(private)
-// Set fixed heights and fit heights.
+// Set fixed heights and content-sized preferred/final heights.
 fit_heights :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
@@ -135,7 +135,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
-// Set heights that depend on parent height (percent, grow)
+// Set heights that depend on parent height or later flexible redistribution.
 distribute_heights :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]

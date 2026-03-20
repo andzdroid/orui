@@ -119,7 +119,6 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	line_first := 0
 	line_last := 0
 	line_width: f32 = 0
-	line_total_weight: f32 = 0
 	line_child_count := 0
 	child := element.children
 	for child != 0 {
@@ -140,19 +139,24 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 		case .Grow:
 			base = child_element._size.x
 		}
-		child_element._size.x = base
-		flex_clamp_width(ctx, child_element)
+		min_width, max_width, apply_max := flex_width_limits(ctx, child_element)
+		child_element._size.x = max(base, min_width)
+		if apply_max && child_element._size.x > max_width {
+			child_element._size.x = max_width
+		}
 
 		element_width := child_element._size.x + x_margin(child_element)
 		new_line_width := line_width + (line_child_count > 0 ? element.gap : 0) + element_width
 		// line is full
 		if line_child_count > 0 && new_line_width > element_inner_width {
-			remaining := element_inner_width - line_width
-			flex_distribute_widths_line(ctx, line_first, line_last, remaining, line_total_weight)
-			if remaining > 0 && line_total_weight > 0 {
-				// at least one grow element filled the remaining space
-				line_width = element_inner_width
-			}
+			line_width = flex_distribute_widths_line(
+				ctx,
+				element,
+				line_first,
+				line_last,
+				element_inner_width,
+				line_child_count,
+			)
 			if line_width > max_line_width {
 				max_line_width = line_width
 			}
@@ -161,8 +165,6 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 			line_first = child
 			line_last = child
 			line_width = element_width
-			line_total_weight =
-				(child_element.width.type == .Grow ? (child_element.width.value <= 0 ? 1 : child_element.width.value) : 0)
 			line_child_count = 1
 			current_line += 1
 			child_element._line = current_line
@@ -174,16 +176,10 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 		if line_child_count == 0 {
 			line_first = child
 			line_width = element_width
-			line_total_weight = 0
 			line_child_count = 1
 		} else {
 			line_width += element.gap + element_width
 			line_child_count += 1
-		}
-		if child_element.width.type == .Grow {
-			weight := child_element.width.value
-			if weight <= 0 {weight = 1}
-			line_total_weight += weight
 		}
 		line_last = child
 		child_element._line = current_line
@@ -192,12 +188,14 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 
 	// finalize the last line
 	if line_child_count > 0 {
-		remaining := element_inner_width - line_width
-		flex_distribute_widths_line(ctx, line_first, line_last, remaining, line_total_weight)
-		if remaining > 0 && line_total_weight > 0 {
-			// at least one grow element filled the remaining space
-			line_width = element_inner_width
-		}
+		line_width = flex_distribute_widths_line(
+			ctx,
+			element,
+			line_first,
+			line_last,
+			element_inner_width,
+			line_child_count,
+		)
 		if line_width > max_line_width {
 			max_line_width = line_width
 		}
@@ -213,10 +211,10 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 flex_distribute_widths_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element_inner_width := inner_width(element)
-
-	width: f32 = 0
-	total_weight: f32 = 0
+	first := 0
+	last := 0
 	child_count := 0
+
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -235,36 +233,35 @@ flex_distribute_widths_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 			base = child_element._size.x
 		case .Grow:
 			base = child_element._size.x
-			weight := child_element.width.value
-			if weight <= 0 {weight = 1}
-			total_weight += weight
 		}
 
-		child_element._size.x = base
-		flex_clamp_width(ctx, child_element)
-		width += child_element._size.x + x_margin(child_element)
+		min_width, max_width, apply_max := flex_width_limits(ctx, child_element)
+		child_element._size.x = max(base, min_width)
+		if apply_max && child_element._size.x > max_width {
+			child_element._size.x = max_width
+		}
+
+		if first == 0 {
+			first = child
+		}
+		last = child
 		child_count += 1
 		child = child_element.next
 	}
 
-	gaps := element.gap * f32(max(child_count - 1, 0))
-	remaining := element_inner_width - width - gaps
-	if remaining > 0 && total_weight > 0 {
-		child = element.children
-		for child != 0 {
-			child_element := &elements[child]
-			if child_element.width.type == .Grow {
-				weight := child_element.width.value
-				if weight <= 0 {weight = 1}
-				add := remaining * (weight / total_weight)
-				child_element._size.x += add
-				flex_clamp_width(ctx, child_element)
-			}
-			child = child_element.next
-		}
+	if first == 0 {
+		element._content_size.x = 0
+		return
 	}
 
-	element._content_size.x = width + gaps
+	element._content_size.x = flex_distribute_widths_line(
+		ctx,
+		element,
+		first,
+		last,
+		element_inner_width,
+		child_count,
+	)
 }
 
 // MARK: widths column
@@ -477,10 +474,12 @@ flex_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element_inner_height := inner_height(element)
-
-	width: f32 = 0
-	total_weight: f32 = 0
+	items := ctx.axis_items[:element.children_count]
+	breakpoints := ctx.axis_breakpoints[:element.children_count]
+	item_count := 0
+	margin_total: f32 = 0
 	child_count := 0
+
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -499,36 +498,47 @@ flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 			base = child_element._size.y
 		case .Grow:
 			base = child_element._size.y
-			weight := child_element.height.value
-			if weight <= 0 {weight = 1}
-			total_weight += weight
 		}
 
-		child_element._size.y = base
-		flex_clamp_height(ctx, child_element)
-		width += child_element._size.y + y_margin(child_element)
+		min_height, max_height, apply_max := flex_height_limits(ctx, child_element)
+		child_element._size.y = max(base, min_height)
+		if apply_max && child_element._size.y > max_height {
+			child_element._size.y = max_height
+		}
+
+		items[item_count] = AxisAllocationItem {
+			size = child_element._size.y,
+			min = min_height,
+			max = max_height,
+			factor = child_element.height.type == .Grow ? max(child_element.height.value, 1) : 0,
+		}
+		item_count += 1
+		margin_total += y_margin(child_element)
 		child_count += 1
 		child = child_element.next
 	}
 
-	gaps := element.gap * f32(max(child_count - 1, 0))
-	remaining := element_inner_height - width - gaps
-	if remaining > 0 && total_weight > 0 {
-		child = element.children
-		for child != 0 {
-			child_element := &elements[child]
-			if child_element.height.type == .Grow {
-				weight := child_element.height.value
-				if weight <= 0 {weight = 1}
-				add := remaining * (weight / total_weight)
-				child_element._size.y += add
-				flex_clamp_height(ctx, child_element)
-			}
-			child = child_element.next
-		}
-	}
+	gap_total := margin_total + element.gap * f32(max(child_count - 1, 0))
+	element._content_size.y = resolve_axis_allocation(
+		items[:item_count],
+		element_inner_height,
+		gap_total,
+		breakpoints[:item_count],
+	)
 
-	element._content_size.y = width + gaps
+	item_index := 0
+	child = element.children
+	for child != 0 {
+		child_element := &elements[child]
+		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
+			child = child_element.next
+			continue
+		}
+
+		child_element._size.y = items[item_index].size
+		item_index += 1
+		child = child_element.next
+	}
 }
 
 // MARK: heights row wrapped
@@ -663,6 +673,136 @@ flex_distribute_heights_line :: proc(
 	}
 }
 
+@(private = "file")
+flex_width_limits :: proc(
+	ctx: ^Context,
+	element: ^Element,
+) -> (
+	min_size: f32,
+	max_size: f32,
+	apply_max: bool,
+) {
+	min_size = max(element.width.min, x_padding(element) + x_border(element))
+
+	parent_width, parent_definite := parent_inner_width(ctx, element)
+	if parent_definite {
+		max_size = parent_width - x_margin(element)
+		apply_max = true
+	}
+
+	if element.width.max > 0 {
+		if apply_max {
+			if element.width.max < max_size {
+				max_size = element.width.max
+			}
+		} else {
+			max_size = element.width.max
+			apply_max = true
+		}
+	}
+
+	return
+}
+
+@(private = "file")
+flex_height_limits :: proc(
+	ctx: ^Context,
+	element: ^Element,
+) -> (
+	min_size: f32,
+	max_size: f32,
+	apply_max: bool,
+) {
+	min_size = max(element.height.min, y_padding(element) + y_border(element))
+
+	parent_height, parent_definite := parent_inner_height(ctx, element)
+	if parent_definite {
+		max_size = parent_height - y_margin(element)
+		apply_max = true
+	}
+
+	if element.height.max > 0 {
+		if apply_max {
+			if element.height.max < max_size {
+				max_size = element.height.max
+			}
+		} else {
+			max_size = element.height.max
+			apply_max = true
+		}
+	}
+
+	return
+}
+
+@(private = "file")
+flex_distribute_widths_line :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	first_index: int,
+	last_index: int,
+	target_width: f32,
+	child_count: int,
+) -> f32 {
+	elements := &ctx.elements[current_buffer(ctx)]
+	items := ctx.axis_items[:child_count]
+	breakpoints := ctx.axis_breakpoints[:child_count]
+	item_count := 0
+	margin_total: f32 = 0
+	in_flow_count := 0
+
+	child := first_index
+	for child != 0 {
+		child_element := &elements[child]
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
+			min_width, max_width, _ := flex_width_limits(ctx, child_element)
+			items[item_count] = AxisAllocationItem {
+				size = child_element._size.x,
+				min = min_width,
+				max = max_width,
+				factor = child_element.width.type == .Grow ? max(child_element.width.value, 1) : 0,
+			}
+			item_count += 1
+			margin_total += x_margin(child_element)
+			in_flow_count += 1
+		}
+
+		if child == last_index {
+			break
+		}
+		child = child_element.next
+	}
+
+	if item_count == 0 {
+		return 0
+	}
+
+	gap_total := margin_total + element.gap * f32(max(in_flow_count - 1, 0))
+	line_width := resolve_axis_allocation(
+		items[:item_count],
+		target_width,
+		gap_total,
+		breakpoints[:item_count],
+	)
+
+	item_index := 0
+	child = first_index
+	for child != 0 {
+		child_element := &elements[child]
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
+			child_element._size.x = items[item_index].size
+			item_index += 1
+		}
+
+		if child == last_index {
+			break
+		}
+		child = child_element.next
+	}
+
+	return line_width
+}
+
 // MARK: clamp width
 @(private)
 flex_clamp_width :: proc(ctx: ^Context, element: ^Element) {
@@ -670,27 +810,7 @@ flex_clamp_width :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	min := max(element.width.min, x_padding(element) + x_border(element))
-
-	apply_max := false
-	max: f32 = 0
-
-	parent_width, parent_definite := parent_inner_width(ctx, element)
-	if parent_definite {
-		max = parent_width - x_margin(element)
-		apply_max = true
-	}
-
-	if element.width.max > 0 {
-		if apply_max {
-			if element.width.max < max {
-				max = element.width.max
-			}
-		} else {
-			max = element.width.max
-			apply_max = true
-		}
-	}
+	min, max, apply_max := flex_width_limits(ctx, element)
 
 	if element._size.x < min {
 		element._size.x = min
@@ -707,27 +827,7 @@ flex_clamp_height :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	min := max(element.height.min, y_padding(element) + y_border(element))
-
-	apply_max := false
-	max: f32 = 0
-
-	parent_height, parent_definite := parent_inner_height(ctx, element)
-	if parent_definite {
-		max = parent_height - y_margin(element)
-		apply_max = true
-	}
-
-	if element.height.max > 0 {
-		if apply_max {
-			if element.height.max < max {
-				max = element.height.max
-			}
-		} else {
-			max = element.height.max
-			apply_max = true
-		}
-	}
+	min, max, apply_max := flex_height_limits(ctx, element)
 
 	if element._size.y < min {
 		element._size.y = min
@@ -1140,7 +1240,7 @@ _content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
 		child = child_element.next
 	}
 
-	gap := element.gap * f32(count - 1)
+	gap := element.gap * f32(max(count - 1, 0))
 	return size + gap, count
 }
 

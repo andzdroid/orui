@@ -253,8 +253,8 @@ fit :: proc() -> Size {
 	return {.Fit, 0, 0, 0}
 }
 
-grow :: proc(base: f32 = 0) -> Size {
-	return {.Grow, base, 0, 0}
+grow :: proc(weight: f32 = 1) -> Size {
+	return {.Grow, weight, 0, 0}
 }
 
 AnchorPoint :: enum {

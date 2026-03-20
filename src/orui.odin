@@ -33,6 +33,8 @@ Context :: struct {
 	text_width_cache:     [2]map[TextWidthKey]f32,
 	sorted:               [MAX_ELEMENTS]int,
 	sorted_count:         int,
+	axis_items:           [MAX_ELEMENTS]AxisAllocationItem,
+	axis_breakpoints:     [MAX_ELEMENTS]AxisBreakpoint,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
 	render_command_count: int,
 

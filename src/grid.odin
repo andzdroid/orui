@@ -136,13 +136,13 @@ grid_fit_width :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set percent and grow column widths.
 grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
-	element_inner_width := inner_width(element)
+	target_width := inner_width(element)
 	gap := element.col_gap > 0 ? element.col_gap : element.gap
 	gaps := gap * f32(max(element.cols - 1, 0))
-	element_inner_width -= gaps
+	target_width -= gaps
+	items := ctx.axis_items[:element.cols]
+	breakpoints := ctx.axis_breakpoints[:element.cols]
 
-	sum_with_margins: f32 = 0
-	total_weight: f32 = 0
 	for i in 0 ..< element.cols {
 		track := element.col_sizes[min(i, len(element.col_sizes) - 1)]
 		base: f32 = 0
@@ -151,37 +151,32 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 		case .Fixed:
 			base = element._grid_col_sizes[i]
 		case .Percent:
-			base = grid_clamp_size(element_inner_width * track.value, track)
-			element._grid_col_sizes[i] = base
+			base = target_width * track.value
 		case .Fit:
 			base = element._grid_col_sizes[i]
 		case .Grow:
 			base = element._grid_col_sizes[i]
-			weight := track.value
-			if weight <= 0 {weight = 1}
-			total_weight += weight
 		}
-		sum_with_margins += base + x_margin(element)
-	}
 
-	remaining := element_inner_width - sum_with_margins
-	if remaining > 0 && total_weight > 0 {
-		for i in 0 ..< element.cols {
-			track := element.col_sizes[min(i, len(element.col_sizes) - 1)]
-			if track.type == .Grow {
-				weight := track.value
-				if weight <= 0 {weight = 1}
-				element._grid_col_sizes[i] += remaining * (weight / total_weight)
-			}
+		items[i] = AxisAllocationItem {
+			size = base,
+			min = track.min,
+			max = track.max,
+			factor = track.type == .Grow ? max(track.value, 1) : 0,
 		}
 	}
 
+	total_width := resolve_axis_allocation(
+		items[:element.cols],
+		target_width,
+		0,
+		breakpoints[:element.cols],
+	)
 	offset: f32 = 0
-	total_width: f32 = 0
 	for i in 0 ..< element.cols {
+		element._grid_col_sizes[i] = items[i].size
 		element._grid_col_offsets[i] = offset
 		offset += element._grid_col_sizes[i] + gap
-		total_width += element._grid_col_sizes[i]
 	}
 	element._content_size.x = total_width + gap * f32(max(element.cols - 1, 0))
 }
@@ -293,13 +288,13 @@ grid_fit_height :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set percent and grow row heights.
 grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
-	element_inner_height := inner_height(element)
+	target_height := inner_height(element)
 	gap := element.row_gap > 0 ? element.row_gap : element.gap
 	gaps := gap * f32(max(element.rows - 1, 0))
-	element_inner_height -= gaps
+	target_height -= gaps
+	items := ctx.axis_items[:element.rows]
+	breakpoints := ctx.axis_breakpoints[:element.rows]
 
-	sum_with_margins: f32 = 0
-	total_weight: f32 = 0
 	for i in 0 ..< element.rows {
 		track := element.row_sizes[min(i, len(element.row_sizes) - 1)]
 		base: f32 = 0
@@ -308,37 +303,32 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 		case .Fixed:
 			base = element._grid_row_sizes[i]
 		case .Percent:
-			base = grid_clamp_size(element_inner_height * track.value, track)
-			element._grid_row_sizes[i] = base
+			base = target_height * track.value
 		case .Fit:
 			base = element._grid_row_sizes[i]
 		case .Grow:
 			base = element._grid_row_sizes[i]
-			weight := track.value
-			if weight <= 0 {weight = 1}
-			total_weight += weight
 		}
-		sum_with_margins += base + y_margin(element)
-	}
 
-	remaining := element_inner_height - sum_with_margins
-	if remaining > 0 && total_weight > 0 {
-		for i in 0 ..< element.rows {
-			track := element.row_sizes[min(i, len(element.row_sizes) - 1)]
-			if track.type == .Grow {
-				weight := track.value
-				if weight <= 0 {weight = 1}
-				element._grid_row_sizes[i] += remaining * (weight / total_weight)
-			}
+		items[i] = AxisAllocationItem {
+			size = base,
+			min = track.min,
+			max = track.max,
+			factor = track.type == .Grow ? max(track.value, 1) : 0,
 		}
 	}
 
+	total_height := resolve_axis_allocation(
+		items[:element.rows],
+		target_height,
+		0,
+		breakpoints[:element.rows],
+	)
 	offset: f32 = 0
-	total_height: f32 = 0
 	for i in 0 ..< element.rows {
+		element._grid_row_sizes[i] = items[i].size
 		element._grid_row_offsets[i] = offset
 		offset += element._grid_row_sizes[i] + gap
-		total_height += element._grid_row_sizes[i]
 	}
 	element._content_size.y = total_height + gap * f32(max(element.rows - 1, 0))
 }
