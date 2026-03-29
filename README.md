@@ -485,6 +485,34 @@ Placement :: struct {
 }
 ```
 
+### bounds
+
+Control how a non-auto positioned element is kept within the window after placement.
+
+Useful for keeping popovers within view (dropdowns, tooltips, etc).
+
+```odin
+BoundsTarget :: enum {
+	None,
+	Window,
+}
+
+BoundsMode :: enum {
+	None,
+	Shift,
+	Flip,
+}
+
+Bounds :: struct {
+	target:  BoundsTarget,
+	mode:    BoundsMode,
+	padding: f32,
+}
+```
+
+- **Shift**: clamp the element inside the window bounds.
+- **Flip**: flip the element to the opposite side on overflowing axes, then clamp it if needed.
+
 ### width and height
 
 ```odin

@@ -65,6 +65,23 @@ Placement :: struct {
 	origin: rl.Vector2,
 }
 
+BoundsTarget :: enum {
+	None,
+	Window,
+}
+
+BoundsMode :: enum {
+	None,
+	Shift,
+	Flip,
+}
+
+Bounds :: struct {
+	target:  BoundsTarget,
+	mode:    BoundsMode,
+	padding: f32,
+}
+
 Layout :: enum {
 	// Layout children next to each other
 	Flex,
@@ -200,6 +217,9 @@ ElementConfig :: struct {
 	// How the element is positioned relative to its parent or anchor element.
 	// Used for non-auto position types.
 	placement:        Placement,
+	// How the element is kept within its bounds after placement.
+	// Used for non-auto position types.
+	bounds:           Bounds,
 	// How the element width is sized.
 	width:            Size,
 	// How the element height is sized.
@@ -335,6 +355,7 @@ Element :: struct {
 	direction:         LayoutDirection,
 	position:          Position,
 	placement:         Placement,
+	bounds:            Bounds,
 	width:             Size,
 	height:            Size,
 	padding:           Edges,
@@ -426,6 +447,7 @@ configure_element :: proc(
 	element.direction = config.direction
 	element.position = config.position
 	element.placement = config.placement
+	element.bounds = config.bounds
 	element.width = config.width
 	element.height = config.height
 	element.padding = config.padding

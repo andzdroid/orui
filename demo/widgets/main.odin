@@ -43,6 +43,7 @@ tooltip :: proc() {
 			{
 				position = {.Absolute, {2, -2}},
 				placement = orui.placement(.TopRight, .BottomLeft),
+				bounds = {.Window, .Flip, 8},
 				width = orui.fixed(200),
 				font_size = 16,
 				color = rl.BLACK,
@@ -74,6 +75,7 @@ tooltip2 :: proc() {
 			"This tooltip follows the mouse position!",
 			{
 				position = {.Absolute, {f32(rl.GetMouseX() + 5), f32(rl.GetMouseY()) - 50}},
+				bounds = {.Window, .Shift, 8},
 				width = orui.fixed(200),
 				font_size = 16,
 				color = rl.BLACK,
@@ -190,6 +192,7 @@ dropdown_menu :: proc(open_state: ^bool, value: ^int) {
 				{
 					position = {.Absolute, {}},
 					placement = orui.placement(.Bottom, .Top),
+					bounds = {.Window, .Flip, 8},
 					direction = .TopToBottom,
 					padding = orui.padding(4),
 					width = orui.fixed(250),
