@@ -13,6 +13,8 @@ handle_input_state :: proc(ctx: ^Context) {
 	// previous elements are the latest available state of the elements
 	elements := &ctx.elements[previous]
 
+	sync_focus_element(ctx)
+
 	position := rl.GetMousePosition()
 	mouse_down := rl.IsMouseButtonDown(.LEFT)
 	pressed := rl.IsMouseButtonPressed(.LEFT)
@@ -137,10 +139,7 @@ handle_input_state :: proc(ctx: ^Context) {
 							ensure_caret_visible(ctx, element, ctx.caret_index)
 						}
 					} else if ctx.focus != 0 {
-						ctx.focus = 0
-						ctx.focus_id = 0
-						ctx.repeat_key = .KEY_NULL
-						ctx.text_selection = {}
+						clear_focus(ctx)
 					}
 				}
 
@@ -182,15 +181,9 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 	if ctx.focus != 0 {
 		element := &elements[ctx.focus]
 		if !element.editable {
-			ctx.focus = 0
-			ctx.focus_id = 0
-			ctx.repeat_key = .KEY_NULL
-			ctx.text_selection = {}
+			clear_focus(ctx)
 		} else if rl.IsKeyPressed(.ENTER) && element.overflow == .Visible {
-			ctx.focus = 0
-			ctx.focus_id = 0
-			ctx.repeat_key = .KEY_NULL
-			ctx.text_selection = {}
+			clear_focus(ctx)
 		} else {
 			text_input := element.text_input
 			ctrl_down := rl.IsKeyDown(.LEFT_CONTROL) || rl.IsKeyDown(.RIGHT_CONTROL)
@@ -428,6 +421,47 @@ handle_keyboard_input :: proc(ctx: ^Context) {
 			}
 		}
 	}
+}
+
+sync_focus_element :: proc(ctx: ^Context) {
+	if ctx.focus_id == 0 {
+		ctx.focus = 0
+		return
+	}
+
+	focus_index, ok := element_index_by_id(ctx, previous_buffer(ctx), ctx.focus_id)
+	if !ok {
+		clear_focus(ctx)
+		return
+	}
+
+	ctx.focus = focus_index
+
+	element := &ctx.elements[previous_buffer(ctx)][focus_index]
+	if !element.editable || element.text_input == nil {
+		return
+	}
+
+	max_index := len(element.text_input.buf)
+	caret_index := clamp(ctx.caret_index, 0, max_index)
+	selection_start := clamp(ctx.text_selection.start, 0, max_index)
+	selection_end := clamp(ctx.text_selection.end, 0, max_index)
+	if caret_index != ctx.caret_index ||
+	   selection_start != ctx.text_selection.start ||
+	   selection_end != ctx.text_selection.end {
+		ctx.caret_index = caret_index
+		ctx.text_selection.start = selection_start
+		ctx.text_selection.end = selection_end
+		ctx.caret_time = 0
+	}
+}
+
+@(private)
+clear_focus :: proc(ctx: ^Context) {
+	ctx.focus = 0
+	ctx.focus_id = 0
+	ctx.repeat_key = .KEY_NULL
+	ctx.text_selection = {}
 }
 
 @(private)

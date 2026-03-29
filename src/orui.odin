@@ -287,15 +287,26 @@ element :: proc(
 	return true
 }
 
+element_index_by_id :: proc(ctx: ^Context, buffer: int, id: Id) -> (index: int, ok: bool) {
+	assert(ctx != nil)
+
+	elements := &ctx.elements[buffer]
+	count := ctx.element_count[buffer]
+	for i in 0 ..< count {
+		if elements[i].id == id {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
 // Get an element from the previous frame.
 get_element :: proc(id: Id) -> ^Element {
 	ctx := current_context
-	elements := &ctx.elements[previous_buffer(ctx)]
-	count := ctx.element_count[previous_buffer(ctx)]
-	for i in 0 ..< count {
-		if elements[i].id == id {
-			return &elements[i]
-		}
+	buffer := previous_buffer(ctx)
+	element_index, ok := element_index_by_id(ctx, buffer, id)
+	if ok {
+		return &ctx.elements[buffer][element_index]
 	}
 	return nil
 }

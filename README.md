@@ -249,15 +249,26 @@ This element displays text, and also allows the user to click into it to focus o
 
 A blinking caret is drawn using the element's `color`.
 
-You must define a `strings.Builder` to hold the user input.
+You must define a [`strings.Builder`](https://pkg.odin-lang.org/core/strings/#Builder) to hold the user input.
+
+Text inputs can be single-line:
 
 ```odin
-buffer := strings.builder_make()
-strings.write_string(&buffer, "Initial text")
-value := strings.to_string(buffer)
+orui.text_input(orui.id("input"), &buffer, {
+	overflow = .Visible,
+	clip = {.Intersect, {}},
+	scroll = orui.scroll(.Horizontal),
+})
 ```
 
-Text inputs can be single-line (no wrapping) or multi-line (wrapping).
+Or multi-line:
+
+```odin
+orui.text_input(orui.id("input"), &buffer, {
+	overflow = .Wrap,
+	scroll = orui.scroll(.Vertical),
+})
+```
 
 For single-line text inputs, the Enter key will unfocus the input.
 
@@ -281,6 +292,8 @@ This element does not need the surrounding curly braces because it cannot hold c
 orui.image(orui.id("image"), &texture, {
 	color = rl.WHITE, // optional tint
 	texture_source = rl.Rectangle{}, // optional, draw part of the texture
+	texture_fit = .Contain,
+	align = .Center,
 })
 ```
 
@@ -648,8 +661,8 @@ orui.container(orui.id("grid"), {
 	layout = .Grid,
 	cols = 5,
 	rows = 5,
-	col_sizes = []{orui.grow()},
-	row_sizes = []{orui.fixed(250)},
+	col_sizes = {orui.grow()},
+	row_sizes = {orui.fixed(250)},
 })
 ```
 
