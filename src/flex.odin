@@ -49,7 +49,7 @@ flex_height_ready :: #force_inline proc(child: ^Element) -> bool {
 }
 
 @(private)
-flex_update_parent_size :: proc(ctx: ^Context, parent_index: int, child_index: int) {
+flex_update_parent_size :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	parent := &elements[parent_index]
 	if parent.layout != .Flex {
@@ -91,7 +91,7 @@ flex_update_parent_size :: proc(ctx: ^Context, parent_index: int, child_index: i
 }
 
 @(private)
-flex_finalize_base_size :: proc(ctx: ^Context, index: int) {
+flex_finalize_base_size :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 	if element.layout != .Flex {
@@ -161,7 +161,7 @@ flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 flex_fit_width_row :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	sum: f32 = 0
-	child_count := 0
+	child_count: i32 = 0
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -235,11 +235,11 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	element_inner_width := inner_width(element)
 
 	max_line_width: f32 = 0
-	current_line := 0
-	line_first := 0
-	line_last := 0
+	current_line: i32 = 0
+	line_first: i32 = 0
+	line_last: i32 = 0
 	line_width: f32 = 0
-	line_child_count := 0
+	line_child_count: i32 = 0
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -331,9 +331,9 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 flex_distribute_widths_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element_inner_width := inner_width(element)
-	first := 0
-	last := 0
-	child_count := 0
+	first: i32 = 0
+	last: i32 = 0
+	child_count: i32 = 0
 
 	child := element.children
 	for child != 0 {
@@ -424,8 +424,8 @@ flex_distribute_widths_column :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 flex_distribute_widths_line :: proc(
 	ctx: ^Context,
-	first_index: int,
-	last_index: int,
+	first_index: i32,
+	last_index: i32,
 	remaining_space: f32,
 	total_weight: f32,
 ) {
@@ -516,7 +516,7 @@ flex_fit_height_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 
 	elements := &ctx.elements[current_buffer(ctx)]
 	total_height: f32 = 0
-	current_line := 0
+	current_line: i32 = 0
 	line_height: f32 = 0
 	child := element.children
 	for child != 0 {
@@ -678,10 +678,10 @@ flex_distribute_heights_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	element_inner_height := inner_height(element)
 
 	total_height: f32 = 0
-	current_line := 0
+	current_line: i32 = 0
 	line_height: f32 = 0
-	line_first := 0
-	line_last := 0
+	line_first: i32 = 0
+	line_last: i32 = 0
 
 	child := element.children
 	for child != 0 {
@@ -767,8 +767,8 @@ flex_distribute_heights_row_unwrapped :: proc(ctx: ^Context, element: ^Element) 
 @(private)
 flex_distribute_heights_line :: proc(
 	ctx: ^Context,
-	first_index: int,
-	last_index: int,
+	first_index: i32,
+	last_index: i32,
 	line_height: f32,
 ) {
 	elements := &ctx.elements[current_buffer(ctx)]
@@ -862,10 +862,10 @@ flex_height_limits :: proc(
 flex_distribute_widths_line :: proc(
 	ctx: ^Context,
 	element: ^Element,
-	first_index: int,
-	last_index: int,
+	first_index: i32,
+	last_index: i32,
 	target_width: f32,
-	child_count: int,
+	child_count: i32,
 ) -> f32 {
 	elements := &ctx.elements[current_buffer(ctx)]
 	items := ctx.axis_items[:child_count]
@@ -1079,10 +1079,10 @@ flex_compute_position_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	group_offset := main_offset(element.align_content, available, element._line_count)
 	line_y_offset := group_offset.initial
 
-	current_line := 0
-	line_first := 0
-	line_last := 0
-	line_child_count := 0
+	current_line: i32 = 0
+	line_first: i32 = 0
+	line_last: i32 = 0
+	line_child_count: i32 = 0
 	line_width: f32 = 0
 	line_height: f32 = 0
 	child := element.children
@@ -1152,11 +1152,11 @@ flex_compute_position_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 flex_compute_position_row_line :: proc(
 	ctx: ^Context,
 	element: ^Element,
-	line_first: int,
-	line_last: int,
+	line_first: i32,
+	line_last: i32,
 	line_width: f32,
 	line_height: f32,
-	line_child_count: int,
+	line_child_count: i32,
 	line_y_offset: f32,
 ) {
 	elements := &ctx.elements[current_buffer(ctx)]
@@ -1218,10 +1218,10 @@ flex_compute_position_column_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	group_offset := main_offset(element.align_content, available, element._line_count)
 	line_x_offset: f32 = group_offset.initial
 
-	current_line := 0
-	line_first := 0
-	line_last := 0
-	line_child_count := 0
+	current_line: i32 = 0
+	line_first: i32 = 0
+	line_last: i32 = 0
+	line_child_count: i32 = 0
 	line_height: f32 = 0
 	line_width: f32 = 0
 	child := element.children
@@ -1291,11 +1291,11 @@ flex_compute_position_column_wrapped :: proc(ctx: ^Context, element: ^Element) {
 flex_compute_position_column_line :: proc(
 	ctx: ^Context,
 	element: ^Element,
-	line_first: int,
-	line_last: int,
+	line_first: i32,
+	line_last: i32,
 	line_height: f32,
 	line_width: f32,
-	line_child_count: int,
+	line_child_count: i32,
 	line_x_offset: f32,
 ) {
 	elements := &ctx.elements[current_buffer(ctx)]
@@ -1345,10 +1345,10 @@ flex_compute_position_column_line :: proc(
 }
 
 @(private = "file")
-_content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, int) {
+_content_size :: proc(ctx: ^Context, element: ^Element) -> (f32, i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	size: f32 = 0
-	count := 0
+	count: i32 = 0
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -1378,7 +1378,7 @@ MainAxisOffset :: struct {
 main_offset :: proc(
 	alignment: MainAlignment,
 	available_space: f32,
-	child_count: int,
+	child_count: i32,
 ) -> MainAxisOffset {
 	if available_space <= 0 {
 		return {}

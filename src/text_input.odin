@@ -145,7 +145,7 @@ text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 	} else if element.overflow == .Wrap {
 		total_lines := element._line_count > 0 ? element._line_count : 1
 		target_line := int(math.floor((point.y - y_start) / element._line_height))
-		target_line = clamp(target_line, 0, total_lines - 1)
+		target_line = clamp(target_line, 0, int(total_lines - 1))
 
 		cache := get_text_cache(ctx, element, inner_width, letter_spacing)
 		line := cache.lines[target_line]

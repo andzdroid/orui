@@ -18,40 +18,40 @@ current_context: ^Context
 
 IdBuffer :: struct {
 	ids:   [MAX_ELEMENTS]Id,
-	count: int,
+	count: i32,
 }
 
 Context :: struct {
 	arena:                [2]virtual.Arena,
 	allocator:            [2]runtime.Allocator,
 	elements:             [2][MAX_ELEMENTS]Element,
-	element_count:        [2]int,
+	element_count:        [2]i32,
 	frame:                int,
 	time:                 f64,
 	default_font:         rl.Font,
 	text_cache:           [2]map[TextCacheKey]TextCache,
 	text_width_cache:     [2]map[TextWidthKey]f32,
-	sorted:               [MAX_ELEMENTS]int,
-	sorted_count:         int,
+	sorted:               [MAX_ELEMENTS]i32,
+	sorted_count:         i32,
 	axis_items:           [MAX_ELEMENTS]AxisAllocationItem,
 	axis_breakpoints:     [MAX_ELEMENTS]AxisBreakpoint,
 	render_commands:      [MAX_COMMANDS]RenderCommand,
 	render_command_count: int,
 
 	// current element index - used while building up the UI
-	current:              int,
+	current:              i32,
 	current_id:           Id,
-	previous:             int,
-	parent:               int,
+	previous:             i32,
+	parent:               i32,
 
 	// mouse input
-	pointer_capture:      int,
+	pointer_capture:      i32,
 	pointer_capture_id:   Id,
 	hover:                [2]IdBuffer,
 	active:               [2]IdBuffer,
 
 	// text input
-	focus:                int,
+	focus:                i32,
 	focus_id:             Id,
 	prev_focus_id:        Id,
 	caret_index:          int,
@@ -94,14 +94,14 @@ previous_buffer :: #force_inline proc(ctx: ^Context) -> int {
 // begin() and end() pairs must not be interleaved or nested.
 begin :: proc {
 	begin_f32,
-	begin_i32,
+	begin_int,
 }
 @(private)
 begin_f32 :: proc(ctx: ^Context, width: f32, height: f32, dt: f32 = 0) {
 	_begin(ctx, width, height, dt)
 }
 @(private)
-begin_i32 :: proc(ctx: ^Context, width: i32, height: i32, dt: f32 = 0) {
+begin_int :: proc(ctx: ^Context, #any_int width, height: int, dt: f32 = 0) {
 	_begin(ctx, f32(width), f32(height), dt)
 }
 
@@ -200,7 +200,7 @@ _id_string :: proc(str: string) -> Id {
 }
 
 @(private)
-_id_int :: proc(id: int) -> Id {
+_id_int :: proc(#any_int id: int) -> Id {
 	id := to_id(id)
 	ctx := current_context
 	ctx.current_id = id
@@ -208,7 +208,7 @@ _id_int :: proc(id: int) -> Id {
 }
 
 @(private)
-_id_string_index :: proc(str: string, index: int) -> Id {
+_id_string_index :: proc(str: string, #any_int index: int) -> Id {
 	id := to_id(str, index)
 	ctx := current_context
 	ctx.current_id = id
@@ -216,7 +216,7 @@ _id_string_index :: proc(str: string, index: int) -> Id {
 }
 
 @(private)
-_id_id_index :: proc(id: Id, index: int) -> Id {
+_id_id_index :: proc(id: Id, #any_int index: int) -> Id {
 	indexed_id := to_id(id, index)
 	ctx := current_context
 	ctx.current_id = indexed_id
@@ -291,7 +291,7 @@ element :: proc(
 	return true
 }
 
-element_index_by_id :: proc(ctx: ^Context, buffer: int, id: Id) -> (index: int, ok: bool) {
+element_index_by_id :: proc(ctx: ^Context, buffer: int, id: Id) -> (index: i32, ok: bool) {
 	assert(ctx != nil)
 
 	elements := &ctx.elements[buffer]
@@ -316,7 +316,7 @@ get_element :: proc(id: Id) -> ^Element {
 }
 
 @(private)
-finalize_element :: proc(ctx: ^Context, index: int) {
+finalize_element :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 	measure_text(ctx, element)

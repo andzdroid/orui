@@ -46,7 +46,7 @@ measure_height :: proc(element: ^Element) {
 
 @(private)
 // Set widths that still depend on children
-fit_widths :: proc(ctx: ^Context, index: int) {
+fit_widths :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
@@ -72,7 +72,7 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 
 @(private)
 // Set widths that depend on parent width or later flexible redistribution.
-distribute_widths :: proc(ctx: ^Context, index: int) {
+distribute_widths :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
@@ -103,7 +103,7 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
-wrap :: proc(ctx: ^Context, index: int) {
+wrap :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
@@ -127,7 +127,7 @@ wrap :: proc(ctx: ^Context, index: int) {
 
 @(private)
 // Set heights that still depend on children
-fit_heights :: proc(ctx: ^Context, index: int) {
+fit_heights :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
@@ -153,7 +153,7 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 
 @(private)
 // Set heights that depend on parent height or later flexible redistribution.
-distribute_heights :: proc(ctx: ^Context, index: int) {
+distribute_heights :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 

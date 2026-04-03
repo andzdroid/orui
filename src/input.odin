@@ -104,7 +104,7 @@ handle_input_state :: proc(ctx: ^Context) {
 			ctx.hover[current].count += 1
 
 			already_active := false
-			for active_index := 0; active_index < ctx.active[previous].count; active_index += 1 {
+				for active_index: i32 = 0; active_index < ctx.active[previous].count; active_index += 1 {
 				if ctx.active[previous].ids[active_index] == element.id {
 					already_active = true
 					break

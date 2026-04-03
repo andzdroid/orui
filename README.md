@@ -752,9 +752,7 @@ Control the letter spacing (pixels) and line height (multiplier) of the text.
 
 Default value is 1 for both.
 
-### has_texture and texture
-
-If `texture` is set, `has_texture` should be set to true. The image element does this automatically.
+### texture
 
 `texture` is a raylib Texture2D pointer.
 

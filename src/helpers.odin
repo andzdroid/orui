@@ -19,7 +19,7 @@ _hovered :: proc() -> bool {
 
 	buffer := current_buffer(ctx)
 	count := ctx.hover[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.hover[buffer].ids[i] == ctx.current_id {
 			return true
 		}
@@ -35,7 +35,7 @@ _hovered_string :: proc(id: string) -> bool {
 	id := to_id(id)
 	buffer := current_buffer(ctx)
 	count := ctx.hover[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.hover[buffer].ids[i] == id {
 			return true
 		}
@@ -49,7 +49,7 @@ _hovered_id :: proc(id: Id) -> bool {
 	ctx := current_context
 	buffer := current_buffer(ctx)
 	count := ctx.hover[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.hover[buffer].ids[i] == id {
 			return true
 		}
@@ -74,7 +74,7 @@ _active :: proc() -> bool {
 
 	buffer := previous_buffer(ctx)
 	count := ctx.active[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.active[buffer].ids[i] == ctx.current_id {
 			return true
 		}
@@ -90,7 +90,7 @@ _active_string :: proc(id: string) -> bool {
 	id := to_id(id)
 	buffer := previous_buffer(ctx)
 	count := ctx.active[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.active[buffer].ids[i] == id {
 			return true
 		}
@@ -104,7 +104,7 @@ _active_id :: proc(id: Id) -> bool {
 	ctx := current_context
 	buffer := previous_buffer(ctx)
 	count := ctx.active[buffer].count
-	for i := 0; i < count; i += 1 {
+	for i: i32 = 0; i < count; i += 1 {
 		if ctx.active[buffer].ids[i] == id {
 			return true
 		}
@@ -234,14 +234,14 @@ corner :: proc(r: f32) -> Corners {
 
 fixed :: proc {
 	fixed_f32,
-	fixed_i32,
+	fixed_int,
 }
 @(private)
 fixed_f32 :: proc(value: f32) -> Size {
 	return {.Fixed, value, 0, 0}
 }
 @(private)
-fixed_i32 :: proc(value: i32) -> Size {
+fixed_int :: proc(#any_int value: int) -> Size {
 	return {.Fixed, f32(value), 0, 0}
 }
 

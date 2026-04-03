@@ -1,7 +1,7 @@
 package orui
 
 @(private)
-compute_layout :: proc(ctx: ^Context, index: int) {
+compute_layout :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 

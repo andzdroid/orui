@@ -58,7 +58,7 @@ render :: proc(ctx: ^Context) {
 
 	current_clip: ClipRectangle
 	ctx.render_command_count = 0
-	for i := 0; i < ctx.sorted_count; i += 1 {
+	for i: i32 = 0; i < ctx.sorted_count; i += 1 {
 		index := ctx.sorted[i]
 		element := &elements[index]
 
@@ -95,11 +95,11 @@ render :: proc(ctx: ^Context) {
 }
 
 @(private = "file")
-collect_elements :: proc(ctx: ^Context, index: int, parent_index: int) {
+collect_elements :: proc(ctx: ^Context, index: i32, parent_index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 	parent := &elements[parent_index]
-	element._layer = element.layer == 0 ? parent._layer : element.layer
+		element._layer = element.layer == 0 ? parent._layer : i32(element.layer)
 
 	switch element.clip.type {
 	case .Inherit:
@@ -151,7 +151,7 @@ collect_elements :: proc(ctx: ^Context, index: int, parent_index: int) {
 @(private = "file")
 sort_elements :: proc(ctx: ^Context) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	for i := 1; i < ctx.sorted_count; i += 1 {
+	for i: i32 = 1; i < ctx.sorted_count; i += 1 {
 		key := ctx.sorted[i]
 		layer := elements[key]._layer
 		j := i - 1
@@ -164,7 +164,7 @@ sort_elements :: proc(ctx: ^Context) {
 }
 
 @(private)
-render_element :: proc(ctx: ^Context, index: int) {
+render_element :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
@@ -217,7 +217,7 @@ render_element :: proc(ctx: ^Context, index: int) {
 		}
 	}
 
-	if element.has_texture {
+	if element.texture != nil {
 		render_texture(ctx, element)
 	}
 

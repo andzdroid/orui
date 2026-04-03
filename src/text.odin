@@ -644,7 +644,7 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 		line_count = 1
 	}
 
-	element._line_count = line_count
+	element._line_count = i32(line_count)
 	text_height := element._line_height * f32(line_count)
 	element._content_size.y = text_height
 

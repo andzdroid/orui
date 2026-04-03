@@ -1,11 +1,11 @@
 package orui
 
 @(private)
-grid_track :: #force_inline proc(tracks: []Size, index: int) -> Size {
+grid_track :: #force_inline proc(tracks: []Size, index: i32) -> Size {
 	if len(tracks) == 0 {
 		return {}
 	}
-	return tracks[min(index, len(tracks) - 1)]
+	return tracks[min(int(index), len(tracks) - 1)]
 }
 
 @(private)
@@ -36,15 +36,15 @@ grid_init_track_sizes :: proc(element: ^Element) {
 }
 
 @(private)
-grid_finalize_base_size :: proc(ctx: ^Context, index: int) {
+grid_finalize_base_size :: proc(ctx: ^Context, index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 	if element.layout != .Grid {
 		return
 	}
 
-	element.cols = min(element._grid_used_cols, len(element._grid_col_sizes))
-	element.rows = min(element._grid_used_rows, len(element._grid_row_sizes))
+	element.cols = min(element._grid_used_cols, i32(len(element._grid_col_sizes)))
+	element.rows = min(element._grid_used_rows, i32(len(element._grid_row_sizes)))
 
 	if element._size.x == 0 &&
 	   element.width.type != .Percent &&
@@ -80,7 +80,7 @@ grid_finalize_base_size :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
-grid_place_child :: proc(ctx: ^Context, parent_index: int, child_index: int) {
+grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	parent := &elements[parent_index]
 	if parent.layout != .Grid {
@@ -103,7 +103,7 @@ grid_place_child :: proc(ctx: ^Context, parent_index: int, child_index: int) {
 	row := parent._grid_auto_row
 	col := parent._grid_auto_col
 	cells := col_limit * row_limit
-	attempts := 0
+	attempts: i32 = 0
 	for attempts < cells {
 		free := true
 		for r in row ..< row + row_span {
@@ -163,7 +163,7 @@ grid_place_child :: proc(ctx: ^Context, parent_index: int, child_index: int) {
 	}
 
 	col_index := child._grid_col_index
-	if col_index < len(parent._grid_col_sizes) && child.col_span <= 1 {
+	if col_index < i32(len(parent._grid_col_sizes)) && child.col_span <= 1 {
 		track := grid_track(parent.col_sizes, col_index)
 		if track.type == .Fit || track.type == .Grow {
 			if grid_width_ready(child) {
@@ -178,7 +178,7 @@ grid_place_child :: proc(ctx: ^Context, parent_index: int, child_index: int) {
 	}
 
 	row_index := child._grid_row_index
-	if row_index < len(parent._grid_row_sizes) && child.row_span <= 1 {
+	if row_index < i32(len(parent._grid_row_sizes)) && child.row_span <= 1 {
 		track := grid_track(parent.row_sizes, row_index)
 		if track.type == .Fit || track.type == .Grow {
 			if grid_height_ready(child) {
@@ -232,10 +232,10 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 	row_limit := element.rows
 
 	cells := col_limit * row_limit
-	occupied := make([]bool, cells, allocator)
+	occupied := make([]bool, int(cells), allocator)
 
-	current_row := 0
-	current_col := 0
+	current_row: i32 = 0
+	current_col: i32 = 0
 
 	child := element.children
 	for child != 0 {
@@ -251,7 +251,7 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 		row := current_row
 		col := current_col
 		found := false
-		attempts := 0
+		attempts: i32 = 0
 		for attempts < cells {
 			free := true
 			for r in row ..< row + row_span {
@@ -425,7 +425,7 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 
 		// calculate cell width across its column span
 		cell_width: f32 = 0
-		for i := 0; i < col_span; i += 1 {
+		for i: i32 = 0; i < col_span; i += 1 {
 			index := start_col + i
 			if index < element.cols {
 				cell_width += element._grid_col_sizes[index]
@@ -577,7 +577,7 @@ grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		row_span := max(child_element.row_span, 1)
 
 		cell_height: f32 = 0
-		for i := 0; i < row_span; i += 1 {
+		for i: i32 = 0; i < row_span; i += 1 {
 			index := start_row + i
 			if index < element.rows {
 				cell_height += element._grid_row_sizes[index]
@@ -639,9 +639,9 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 }
 
 @(private = "file")
-grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> int {
+grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> i32 {
 	elements := &ctx.elements[current_buffer(ctx)]
-	used := 0
+	used: i32 = 0
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -656,9 +656,9 @@ grid_used_columns :: proc(ctx: ^Context, element: ^Element) -> int {
 }
 
 @(private = "file")
-grid_used_rows :: proc(ctx: ^Context, element: ^Element) -> int {
+grid_used_rows :: proc(ctx: ^Context, element: ^Element) -> i32 {
 	elements := &ctx.elements[current_buffer(ctx)]
-	used := 0
+	used: i32 = 0
 	child := element.children
 	for child != 0 {
 		child_element := &elements[child]
@@ -682,7 +682,7 @@ grid_clamp_size :: proc(size: f32, track: Size) -> f32 {
 }
 
 @(private = "file")
-increment_column :: proc(col: int, row: int, col_limit: int, row_limit: int) -> (int, int) {
+increment_column :: proc(col: i32, row: i32, col_limit: i32, row_limit: i32) -> (i32, i32) {
 	col := col
 	row := row
 	if col >= col_limit {
@@ -696,7 +696,7 @@ increment_column :: proc(col: int, row: int, col_limit: int, row_limit: int) -> 
 }
 
 @(private = "file")
-increment_row :: proc(col: int, row: int, col_limit: int, row_limit: int) -> (int, int) {
+increment_row :: proc(col: i32, row: i32, col_limit: i32, row_limit: i32) -> (i32, i32) {
 	col := col
 	row := row
 	if row >= row_limit {
@@ -710,7 +710,7 @@ increment_row :: proc(col: int, row: int, col_limit: int, row_limit: int) -> (in
 }
 
 @(private)
-grid_tracks_fixed :: proc(tracks: []Size, start: int, span: int) -> bool {
+grid_tracks_fixed :: proc(tracks: []Size, start: i32, span: i32) -> bool {
 	if span <= 0 {
 		return false
 	}
@@ -728,7 +728,7 @@ grid_tracks_fixed :: proc(tracks: []Size, start: int, span: int) -> bool {
 grid_inner_width :: proc(parent: ^Element, child: ^Element) -> (width: f32, definite: bool) {
 	col_span := max(child.col_span, 1)
 	for i := child._grid_col_index; i < child._grid_col_index + col_span; i += 1 {
-		if i < len(parent._grid_col_sizes) {
+		if i < i32(len(parent._grid_col_sizes)) {
 			width += parent._grid_col_sizes[i]
 		}
 	}
@@ -751,7 +751,7 @@ grid_inner_width :: proc(parent: ^Element, child: ^Element) -> (width: f32, defi
 grid_inner_height :: proc(parent: ^Element, child: ^Element) -> (height: f32, definite: bool) {
 	row_span := max(child.row_span, 1)
 	for i := child._grid_row_index; i < child._grid_row_index + row_span; i += 1 {
-		if i < len(parent._grid_row_sizes) {
+		if i < i32(len(parent._grid_row_sizes)) {
 			height += parent._grid_row_sizes[i]
 		}
 	}

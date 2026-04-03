@@ -95,7 +95,6 @@ image :: proc(
 	element, parent := begin_element(id, loc)
 	configure_element(ctx, element, parent^, config)
 	element.layout = .None
-	element.has_texture = true
 	element.texture = texture
 
 	for modifier in modifiers {

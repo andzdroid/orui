@@ -4,7 +4,7 @@ import "core:hash"
 import "core:strings"
 import rl "vendor:raylib"
 
-Id :: distinct int
+Id :: distinct u32
 
 Edges :: struct {
 	top:    f32,
@@ -20,7 +20,7 @@ Corners :: struct {
 	bottom_left:  f32,
 }
 
-SizeType :: enum {
+SizeType :: enum u8 {
 	// Element uses its content size as its final size.
 	// Only used by children of Flex and Grid layouts.
 	Fit,
@@ -41,7 +41,7 @@ Size :: struct {
 	max:   f32,
 }
 
-PositionType :: enum {
+PositionType :: enum u8 {
 	// Default. Positioned by flex/grid parent. Don't use this if parent is not flex or grid.
 	Auto,
 	// Positioned relative to the closest ancestor with a non-auto position.
@@ -65,12 +65,12 @@ Placement :: struct {
 	origin: rl.Vector2,
 }
 
-BoundsTarget :: enum {
+BoundsTarget :: enum u8 {
 	None,
 	Window,
 }
 
-BoundsMode :: enum {
+BoundsMode :: enum u8 {
 	None,
 	Shift,
 	Flip,
@@ -82,7 +82,7 @@ Bounds :: struct {
 	padding: f32,
 }
 
-Layout :: enum {
+Layout :: enum u8 {
 	// Layout children next to each other
 	Flex,
 	// Layout children in columns and rows
@@ -92,12 +92,12 @@ Layout :: enum {
 }
 
 // Only used for Flex layout
-LayoutDirection :: enum {
+LayoutDirection :: enum u8 {
 	LeftToRight,
 	TopToBottom,
 }
 
-MainAlignment :: enum {
+MainAlignment :: enum u8 {
 	// Align children to beginning of element
 	Start,
 	// Align children to end of element
@@ -112,7 +112,7 @@ MainAlignment :: enum {
 	SpaceEvenly,
 }
 
-CrossAlignment :: enum {
+CrossAlignment :: enum u8 {
 	// Align children to beginning of element
 	Start,
 	// Align children to end of element
@@ -121,24 +121,24 @@ CrossAlignment :: enum {
 	Center,
 }
 
-ContentAlignment :: enum {
+ContentAlignment :: enum u8 {
 	Start,
 	Center,
 	End,
 }
 
-FlexWrap :: enum {
+FlexWrap :: enum u8 {
 	NoWrap,
 	Wrap,
 }
 
-InheritedBool :: enum {
+InheritedBool :: enum u8 {
 	Inherit,
 	False,
 	True,
 }
 
-Overflow :: enum {
+Overflow :: enum u8 {
 	// Content will be wrapped to fit in the element.
 	Wrap,
 	// Content will be visible outside of the element.
@@ -146,14 +146,14 @@ Overflow :: enum {
 	Visible,
 }
 
-WhitespaceMode :: enum {
+WhitespaceMode :: enum u8 {
 	// Collapse sequences of spaces; typical for display text.
 	Collapse,
 	// Preserve all whitespace; typical for text input.
 	Preserve,
 }
 
-TextureFit :: enum {
+TextureFit :: enum u8 {
 	// Image will be stretched or squashed to fill the container.
 	Fill,
 	// Keeps its aspect ratio, and resizes to fit the container.
@@ -166,7 +166,7 @@ TextureFit :: enum {
 	ScaleDown,
 }
 
-ClipType :: enum {
+ClipType :: enum u8 {
 	// Use parent clip
 	Inherit,
 	// Set clip to element position and size
@@ -191,7 +191,7 @@ Clip :: struct {
 	rectangle: ClipRectangle,
 }
 
-ScrollDirection :: enum {
+ScrollDirection :: enum u8 {
 	None,
 	Auto,
 	// Automatically handle mouse scroll events for vertical scrolling.
@@ -257,13 +257,13 @@ ElementConfig :: struct {
 
 	// Number of columns.
 	// Only used for Grid layout.
-	cols:             int,
+	cols:             i32,
 	// Size of each column.
 	// If the size of a column is not provided, the last provided size is used.
 	col_sizes:        []Size,
 	// Number of rows.
 	// Only used for Grid layout.
-	rows:             int,
+	rows:             i32,
 	// Size of each row.
 	// If the size of a row is not provided, the last provided size is used.
 	row_sizes:        []Size,
@@ -275,10 +275,10 @@ ElementConfig :: struct {
 	row_gap:          f32,
 	// How many columns this element should span.
 	// Only used for Grid layout children.
-	col_span:         int,
+	col_span:         i32,
 	// How many rows this element should span.
 	// Only used for Grid layout children.
-	row_span:         int,
+	row_span:         i32,
 
 	// Foreground color.
 	// Used for text color if there is text, and texture tint if there is a texture.
@@ -312,8 +312,6 @@ ElementConfig :: struct {
 	whitespace:       WhitespaceMode,
 	text_input:       ^strings.Builder,
 
-	// Must be true if this element has a texture.
-	has_texture:      bool,
 	// The texture to use for the element.
 	texture:          ^rl.Texture2D,
 	// The source rectangle of the texture that you want to draw.
@@ -345,10 +343,10 @@ ElementConfig :: struct {
 
 Element :: struct {
 	id:                Id,
-	parent:            int,
-	children:          int,
-	next:              int,
-	children_count:    int,
+	parent:            i32,
+	children:          i32,
+	next:              i32,
+	children_count:    i32,
 
 	// layout
 	layout:            Layout,
@@ -371,14 +369,14 @@ Element :: struct {
 	clip:              Clip,
 
 	// grid
-	cols:              int,
+	cols:              i32,
 	col_sizes:         []Size,
-	rows:              int,
+	rows:              i32,
 	row_sizes:         []Size,
 	col_gap:           f32,
 	row_gap:           f32,
-	col_span:          int,
-	row_span:          int,
+	col_span:          i32,
+	row_span:          i32,
 
 	// style
 	color:             rl.Color,
@@ -397,7 +395,6 @@ Element :: struct {
 	text_input:        ^strings.Builder,
 
 	// texture
-	has_texture:       bool,
 	texture:           ^rl.Texture2D,
 	texture_source:    rl.Rectangle,
 	texture_fit:       TextureFit,
@@ -421,24 +418,24 @@ Element :: struct {
 	_position:         rl.Vector2,
 	_size:             rl.Vector2, // border box size
 	_content_size:     rl.Vector2,
-	_layer:            int,
+	_layer:            i32,
 	_text_width:       f32,
-	_line_count:       int,
+	_line_count:       i32,
 	_line_height:      f32,
-	_flex_child_count: int,
+	_flex_child_count: i32,
 	_flex_sum_width:   f32,
 	_flex_sum_height:  f32,
 	_flex_max_width:   f32,
 	_flex_max_height:  f32,
 	_flags:            Element_Flags,
 	_subtree_flags:    Element_Flags,
-	_line:             int,
-	_grid_col_index:   int,
-	_grid_row_index:   int,
-	_grid_auto_col:    int,
-	_grid_auto_row:    int,
-	_grid_used_cols:   int,
-	_grid_used_rows:   int,
+	_line:             i32,
+	_grid_col_index:   i32,
+	_grid_row_index:   i32,
+	_grid_auto_col:    i32,
+	_grid_auto_row:    i32,
+	_grid_used_cols:   i32,
+	_grid_used_rows:   i32,
 	_grid_occupied:    []bool,
 	_grid_row_sizes:   []f32,
 	_grid_col_sizes:   []f32,
@@ -477,29 +474,29 @@ configure_element :: proc(
 	element.clip = config.clip
 
 	// grid
-	if element.layout == .Grid {
-		element.cols = config.cols
-		element.rows = config.rows
+		if element.layout == .Grid {
+			element.cols = config.cols
+			element.rows = config.rows
 
-		col_sizes := min(config.cols, len(config.col_sizes))
-		if col_sizes > 0 {
-			element.col_sizes = make([]Size, col_sizes, allocator)
-			copy(element.col_sizes, config.col_sizes[:col_sizes])
+			col_sizes := min(int(config.cols), len(config.col_sizes))
+			if col_sizes > 0 {
+				element.col_sizes = make([]Size, col_sizes, allocator)
+				copy(element.col_sizes, config.col_sizes[:col_sizes])
+			}
+
+			row_sizes := min(int(config.rows), len(config.row_sizes))
+			if row_sizes > 0 {
+				element.row_sizes = make([]Size, row_sizes, allocator)
+				copy(element.row_sizes, config.row_sizes[:row_sizes])
+			}
+
+			element._grid_occupied = make([]bool, int(element.cols * element.rows), allocator)
+			element._grid_col_sizes = make([]f32, int(element.cols), allocator)
+			element._grid_col_offsets = make([]f32, int(element.cols), allocator)
+			element._grid_row_sizes = make([]f32, int(element.rows), allocator)
+			element._grid_row_offsets = make([]f32, int(element.rows), allocator)
+			grid_init_track_sizes(element)
 		}
-
-		row_sizes := min(config.rows, len(config.row_sizes))
-		if row_sizes > 0 {
-			element.row_sizes = make([]Size, row_sizes, allocator)
-			copy(element.row_sizes, config.row_sizes[:row_sizes])
-		}
-
-		element._grid_occupied = make([]bool, element.cols * element.rows, allocator)
-		element._grid_col_sizes = make([]f32, element.cols, allocator)
-		element._grid_col_offsets = make([]f32, element.cols, allocator)
-		element._grid_row_sizes = make([]f32, element.rows, allocator)
-		element._grid_row_offsets = make([]f32, element.rows, allocator)
-		grid_init_track_sizes(element)
-	}
 
 	element.col_gap = config.col_gap
 	element.row_gap = config.row_gap
@@ -523,7 +520,6 @@ configure_element :: proc(
 	element.text_input = config.text_input
 
 	// texture
-	element.has_texture = config.has_texture
 	element.texture = config.texture
 	element.texture_source = config.texture_source
 	element.texture_fit = config.texture_fit
@@ -559,15 +555,15 @@ to_id_runtime :: proc(str: string) -> Id {
 	return Id(hash.fnv32a(transmute([]u8)str))
 }
 
-to_id_string_index :: proc(str: string, index: int) -> Id {
+to_id_string_index :: proc(str: string, #any_int index: int) -> Id {
 	return Id(hash.fnv32a(transmute([]u8)str, u32(index)))
 }
 
-to_id_int :: proc(id: int) -> Id {
+to_id_int :: proc(#any_int id: int) -> Id {
 	return Id(id)
 }
 
-to_id_id_index :: proc(id: Id, index: int) -> Id {
+to_id_id_index :: proc(id: Id, #any_int index: int) -> Id {
 	id_u32 := u32(id)
 	id_bytes := transmute([4]u8)id_u32
 	return Id(hash.fnv32a(id_bytes[:], u32(index)))
