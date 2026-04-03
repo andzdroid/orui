@@ -159,12 +159,12 @@ _end :: proc() -> []RenderCommand {
 
 @(private)
 _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
+	root := &ctx.elements[current_buffer(ctx)][0]
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
-	wrap(ctx)
+	wrap(ctx, 0)
 	fit_heights(ctx, 0)
 	distribute_heights(ctx, 0)
-
 	compute_layout(ctx, 0)
 	render(ctx)
 	return ctx.render_commands[:ctx.render_command_count]
@@ -261,8 +261,12 @@ begin_element :: proc(id: Id, loc := #caller_location) -> (^Element, ^Element) {
 // Closes the current element.
 end_element :: proc() {
 	ctx := current_context
+	element := ctx.current
+	finalize_element(ctx, element)
 	elements := &ctx.elements[current_buffer(ctx)]
-	ctx.previous = ctx.current
+	elements[ctx.parent]._subtree_flags +=
+		elements[element]._flags + elements[element]._subtree_flags
+	ctx.previous = element
 	ctx.current = ctx.parent
 	current := elements[ctx.current]
 	ctx.parent = current.parent
@@ -309,4 +313,42 @@ get_element :: proc(id: Id) -> ^Element {
 		return &ctx.elements[buffer][element_index]
 	}
 	return nil
+}
+
+@(private)
+finalize_element :: proc(ctx: ^Context, index: int) {
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
+	measure_text(ctx, element)
+	measure_width(element)
+	measure_height(element)
+	flex_finalize_base_size(ctx, index)
+	grid_finalize_base_size(ctx, index)
+	set_flags(element)
+	if element.parent != 0 {
+		flex_update_parent_size(ctx, element.parent, index)
+		grid_place_child(ctx, element.parent, index)
+	}
+}
+
+@(private)
+measure_text :: proc(ctx: ^Context, element: ^Element) {
+	if !element.has_text {
+		return
+	}
+
+	element._text_width = measure_text_width(
+		ctx,
+		element.text,
+		element.font,
+		element.font_size,
+		element.letter_spacing,
+	)
+	element._line_height = measure_text_height(element.font_size, element.line_height)
+
+	if element.overflow == .Visible {
+		if len(element.text) > 0 {
+			element._line_count = 1
+		}
+	}
 }

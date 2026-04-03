@@ -1,21 +1,138 @@
 package orui
 
-// MARK: should wrap
 @(private)
-flex_should_wrap :: proc(element: ^Element) -> bool {
-	if element.flex_wrap != .Wrap {
-		return false
-	}
-	if element.direction == .TopToBottom {
-		// column wrapping is not supported
-		return false
-	}
-	// don't wrap if scrolling on the main axis
+flex_uses_wrapped_rows :: #force_inline proc(element: ^Element) -> bool {
 	return(
-		inner_width(element) > 0 &&
+		element.flex_wrap == .Wrap &&
+		element.direction == .LeftToRight &&
 		element.scroll.direction != .Horizontal &&
 		element.scroll.direction != .Auto \
 	)
+}
+
+@(private)
+flex_width_ready :: #force_inline proc(child: ^Element) -> bool {
+	if child.width.type == .Fixed || child.width.type == .Percent {
+		return true
+	}
+
+	switch child.layout {
+	case .Flex, .Grid:
+		return !(.Width_Blocked in child._flags)
+	case .None:
+		return true
+	}
+
+	return true
+}
+
+@(private)
+flex_height_ready :: #force_inline proc(child: ^Element) -> bool {
+	if child.height.type == .Fixed || child.height.type == .Percent {
+		return true
+	}
+
+	if .Needs_Wrap in child._flags {
+		return false
+	}
+
+	switch child.layout {
+	case .Flex:
+		return !(.Height_Blocked in child._flags) && !flex_uses_wrapped_rows(child)
+	case .Grid:
+		return !(.Height_Blocked in child._flags)
+	case .None:
+		return true
+	}
+
+	return true
+}
+
+@(private)
+flex_update_parent_size :: proc(ctx: ^Context, parent_index: int, child_index: int) {
+	elements := &ctx.elements[current_buffer(ctx)]
+	parent := &elements[parent_index]
+	if parent.layout != .Flex {
+		return
+	}
+
+	child := &elements[child_index]
+	if child.position.type == .Absolute || child.position.type == .Fixed {
+		return
+	}
+
+	parent._flex_child_count += 1
+
+	if flex_width_ready(child) {
+		if child.width.type != .Percent {
+			child_width := child._size.x + x_margin(child)
+			if parent.direction == .LeftToRight {
+				parent._flex_sum_width += child_width
+			} else if child_width > parent._flex_max_width {
+				parent._flex_max_width = child_width
+			}
+		}
+	} else {
+		parent._flags += {.Width_Blocked}
+	}
+
+	if flex_height_ready(child) {
+		if child.height.type != .Percent {
+			child_height := child._size.y + y_margin(child)
+			if parent.direction == .TopToBottom {
+				parent._flex_sum_height += child_height
+			} else if child_height > parent._flex_max_height {
+				parent._flex_max_height = child_height
+			}
+		}
+	} else {
+		parent._flags += {.Height_Blocked}
+	}
+}
+
+@(private)
+flex_finalize_base_size :: proc(ctx: ^Context, index: int) {
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
+	if element.layout != .Flex {
+		return
+	}
+
+	if element._size.x == 0 &&
+	   element.width.type != .Percent &&
+	   !(.Width_Blocked in element._flags) {
+		if element.direction == .LeftToRight {
+			gaps := element.gap * f32(max(element._flex_child_count - 1, 0))
+			element._size.x =
+				element._flex_sum_width + gaps + x_padding(element) + x_border(element)
+		} else {
+			element._size.x = element._flex_max_width + x_padding(element) + x_border(element)
+		}
+
+		flex_clamp_width(ctx, element)
+	}
+
+	if element._size.y == 0 &&
+	   element.height.type != .Percent &&
+	   !(.Height_Blocked in element._flags) &&
+	   !flex_uses_wrapped_rows(element) {
+		if element.direction == .TopToBottom {
+			gaps := element.gap * f32(max(element._flex_child_count - 1, 0))
+			element._size.y =
+				element._flex_sum_height + gaps + y_padding(element) + y_border(element)
+		} else {
+			element._size.y = element._flex_max_height + y_padding(element) + y_border(element)
+		}
+
+		flex_clamp_height(ctx, element)
+	}
+}
+
+// MARK: should wrap
+@(private)
+flex_should_wrap :: proc(element: ^Element) -> bool {
+	// don't wrap if scrolling on the main axis
+	return flex_uses_wrapped_rows(element) && inner_width(element) > 0
 }
 
 // MARK: fit width
@@ -23,6 +140,9 @@ flex_should_wrap :: proc(element: ^Element) -> bool {
 // Set width of element to fit its children
 flex_fit_width :: proc(ctx: ^Context, element: ^Element) {
 	if element._size.x > 0 || element.width.type == .Percent {
+		return
+	}
+	if !(.Width_Blocked in element._flags) {
 		return
 	}
 
@@ -340,6 +460,9 @@ flex_fit_height :: proc(ctx: ^Context, element: ^Element) {
 	if element._size.y > 0 || element.height.type == .Percent {
 		return
 	}
+	if !(.Height_Blocked in element._flags) && !flex_uses_wrapped_rows(element) {
+		return
+	}
 
 	if element.direction == .TopToBottom {
 		flex_fit_height_column(ctx, element)
@@ -507,9 +630,9 @@ flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 		}
 
 		items[item_count] = AxisAllocationItem {
-			size = child_element._size.y,
-			min = min_height,
-			max = max_height,
+			size   = child_element._size.y,
+			min    = min_height,
+			max    = max_height,
 			factor = child_element.height.type == .Grow ? max(child_element.height.value, 1) : 0,
 		}
 		item_count += 1
@@ -757,9 +880,9 @@ flex_distribute_widths_line :: proc(
 		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
 			min_width, max_width, _ := flex_width_limits(ctx, child_element)
 			items[item_count] = AxisAllocationItem {
-				size = child_element._size.x,
-				min = min_width,
-				max = max_width,
+				size   = child_element._size.x,
+				min    = min_width,
+				max    = max_width,
 				factor = child_element.width.type == .Grow ? max(child_element.width.value, 1) : 0,
 			}
 			item_count += 1

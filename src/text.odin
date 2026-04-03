@@ -645,19 +645,17 @@ wrap_text_element :: proc(ctx: ^Context, element: ^Element) {
 	}
 
 	element._line_count = line_count
+	text_height := element._line_height * f32(line_count)
+	element._content_size.y = text_height
 
 	if element.height.type != .Fixed {
 		if element.height.type == .Percent {
 			_, parent_definite := parent_inner_height(ctx, element)
 			if !parent_definite {
-				line_height_px := measure_text_height(element.font_size, element.line_height)
-				element._size.y =
-					line_height_px * f32(line_count) + y_padding(element) + y_border(element)
+				element._size.y = text_height + y_padding(element) + y_border(element)
 			}
 		} else {
-			line_height_px := measure_text_height(element.font_size, element.line_height)
-			element._size.y =
-				line_height_px * f32(line_count) + y_padding(element) + y_border(element)
+			element._size.y = text_height + y_padding(element) + y_border(element)
 		}
 	}
 
@@ -699,9 +697,8 @@ _render_text_line :: proc(
 	letter_spacing: f32,
 	inner_width: f32,
 ) {
-	line_height := measure_text_height(element.font_size, element.line_height)
 	if element._clip.height > 0 &&
-	   (y + line_height < f32(element._clip.y) ||
+	   (y + element._line_height < f32(element._clip.y) ||
 			   y > f32(element._clip.y + element._clip.height)) {
 		return
 	}
@@ -726,13 +723,6 @@ _render_text_line :: proc(
 @(private)
 render_text :: proc(ctx: ^Context, element: ^Element) {
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	line_width := measure_text_width(
-		ctx,
-		element.text,
-		element.font,
-		element.font_size,
-		letter_spacing,
-	)
 	inner_width := inner_width(element)
 
 	x := element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
@@ -750,7 +740,7 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 			element.text,
 			0,
 			len(element.text),
-			line_width,
+			element._text_width,
 			x,
 			y,
 			letter_spacing,
@@ -759,7 +749,16 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 		)
 	}
 
-	_render_text_line(ctx, element, element.text, line_width, x, y, letter_spacing, inner_width)
+	_render_text_line(
+		ctx,
+		element,
+		element.text,
+		element._text_width,
+		x,
+		y,
+		letter_spacing,
+		inner_width,
+	)
 
 	render_caret(
 		ctx,
@@ -767,7 +766,7 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 		element.text,
 		0,
 		len(element.text),
-		line_width,
+		element._text_width,
 		x,
 		y,
 		letter_spacing,
@@ -795,7 +794,6 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
-	line_height := measure_text_height(element.font_size, element.line_height)
 	active := current_context.focus_id == element.id
 	cache := get_text_cache(ctx, element, inner_width, letter_spacing)
 	y := y_start
@@ -840,7 +838,7 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 			inner_width,
 		)
 
-		y += line_height
+		y += element._line_height
 	}
 }
 
@@ -848,9 +846,8 @@ render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 // Vertical offset
 calculate_text_offset :: proc(element: ^Element) -> f32 {
 	content_height := inner_height(element)
-	line_height := measure_text_height(element.font_size, element.line_height)
 	line_count := element._line_count > 0 ? element._line_count : 1
-	text_height := line_height * f32(line_count)
+	text_height := element._line_height * f32(line_count)
 	return calculate_alignment_offset(element.align.y, content_height, text_height)
 }
 
@@ -892,9 +889,8 @@ render_caret :: proc(
 		return
 	}
 
-	line_height := measure_text_height(element.font_size, element.line_height)
 	if element._clip.height > 0 &&
-	   (y + line_height < f32(element._clip.y) ||
+	   (y + element._line_height < f32(element._clip.y) ||
 			   y > f32(element._clip.y + element._clip.height)) {
 		return
 	}
@@ -913,7 +909,7 @@ render_caret :: proc(
 		type = .Rectangle,
 		data = RenderCommandDataRectangle {
 			position = current_context.caret_position,
-			size = {1, line_height},
+			size = {1, element._line_height},
 			color = element.color,
 		},
 	}
@@ -942,9 +938,8 @@ render_selection :: proc(
 		return
 	}
 
-	line_height := measure_text_height(element.font_size, element.line_height)
 	if element._clip.height > 0 &&
-	   (y + line_height < f32(element._clip.y) ||
+	   (y + element._line_height < f32(element._clip.y) ||
 			   y > f32(element._clip.y + element._clip.height)) {
 		return
 	}
@@ -976,7 +971,7 @@ render_selection :: proc(
 		type = .Rectangle,
 		data = RenderCommandDataRectangle {
 			position = {x, y},
-			size = {selection_width, line_height},
+			size = {selection_width, element._line_height},
 			color = {31, 104, 217, 120},
 		},
 	}

@@ -7,36 +7,51 @@ Margin box: border box + margin
 */
 
 @(private)
-// Set fixed widths and content-sized preferred/final widths.
-fit_widths :: proc(ctx: ^Context, index: int) {
-	elements := &ctx.elements[current_buffer(ctx)]
-	element := &elements[index]
-
+measure_width :: proc(element: ^Element) {
 	if element.width.type == .Fixed {
 		element._size.x = element.width.value
 	}
 
-	if element.has_text &&
-	   (element.overflow != .Wrap || element.width.type == .Fit || element.width.type == .Grow) {
-		text_width := measure_text_width(
-			ctx,
-			element.text,
-			element.font,
-			element.font_size,
-			element.letter_spacing,
-		)
-
-		if element.overflow != .Wrap {
-			element._content_size.x = text_width
-		}
-
-		if element.width.type == .Fit || element.width.type == .Grow {
-			element._size.x = text_width + x_padding(element) + x_border(element)
-		}
+	if !element.has_text {
+		return
 	}
 
-	if element.layout == .Grid {
-		grid_auto_place(ctx, element)
+	if element.overflow != .Wrap {
+		element._content_size.x = element._text_width
+	}
+
+	if element.width.type == .Fit || element.width.type == .Grow {
+		element._size.x = element._text_width + x_padding(element) + x_border(element)
+	}
+}
+
+@(private)
+measure_height :: proc(element: ^Element) {
+	if element.height.type == .Fixed {
+		element._size.y = element.height.value
+	}
+
+	if !element.has_text || element.overflow == .Wrap {
+		return
+	}
+
+	lines := element._line_count > 0 ? element._line_count : 1
+	text_height := element._line_height * f32(lines)
+	element._content_size.y = text_height
+
+	if element.height.type == .Fit || element.height.type == .Grow {
+		element._size.y = text_height + y_padding(element) + y_border(element)
+	}
+}
+
+@(private)
+// Set widths that still depend on children
+fit_widths :: proc(ctx: ^Context, index: int) {
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
+
+	if !has_flags(element, {.Width_Blocked}) {
+		return
 	}
 
 	child := element.children
@@ -48,8 +63,10 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 	if element.layout == .Flex {
 		flex_fit_width(ctx, element)
 	} else if element.layout == .Grid {
-		grid_fit_columns(ctx, element)
-		grid_fit_width(ctx, element)
+		if .Width_Blocked in element._flags {
+			grid_fit_columns(ctx, element)
+			grid_fit_width(ctx, element)
+		}
 	}
 }
 
@@ -58,6 +75,10 @@ fit_widths :: proc(ctx: ^Context, index: int) {
 distribute_widths :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
+
+	if !has_flags(element, {.Needs_Width}) {
+		return
+	}
 
 	if element.width.type == .Percent {
 		percent_width, definite := parent_inner_width(ctx, element)
@@ -82,42 +103,36 @@ distribute_widths :: proc(ctx: ^Context, index: int) {
 }
 
 @(private)
-wrap :: proc(ctx: ^Context) {
+wrap :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	for i in 0 ..< ctx.element_count[current_buffer(ctx)] {
-		element := &elements[i]
-		if element.overflow != .Wrap {
-			continue
-		}
+	element := &elements[index]
 
-		if element.has_text {
-			wrap_text_element(ctx, element)
-		}
-
-		// TODO: wrap flex containers
-		// should not happen here, should be part of flex sizing
+	if !has_flags(element, {.Needs_Wrap}) {
+		return
 	}
+
+	if .Needs_Wrap in element._flags && element.has_text {
+		wrap_text_element(ctx, element)
+	}
+
+	child := element.children
+	for child != 0 {
+		wrap(ctx, child)
+		child = elements[child].next
+	}
+
+	// TODO: wrap flex containers
+	// should not happen here, should be part of flex sizing
 }
 
 @(private)
-// Set fixed heights and content-sized preferred/final heights.
+// Set heights that still depend on children
 fit_heights :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 
-	if element.height.type == .Fixed {
-		element._size.y = element.height.value
-	}
-
-	if element.has_text {
-		lines := element._line_count > 0 ? element._line_count : 1
-		line_height_px := measure_text_height(element.font_size, element.line_height)
-		text_height := line_height_px * f32(lines)
-		element._content_size.y = text_height
-
-		if element.height.type == .Fit || element.height.type == .Grow {
-			element._size.y = text_height + y_padding(element) + y_border(element)
-		}
+	if !has_flags(element, {.Needs_Height}) {
+		return
 	}
 
 	child := element.children
@@ -129,8 +144,10 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 	if element.layout == .Flex {
 		flex_fit_height(ctx, element)
 	} else if element.layout == .Grid {
-		grid_fit_rows(ctx, element)
-		grid_fit_height(ctx, element)
+		if .Height_Blocked in element._flags {
+			grid_fit_rows(ctx, element)
+			grid_fit_height(ctx, element)
+		}
 	}
 }
 
@@ -139,6 +156,10 @@ fit_heights :: proc(ctx: ^Context, index: int) {
 distribute_heights :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
+
+	if !has_flags(element, {.Needs_Height}) {
+		return
+	}
 
 	if element.height.type == .Percent {
 		percent_height, definite := parent_inner_height(ctx, element)

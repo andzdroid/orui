@@ -422,10 +422,24 @@ Element :: struct {
 	_size:             rl.Vector2, // border box size
 	_content_size:     rl.Vector2,
 	_layer:            int,
+	_text_width:       f32,
 	_line_count:       int,
+	_line_height:      f32,
+	_flex_child_count: int,
+	_flex_sum_width:   f32,
+	_flex_sum_height:  f32,
+	_flex_max_width:   f32,
+	_flex_max_height:  f32,
+	_flags:            Element_Flags,
+	_subtree_flags:    Element_Flags,
 	_line:             int,
 	_grid_col_index:   int,
 	_grid_row_index:   int,
+	_grid_auto_col:    int,
+	_grid_auto_row:    int,
+	_grid_used_cols:   int,
+	_grid_used_rows:   int,
+	_grid_occupied:    []bool,
 	_grid_row_sizes:   []f32,
 	_grid_col_sizes:   []f32,
 	_grid_row_offsets: []f32,
@@ -479,10 +493,12 @@ configure_element :: proc(
 			copy(element.row_sizes, config.row_sizes[:row_sizes])
 		}
 
+		element._grid_occupied = make([]bool, element.cols * element.rows, allocator)
 		element._grid_col_sizes = make([]f32, element.cols, allocator)
 		element._grid_col_offsets = make([]f32, element.cols, allocator)
 		element._grid_row_sizes = make([]f32, element.rows, allocator)
 		element._grid_row_offsets = make([]f32, element.rows, allocator)
+		grid_init_track_sizes(element)
 	}
 
 	element.col_gap = config.col_gap

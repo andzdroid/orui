@@ -4,6 +4,11 @@ package orui
 compute_layout :: proc(ctx: ^Context, index: int) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
+
+	if !has_flags(element, {.Needs_Layout}) {
+		return
+	}
+
 	compute_position(ctx, element)
 
 	child := element.children

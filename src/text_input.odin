@@ -118,7 +118,6 @@ text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 	}
 
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	line_height := measure_text_height(element.font_size, element.line_height)
 	inner_width := inner_width(element)
 
 	x_start :=
@@ -131,28 +130,21 @@ text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 		element.scroll.offset.y
 
 	if element.overflow == .Visible {
-		line_width := measure_text_width(
-			ctx,
-			text,
-			element.font,
-			element.font_size,
-			letter_spacing,
-		)
-		line_offset := calculate_line_offset(element, line_width, inner_width)
+		line_offset := calculate_line_offset(element, element._text_width, inner_width)
 		local_x := point.x - (x_start + line_offset)
 
 		if local_x <= 0 {
 			return 0
 		}
 
-		if local_x >= line_width {
+		if local_x >= element._text_width {
 			return len(text)
 		}
 
 		return caret_index_in_line(element, text, 0, len(text), local_x, letter_spacing)
 	} else if element.overflow == .Wrap {
 		total_lines := element._line_count > 0 ? element._line_count : 1
-		target_line := int(math.floor((point.y - y_start) / line_height))
+		target_line := int(math.floor((point.y - y_start) / element._line_height))
 		target_line = clamp(target_line, 0, total_lines - 1)
 
 		cache := get_text_cache(ctx, element, inner_width, letter_spacing)
@@ -260,15 +252,13 @@ caret_index_in_line :: proc(
 
 @(private)
 caret_index_up :: proc(ctx: ^Context, element: ^Element, from: rl.Vector2, lines := 1) -> int {
-	line_height := measure_text_height(element.font_size, element.line_height)
-	target := from - {0, line_height * f32(lines)}
+	target := from - {0, element._line_height * f32(lines)}
 	return text_caret_from_point(ctx, element, target)
 }
 
 @(private)
 caret_index_down :: proc(ctx: ^Context, element: ^Element, from: rl.Vector2, lines := 1) -> int {
-	line_height := measure_text_height(element.font_size, element.line_height)
-	target := from + {0, line_height * f32(lines)}
+	target := from + {0, element._line_height * f32(lines)}
 	return text_caret_from_point(ctx, element, target)
 }
 
@@ -365,7 +355,7 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 	}
 
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
-	line_height := measure_text_height(element.font_size, element.line_height)
+	line_height := element._line_height
 	inner_width := inner_width(element)
 	inner_height := inner_height(element)
 
