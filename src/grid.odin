@@ -9,36 +9,6 @@ grid_track :: #force_inline proc(tracks: []Size, index: int) -> Size {
 }
 
 @(private)
-grid_width_ready :: #force_inline proc(child: ^Element) -> bool {
-	switch child.layout {
-	case .Flex, .Grid:
-		return !(.Width_Blocked in child._flags)
-	case .None:
-		return true
-	}
-
-	return true
-}
-
-@(private)
-grid_height_ready :: #force_inline proc(child: ^Element) -> bool {
-	if .Needs_Wrap in child._flags {
-		return false
-	}
-
-	switch child.layout {
-	case .Flex:
-		return !(.Height_Blocked in child._flags) && !flex_uses_wrapped_rows(child)
-	case .Grid:
-		return !(.Height_Blocked in child._flags)
-	case .None:
-		return true
-	}
-
-	return true
-}
-
-@(private)
 grid_init_track_sizes :: proc(element: ^Element) {
 	for i in 0 ..< element.cols {
 		track := grid_track(element.col_sizes, i)
@@ -62,6 +32,50 @@ grid_init_track_sizes :: proc(element: ^Element) {
 		case .Percent:
 			element._grid_row_sizes[i] = 0
 		}
+	}
+}
+
+@(private)
+grid_finalize_base_size :: proc(ctx: ^Context, index: int) {
+	elements := &ctx.elements[current_buffer(ctx)]
+	element := &elements[index]
+	if element.layout != .Grid {
+		return
+	}
+
+	element.cols = min(element._grid_used_cols, len(element._grid_col_sizes))
+	element.rows = min(element._grid_used_rows, len(element._grid_row_sizes))
+
+	if element._size.x == 0 &&
+	   element.width.type != .Percent &&
+	   !(.Width_Blocked in element._flags) {
+		col_gap := element.col_gap > 0 ? element.col_gap : element.gap
+		total: f32 = 0
+		for i in 0 ..< element.cols {
+			total += element._grid_col_sizes[i]
+		}
+		gaps := col_gap * f32(max(element.cols - 1, 0))
+		total += gaps + x_padding(element) + x_border(element)
+
+		min := max(element.width.min, x_padding(element) + x_border(element))
+		max := element.width.max > 0 ? element.width.max : total
+		element._size.x = clamp(total, min, max)
+	}
+
+	if element._size.y == 0 &&
+	   element.height.type != .Percent &&
+	   !(.Height_Blocked in element._flags) {
+		row_gap := element.row_gap > 0 ? element.row_gap : element.gap
+		total: f32 = 0
+		for i in 0 ..< element.rows {
+			total += element._grid_row_sizes[i]
+		}
+		gaps := row_gap * f32(max(element.rows - 1, 0))
+		total += gaps + y_padding(element) + y_border(element)
+
+		min := max(element.height.min, y_padding(element) + y_border(element))
+		max := element.height.max > 0 ? element.height.max : total
+		element._size.y = clamp(total, min, max)
 	}
 }
 
@@ -180,47 +194,33 @@ grid_place_child :: proc(ctx: ^Context, parent_index: int, child_index: int) {
 }
 
 @(private)
-grid_finalize_base_size :: proc(ctx: ^Context, index: int) {
-	elements := &ctx.elements[current_buffer(ctx)]
-	element := &elements[index]
-	if element.layout != .Grid {
-		return
+grid_width_ready :: #force_inline proc(child: ^Element) -> bool {
+	switch child.layout {
+	case .Flex, .Grid:
+		return !(.Width_Blocked in child._flags)
+	case .None:
+		return true
 	}
 
-	element.cols = min(element._grid_used_cols, len(element._grid_col_sizes))
-	element.rows = min(element._grid_used_rows, len(element._grid_row_sizes))
+	return true
+}
 
-	if element._size.x == 0 &&
-	   element.width.type != .Percent &&
-	   !(.Width_Blocked in element._flags) {
-		col_gap := element.col_gap > 0 ? element.col_gap : element.gap
-		total: f32 = 0
-		for i in 0 ..< element.cols {
-			total += element._grid_col_sizes[i]
-		}
-		gaps := col_gap * f32(max(element.cols - 1, 0))
-		total += gaps + x_padding(element) + x_border(element)
-
-		min := max(element.width.min, x_padding(element) + x_border(element))
-		max := element.width.max > 0 ? element.width.max : total
-		element._size.x = clamp(total, min, max)
+@(private)
+grid_height_ready :: #force_inline proc(child: ^Element) -> bool {
+	if .Needs_Wrap in child._flags {
+		return false
 	}
 
-	if element._size.y == 0 &&
-	   element.height.type != .Percent &&
-	   !(.Height_Blocked in element._flags) {
-		row_gap := element.row_gap > 0 ? element.row_gap : element.gap
-		total: f32 = 0
-		for i in 0 ..< element.rows {
-			total += element._grid_row_sizes[i]
-		}
-		gaps := row_gap * f32(max(element.rows - 1, 0))
-		total += gaps + y_padding(element) + y_border(element)
-
-		min := max(element.height.min, y_padding(element) + y_border(element))
-		max := element.height.max > 0 ? element.height.max : total
-		element._size.y = clamp(total, min, max)
+	switch child.layout {
+	case .Flex:
+		return !(.Height_Blocked in child._flags) && !flex_uses_wrapped_rows(child)
+	case .Grid:
+		return !(.Height_Blocked in child._flags)
+	case .None:
+		return true
 	}
+
+	return true
 }
 
 @(private)
@@ -402,6 +402,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 		offset += element._grid_col_sizes[i] + gap
 	}
 	element._content_size.x = total_width + gap * f32(max(element.cols - 1, 0))
+	element._flags += {.Grid_Width_Resolved}
 }
 
 @(private)
@@ -554,6 +555,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 		offset += element._grid_row_sizes[i] + gap
 	}
 	element._content_size.y = total_height + gap * f32(max(element.rows - 1, 0))
+	element._flags += {.Grid_Height_Resolved}
 }
 
 @(private)
@@ -705,4 +707,65 @@ increment_row :: proc(col: int, row: int, col_limit: int, row_limit: int) -> (in
 		}
 	}
 	return col, row
+}
+
+@(private)
+grid_tracks_fixed :: proc(tracks: []Size, start: int, span: int) -> bool {
+	if span <= 0 {
+		return false
+	}
+
+	for i in start ..< start + span {
+		if grid_track(tracks, i).type != .Fixed {
+			return false
+		}
+	}
+
+	return true
+}
+
+@(private)
+grid_inner_width :: proc(parent: ^Element, child: ^Element) -> (width: f32, definite: bool) {
+	col_span := max(child.col_span, 1)
+	for i := child._grid_col_index; i < child._grid_col_index + col_span; i += 1 {
+		if i < len(parent._grid_col_sizes) {
+			width += parent._grid_col_sizes[i]
+		}
+	}
+
+	gap := parent.col_gap > 0 ? parent.col_gap : parent.gap
+	gap_count := max(col_span - 1, 0)
+	width += gap * f32(gap_count)
+
+	if scroll_x_enabled(parent) {
+		return
+	}
+
+	definite =
+		.Grid_Width_Resolved in parent._flags ||
+		grid_tracks_fixed(parent.col_sizes, child._grid_col_index, col_span)
+	return
+}
+
+@(private)
+grid_inner_height :: proc(parent: ^Element, child: ^Element) -> (height: f32, definite: bool) {
+	row_span := max(child.row_span, 1)
+	for i := child._grid_row_index; i < child._grid_row_index + row_span; i += 1 {
+		if i < len(parent._grid_row_sizes) {
+			height += parent._grid_row_sizes[i]
+		}
+	}
+
+	gap := parent.row_gap > 0 ? parent.row_gap : parent.gap
+	gap_count := max(row_span - 1, 0)
+	height += gap * f32(gap_count)
+
+	if scroll_y_enabled(parent) {
+		return
+	}
+
+	definite =
+		.Grid_Height_Resolved in parent._flags ||
+		grid_tracks_fixed(parent.row_sizes, child._grid_row_index, row_span)
+	return
 }

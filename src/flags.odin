@@ -7,6 +7,8 @@ Element_Flag :: enum {
 	Needs_Layout,
 	Width_Blocked,
 	Height_Blocked,
+	Grid_Width_Resolved,
+	Grid_Height_Resolved,
 }
 
 Element_Flags :: bit_set[Element_Flag;u16]

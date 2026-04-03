@@ -442,15 +442,7 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 
 	parent := &elements[e.parent]
 	if parent.layout == .Grid {
-		width: f32 = 0
-		col_span := max(e.col_span, 1)
-		for i := e._grid_col_index; i < e._grid_col_index + col_span; i += 1 {
-			width += parent._grid_col_sizes[i]
-		}
-		gap := parent.col_gap > 0 ? parent.col_gap : parent.gap
-		gap_count := max(col_span - 1, 0)
-		width += gap * f32(gap_count)
-		return width, !scroll_x_enabled(parent)
+		return grid_inner_width(parent, e)
 	} else {
 		return inner_width(parent), parent._size.x > 0 && !scroll_x_enabled(parent)
 	}
@@ -466,15 +458,7 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 
 	parent := &elements[e.parent]
 	if parent.layout == .Grid {
-		height: f32 = 0
-		row_span := max(e.row_span, 1)
-		for i := e._grid_row_index; i < e._grid_row_index + row_span; i += 1 {
-			height += parent._grid_row_sizes[i]
-		}
-		gap := parent.row_gap > 0 ? parent.row_gap : parent.gap
-		gap_count := max(row_span - 1, 0)
-		height += gap * f32(gap_count)
-		return height, !scroll_y_enabled(parent)
+		return grid_inner_height(parent, e)
 	} else {
 		return inner_height(parent), parent._size.y > 0 && !scroll_y_enabled(parent)
 	}
