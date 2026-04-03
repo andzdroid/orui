@@ -94,7 +94,10 @@ main :: proc() {
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(120)
 
-	texture_path, _ := filepath.join({#directory, "assets", "icon.png"}, context.temp_allocator)
+	texture_path, _ := filepath.join(
+		{#directory, "..", "assets", "icon.png"},
+		context.temp_allocator,
+	)
 	texture = rl.LoadTexture(strings.clone_to_cstring(texture_path, context.temp_allocator))
 	defer rl.UnloadTexture(texture)
 
@@ -105,7 +108,7 @@ main :: proc() {
 	defer orui.destroy(ctx)
 
 	font_path, _ := filepath.join(
-		{#directory, "assets", "Inter-Regular.ttf"},
+		{#directory, "..", "assets", "Inter-Regular.ttf"},
 		context.temp_allocator,
 	)
 	ctx.default_font = rl.LoadFont(strings.clone_to_cstring(font_path, context.temp_allocator))

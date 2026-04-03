@@ -119,8 +119,7 @@ for !rl.WindowShouldClose() {
 		// optional: use orui's built-in helper
 		orui.render_command(render_command)
 		// important: the built-in renderer uses the temp allocator when rendering strings!
-		// remember to free the temp allocator at the end of each frame, or implement your
-		// own renderer
+		// remember to free the temp allocator at the end of each frame
 	}
 
 	rl.EndDrawing()
