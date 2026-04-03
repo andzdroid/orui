@@ -3,7 +3,7 @@ package demo
 import orui "../src"
 import rl "vendor:raylib"
 
-render_dense :: proc() {
+render_test_flex_dense :: proc() {
 	orui.container(
 		orui.id("container"),
 		{
@@ -19,7 +19,7 @@ render_dense :: proc() {
 
 	orui.label(
 		orui.id("title"),
-		"Dense",
+		"Flex Dense",
 		{width = orui.grow(), font_size = 24, color = rl.BLACK, align = {.Center, .Center}},
 	)
 

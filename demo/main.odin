@@ -44,9 +44,10 @@ texture: rl.Texture2D
 Scene :: enum {
 	Test_Flex,
 	Test_Grid,
+	Test_Flex_Dense,
+	Test_Grid_Dense,
 	Test_Image,
 	Test_Placement,
-	Test_Dense,
 	Test_Text,
 	Test_Scroll,
 }
@@ -150,14 +151,16 @@ main :: proc() {
 			render_test_flex()
 		case .Test_Grid:
 			render_test_grid()
+		case .Test_Flex_Dense:
+			render_test_flex_dense()
+		case .Test_Grid_Dense:
+			render_test_grid_dense()
 		case .Test_Image:
 			render_test_image()
 		case .Test_Text:
 			render_test_text()
 		case .Test_Placement:
 			render_test_placement()
-		case .Test_Dense:
-			render_dense()
 		case .Test_Scroll:
 			render_test_scroll()
 		}
