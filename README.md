@@ -9,8 +9,8 @@ It is meant for building user-facing UIs using familiar concepts from CSS.
 orui is a work in progress. **Requires odin 2026-03 release or newer!**
 
 <img src="demo/test_flex.png" width="45%" /><img src="demo/test_grid.png" width="45%" />
-<img src="demo/skinning/screenshot.gif" width="45%" /><img src="demo/window/screenshot.gif" width="42%" />
-<img src="demo/test_scroll.gif" width="40%" /><img src="demo/widgets/screenshot.png" width="45%">
+<img src="examples/skinning/screenshot.gif" width="45%" /><img src="examples/window/screenshot.gif" width="42%" />
+<img src="demo/test_scroll.gif" width="40%" /><img src="examples/widgets/screenshot.png" width="45%">
 
 Features:
 
