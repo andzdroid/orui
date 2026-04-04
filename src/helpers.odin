@@ -442,7 +442,7 @@ parent_inner_width :: proc(ctx: ^Context, e: ^Element) -> (w: f32, definite: boo
 
 	parent := &elements[e.parent]
 	if parent.layout == .Grid {
-		return grid_inner_width(parent, e)
+		return grid_inner_width(ctx, parent, e)
 	} else {
 		return inner_width(parent), parent._size.x > 0 && !scroll_x_enabled(parent)
 	}
@@ -458,7 +458,7 @@ parent_inner_height :: proc(ctx: ^Context, e: ^Element) -> (h: f32, definite: bo
 
 	parent := &elements[e.parent]
 	if parent.layout == .Grid {
-		return grid_inner_height(parent, e)
+		return grid_inner_height(ctx, parent, e)
 	} else {
 		return inner_height(parent), parent._size.y > 0 && !scroll_y_enabled(parent)
 	}

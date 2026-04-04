@@ -430,17 +430,9 @@ Element :: struct {
 	_flags:            Element_Flags,
 	_subtree_flags:    Element_Flags,
 	_line:             i32,
+	_grid_state:       i32,
 	_grid_col_index:   i32,
 	_grid_row_index:   i32,
-	_grid_auto_col:    i32,
-	_grid_auto_row:    i32,
-	_grid_used_cols:   i32,
-	_grid_used_rows:   i32,
-	_grid_occupied:    []bool,
-	_grid_row_sizes:   []f32,
-	_grid_col_sizes:   []f32,
-	_grid_row_offsets: []f32,
-	_grid_col_offsets: []f32,
 	_clip:             ClipRectangle,
 }
 
@@ -474,29 +466,35 @@ configure_element :: proc(
 	element.clip = config.clip
 
 	// grid
-		if element.layout == .Grid {
-			element.cols = config.cols
-			element.rows = config.rows
+	if element.layout == .Grid {
+		element.cols = config.cols
+		element.rows = config.rows
 
-			col_sizes := min(int(config.cols), len(config.col_sizes))
-			if col_sizes > 0 {
-				element.col_sizes = make([]Size, col_sizes, allocator)
-				copy(element.col_sizes, config.col_sizes[:col_sizes])
-			}
-
-			row_sizes := min(int(config.rows), len(config.row_sizes))
-			if row_sizes > 0 {
-				element.row_sizes = make([]Size, row_sizes, allocator)
-				copy(element.row_sizes, config.row_sizes[:row_sizes])
-			}
-
-			element._grid_occupied = make([]bool, int(element.cols * element.rows), allocator)
-			element._grid_col_sizes = make([]f32, int(element.cols), allocator)
-			element._grid_col_offsets = make([]f32, int(element.cols), allocator)
-			element._grid_row_sizes = make([]f32, int(element.rows), allocator)
-			element._grid_row_offsets = make([]f32, int(element.rows), allocator)
-			grid_init_track_sizes(element)
+		col_sizes := min(int(config.cols), len(config.col_sizes))
+		if col_sizes > 0 {
+			element.col_sizes = make([]Size, col_sizes, allocator)
+			copy(element.col_sizes, config.col_sizes[:col_sizes])
 		}
+
+		row_sizes := min(int(config.rows), len(config.row_sizes))
+		if row_sizes > 0 {
+			element.row_sizes = make([]Size, row_sizes, allocator)
+			copy(element.row_sizes, config.row_sizes[:row_sizes])
+		}
+
+		buffer := current_buffer(ctx)
+		slot := i32(len(ctx.grid_states[buffer]))
+		append(&ctx.grid_states[buffer], GridState{})
+		element._grid_state = slot
+
+		state := &ctx.grid_states[buffer][slot]
+		state.occupied = make([]bool, int(element.cols * element.rows), allocator)
+		state.col_sizes = make([]f32, int(element.cols), allocator)
+		state.col_offsets = make([]f32, int(element.cols), allocator)
+		state.row_sizes = make([]f32, int(element.rows), allocator)
+		state.row_offsets = make([]f32, int(element.rows), allocator)
+		grid_state_init(element, state)
+	}
 
 	element.col_gap = config.col_gap
 	element.row_gap = config.row_gap

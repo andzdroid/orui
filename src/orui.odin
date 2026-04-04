@@ -25,6 +25,7 @@ Context :: struct {
 	arena:                [2]virtual.Arena,
 	allocator:            [2]runtime.Allocator,
 	elements:             [2][MAX_ELEMENTS]Element,
+	grid_states:          [2][dynamic]GridState,
 	element_count:        [2]i32,
 	frame:                int,
 	time:                 f64,
@@ -115,6 +116,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	virtual.arena_free_all(&ctx.arena[i])
 	ctx.text_cache[i] = make(map[TextCacheKey]TextCache, 1024, ctx.allocator[i])
 	ctx.text_width_cache[i] = make(map[TextWidthKey]f32, 1024, ctx.allocator[i])
+	ctx.grid_states[i] = make([dynamic]GridState, ctx.allocator[i])
 
 	handle_input_state(ctx)
 
@@ -125,14 +127,15 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	root_id := to_id("root")
 	element_count^ = 0
 	elements[0] = {
-		id       = root_id,
-		width    = fixed(width),
-		height   = fixed(height),
-		_size    = {width, height},
-		layer    = 1,
-		disabled = .False,
-		block    = .True,
-		capture  = .False,
+		id          = root_id,
+		width       = fixed(width),
+		height      = fixed(height),
+		_size       = {width, height},
+		layer       = 1,
+		disabled    = .False,
+		block       = .True,
+		capture     = .False,
+		_grid_state = -1,
 	}
 	element_count^ += 1
 
@@ -159,7 +162,6 @@ _end :: proc() -> []RenderCommand {
 
 @(private)
 _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
-	root := &ctx.elements[current_buffer(ctx)][0]
 	fit_widths(ctx, 0)
 	distribute_widths(ctx, 0)
 	wrap(ctx, 0)

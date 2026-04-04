@@ -23,3 +23,17 @@ find_element :: proc(ctx: ^orui.Context, id: orui.Id) -> ^orui.Element {
 	}
 	return nil
 }
+
+find_grid_state :: proc(ctx: ^orui.Context, element: ^orui.Element) -> ^orui.GridState {
+	if element == nil || element._grid_state < 0 {
+		return nil
+	}
+
+	buffer := ctx.frame % 2
+	slot := element._grid_state
+	if slot >= i32(len(ctx.grid_states[buffer])) {
+		return nil
+	}
+
+	return &ctx.grid_states[buffer][slot]
+}

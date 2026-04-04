@@ -101,13 +101,15 @@ grid_fit_size_matches_track_bases :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	testing.expect(t, grid != nil)
+	testing.expect(t, grid_state != nil)
 	testing.expect_value(t, grid.cols, 2)
 	testing.expect_value(t, grid.rows, 2)
-	expect_f32(t, grid._grid_col_sizes[0], 15, "column 0 width")
-	expect_f32(t, grid._grid_col_sizes[1], 30, "column 1 width")
-	expect_f32(t, grid._grid_row_sizes[0], 20, "row 0 height")
-	expect_f32(t, grid._grid_row_sizes[1], 8, "row 1 height")
+	expect_f32(t, grid_state.col_sizes[0], 15, "column 0 width")
+	expect_f32(t, grid_state.col_sizes[1], 30, "column 1 width")
+	expect_f32(t, grid_state.row_sizes[0], 20, "row 0 height")
+	expect_f32(t, grid_state.row_sizes[1], 8, "row 1 height")
 	expect_f32(t, grid._size.x, 49, "grid width")
 	expect_f32(t, grid._size.y, 32, "grid height")
 }
@@ -153,11 +155,13 @@ wrapped_flex_in_fit_row_keeps_height :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	wrap_row := find_element(ctx, orui.to_id("wrap-row"))
 	testing.expect(t, grid != nil)
+	testing.expect(t, grid_state != nil)
 	testing.expect(t, wrap_row != nil)
 	expect_f32(t, wrap_row._size.y, 162, "wrapped flex height")
-	expect_f32(t, grid._grid_row_sizes[0], 162, "grid row height")
+	expect_f32(t, grid_state.row_sizes[0], 162, "grid row height")
 	expect_f32(t, grid._size.y, 162, "grid height")
 }
 
@@ -201,11 +205,13 @@ flex_in_fit_row_keeps_height :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	row := find_element(ctx, orui.to_id("row"))
 	testing.expect(t, grid != nil)
+	testing.expect(t, grid_state != nil)
 	testing.expect(t, row != nil)
 	expect_f32(t, row._size.y, 35, "flex height")
-	expect_f32(t, grid._grid_row_sizes[0], 35, "grid row height")
+	expect_f32(t, grid_state.row_sizes[0], 35, "grid row height")
 	expect_f32(t, grid._size.y, 35, "grid height")
 }
 
@@ -249,11 +255,13 @@ flex_in_fit_column_keeps_width :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	column := find_element(ctx, orui.to_id("column"))
 	testing.expect(t, grid != nil)
+	testing.expect(t, grid_state != nil)
 	testing.expect(t, column != nil)
 	expect_f32(t, column._size.x, 60, "flex width")
-	expect_f32(t, grid._grid_col_sizes[0], 60, "grid column width")
+	expect_f32(t, grid_state.col_sizes[0], 60, "grid column width")
 	expect_f32(t, grid._size.x, 60, "grid width")
 }
 
@@ -290,14 +298,16 @@ resolved_tracks_size_percent_and_grow_children :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	percent := find_element(ctx, orui.to_id("percent"))
 	grow := find_element(ctx, orui.to_id("grow"))
 	testing.expect(t, grid != nil)
+	testing.expect(t, grid_state != nil)
 	testing.expect(t, percent != nil)
 	testing.expect(t, grow != nil)
-	expect_f32(t, grid._grid_col_sizes[0], 100, "resolved column width")
-	expect_f32(t, grid._grid_row_sizes[0], 60, "resolved row 0 height")
-	expect_f32(t, grid._grid_row_sizes[1], 60, "resolved row 1 height")
+	expect_f32(t, grid_state.col_sizes[0], 100, "resolved column width")
+	expect_f32(t, grid_state.row_sizes[0], 60, "resolved row 0 height")
+	expect_f32(t, grid_state.row_sizes[1], 60, "resolved row 1 height")
 	expect_f32(t, percent._size.x, 50, "percent child width")
 	expect_f32(t, percent._size.y, 30, "percent child height")
 	expect_f32(t, grow._size.x, 100, "grow child width")
@@ -339,10 +349,12 @@ grid_grow_columns_respect_explicit_max :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	testing.expect(t, grid != nil)
-	expect_f32(t, grid._grid_col_sizes[0], 60, "column 0 width")
-	expect_f32(t, grid._grid_col_sizes[1], 70, "column 1 width")
-	expect_f32(t, grid._grid_col_sizes[2], 70, "column 2 width")
+	testing.expect(t, grid_state != nil)
+	expect_f32(t, grid_state.col_sizes[0], 60, "column 0 width")
+	expect_f32(t, grid_state.col_sizes[1], 70, "column 1 width")
+	expect_f32(t, grid_state.col_sizes[2], 70, "column 2 width")
 	expect_f32(t, grid._content_size.x, 220, "grid content width")
 }
 
@@ -381,9 +393,11 @@ grid_grow_rows_respect_explicit_min_when_shrinking :: proc(t: ^testing.T) {
 	orui.end()
 
 	grid := find_element(ctx, orui.to_id("grid"))
+	grid_state := find_grid_state(ctx, grid)
 	testing.expect(t, grid != nil)
-	expect_f32(t, grid._grid_row_sizes[0], 40, "row 0 height")
-	expect_f32(t, grid._grid_row_sizes[1], 35, "row 1 height")
-	expect_f32(t, grid._grid_row_sizes[2], 35, "row 2 height")
+	testing.expect(t, grid_state != nil)
+	expect_f32(t, grid_state.row_sizes[0], 40, "row 0 height")
+	expect_f32(t, grid_state.row_sizes[1], 35, "row 1 height")
+	expect_f32(t, grid_state.row_sizes[2], 35, "row 2 height")
 	expect_f32(t, grid._content_size.y, 130, "grid content height")
 }

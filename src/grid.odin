@@ -1,5 +1,26 @@
 package orui
 
+GridState :: struct {
+	col_cursor:  i32,
+	row_cursor:  i32,
+	used_cols:   i32,
+	used_rows:   i32,
+	occupied:    []bool,
+	row_sizes:   []f32,
+	col_sizes:   []f32,
+	row_offsets: []f32,
+	col_offsets: []f32,
+}
+
+@(private = "file")
+grid_state :: proc(ctx: ^Context, element: ^Element) -> ^GridState {
+	assert(element.layout == .Grid)
+	states := ctx.grid_states[current_buffer(ctx)]
+	slot := element._grid_state
+	assert(slot >= 0 && slot < i32(len(states)))
+	return &ctx.grid_states[current_buffer(ctx)][slot]
+}
+
 @(private)
 grid_track :: #force_inline proc(tracks: []Size, index: i32) -> Size {
 	if len(tracks) == 0 {
@@ -9,16 +30,16 @@ grid_track :: #force_inline proc(tracks: []Size, index: i32) -> Size {
 }
 
 @(private)
-grid_init_track_sizes :: proc(element: ^Element) {
+grid_state_init :: proc(element: ^Element, state: ^GridState) {
 	for i in 0 ..< element.cols {
 		track := grid_track(element.col_sizes, i)
 		switch track.type {
 		case .Fixed:
-			element._grid_col_sizes[i] = grid_clamp_size(track.value, track)
+			state.col_sizes[i] = grid_clamp_size(track.value, track)
 		case .Fit, .Grow:
-			element._grid_col_sizes[i] = grid_clamp_size(0, track)
+			state.col_sizes[i] = grid_clamp_size(0, track)
 		case .Percent:
-			element._grid_col_sizes[i] = 0
+			state.col_sizes[i] = 0
 		}
 	}
 
@@ -26,11 +47,11 @@ grid_init_track_sizes :: proc(element: ^Element) {
 		track := grid_track(element.row_sizes, i)
 		switch track.type {
 		case .Fixed:
-			element._grid_row_sizes[i] = grid_clamp_size(track.value, track)
+			state.row_sizes[i] = grid_clamp_size(track.value, track)
 		case .Fit, .Grow:
-			element._grid_row_sizes[i] = grid_clamp_size(0, track)
+			state.row_sizes[i] = grid_clamp_size(0, track)
 		case .Percent:
-			element._grid_row_sizes[i] = 0
+			state.row_sizes[i] = 0
 		}
 	}
 }
@@ -43,8 +64,9 @@ grid_finalize_base_size :: proc(ctx: ^Context, index: i32) {
 		return
 	}
 
-	element.cols = min(element._grid_used_cols, i32(len(element._grid_col_sizes)))
-	element.rows = min(element._grid_used_rows, i32(len(element._grid_row_sizes)))
+	state := grid_state(ctx, element)
+	element.cols = min(state.used_cols, i32(len(state.col_sizes)))
+	element.rows = min(state.used_rows, i32(len(state.row_sizes)))
 
 	if element._size.x == 0 &&
 	   element.width.type != .Percent &&
@@ -52,7 +74,7 @@ grid_finalize_base_size :: proc(ctx: ^Context, index: i32) {
 		col_gap := element.col_gap > 0 ? element.col_gap : element.gap
 		total: f32 = 0
 		for i in 0 ..< element.cols {
-			total += element._grid_col_sizes[i]
+			total += state.col_sizes[i]
 		}
 		gaps := col_gap * f32(max(element.cols - 1, 0))
 		total += gaps + x_padding(element) + x_border(element)
@@ -68,7 +90,7 @@ grid_finalize_base_size :: proc(ctx: ^Context, index: i32) {
 		row_gap := element.row_gap > 0 ? element.row_gap : element.gap
 		total: f32 = 0
 		for i in 0 ..< element.rows {
-			total += element._grid_row_sizes[i]
+			total += state.row_sizes[i]
 		}
 		gaps := row_gap * f32(max(element.rows - 1, 0))
 		total += gaps + y_padding(element) + y_border(element)
@@ -86,6 +108,7 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 	if parent.layout != .Grid {
 		return
 	}
+	parent_state := grid_state(ctx, parent)
 
 	child := &elements[child_index]
 	if child.position.type == .Absolute || child.position.type == .Fixed {
@@ -100,8 +123,8 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 
 	col_span := max(child.col_span, 1)
 	row_span := max(child.row_span, 1)
-	row := parent._grid_auto_row
-	col := parent._grid_auto_col
+	row := parent_state.row_cursor
+	col := parent_state.col_cursor
 	cells := col_limit * row_limit
 	attempts: i32 = 0
 	for attempts < cells {
@@ -116,7 +139,7 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 					free = false
 					break
 				}
-				if parent._grid_occupied[r * col_limit + c] {
+				if parent_state.occupied[r * col_limit + c] {
 					free = false
 					break
 				}
@@ -139,22 +162,22 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 
 	for r in row ..< min(row + row_span, row_limit) {
 		for c in col ..< min(col + col_span, col_limit) {
-			parent._grid_occupied[r * col_limit + c] = true
+			parent_state.occupied[r * col_limit + c] = true
 		}
 	}
 
-	parent._grid_used_cols = max(parent._grid_used_cols, min(col + col_span, col_limit))
-	parent._grid_used_rows = max(parent._grid_used_rows, min(row + row_span, row_limit))
+	parent_state.used_cols = max(parent_state.used_cols, min(col + col_span, col_limit))
+	parent_state.used_rows = max(parent_state.used_rows, min(row + row_span, row_limit))
 
 	if parent.direction == .LeftToRight {
-		parent._grid_auto_col, parent._grid_auto_row = increment_column(
+		parent_state.col_cursor, parent_state.row_cursor = increment_column(
 			col + col_span,
 			row,
 			col_limit,
 			row_limit,
 		)
 	} else {
-		parent._grid_auto_col, parent._grid_auto_row = increment_row(
+		parent_state.col_cursor, parent_state.row_cursor = increment_row(
 			col,
 			row + row_span,
 			col_limit,
@@ -163,13 +186,13 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 	}
 
 	col_index := child._grid_col_index
-	if col_index < i32(len(parent._grid_col_sizes)) && child.col_span <= 1 {
+	if col_index < i32(len(parent_state.col_sizes)) && child.col_span <= 1 {
 		track := grid_track(parent.col_sizes, col_index)
 		if track.type == .Fit || track.type == .Grow {
 			if grid_width_ready(child) {
 				width := grid_clamp_size(child._size.x + x_margin(child), track)
-				if width > parent._grid_col_sizes[col_index] {
-					parent._grid_col_sizes[col_index] = width
+				if width > parent_state.col_sizes[col_index] {
+					parent_state.col_sizes[col_index] = width
 				}
 			} else {
 				parent._flags += {.Width_Blocked}
@@ -178,13 +201,13 @@ grid_place_child :: proc(ctx: ^Context, parent_index: i32, child_index: i32) {
 	}
 
 	row_index := child._grid_row_index
-	if row_index < i32(len(parent._grid_row_sizes)) && child.row_span <= 1 {
+	if row_index < i32(len(parent_state.row_sizes)) && child.row_span <= 1 {
 		track := grid_track(parent.row_sizes, row_index)
 		if track.type == .Fit || track.type == .Grow {
 			if grid_height_ready(child) {
 				height := grid_clamp_size(child._size.y + y_margin(child), track)
-				if height > parent._grid_row_sizes[row_index] {
-					parent._grid_row_sizes[row_index] = height
+				if height > parent_state.row_sizes[row_index] {
+					parent_state.row_sizes[row_index] = height
 				}
 			} else {
 				parent._flags += {.Height_Blocked}
@@ -306,13 +329,14 @@ grid_auto_place :: proc(ctx: ^Context, element: ^Element) {
 // Calculate column fixed/fit widths. NOT the widths of the grid cells.
 grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
+	state := grid_state(ctx, element)
 	element.cols = grid_used_columns(ctx, element)
 
 	for i in 0 ..< element.cols {
 		track := grid_track(element.col_sizes, i)
 		if track.type == .Fixed {
 			width := grid_clamp_size(track.value, track)
-			element._grid_col_sizes[i] = width
+			state.col_sizes[i] = width
 		} else if track.type == .Fit || track.type == .Grow {
 			max_width: f32 = 0
 			child := element.children
@@ -330,7 +354,7 @@ grid_fit_columns :: proc(ctx: ^Context, element: ^Element) {
 				child = child_element.next
 			}
 			max_width = grid_clamp_size(max_width, track)
-			element._grid_col_sizes[i] = max_width
+			state.col_sizes[i] = max_width
 		}
 	}
 }
@@ -342,10 +366,11 @@ grid_fit_width :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
+	state := grid_state(ctx, element)
 	col_gap := element.col_gap > 0 ? element.col_gap : element.gap
 	total: f32 = 0
 	for i in 0 ..< element.cols {
-		total += element._grid_col_sizes[i]
+		total += state.col_sizes[i]
 	}
 	gaps := col_gap * f32(max(element.cols - 1, 0))
 	total += gaps + x_padding(element) + x_border(element)
@@ -359,6 +384,7 @@ grid_fit_width :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set percent and grow column widths.
 grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
+	state := grid_state(ctx, element)
 	target_width := inner_width(element)
 	gap := element.col_gap > 0 ? element.col_gap : element.gap
 	gaps := gap * f32(max(element.cols - 1, 0))
@@ -372,13 +398,13 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 
 		switch track.type {
 		case .Fixed:
-			base = element._grid_col_sizes[i]
+			base = state.col_sizes[i]
 		case .Percent:
 			base = target_width * track.value
 		case .Fit:
-			base = element._grid_col_sizes[i]
+			base = state.col_sizes[i]
 		case .Grow:
-			base = element._grid_col_sizes[i]
+			base = state.col_sizes[i]
 		}
 
 		items[i] = AxisAllocationItem {
@@ -397,9 +423,9 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 	)
 	offset: f32 = 0
 	for i in 0 ..< element.cols {
-		element._grid_col_sizes[i] = items[i].size
-		element._grid_col_offsets[i] = offset
-		offset += element._grid_col_sizes[i] + gap
+		state.col_sizes[i] = items[i].size
+		state.col_offsets[i] = offset
+		offset += state.col_sizes[i] + gap
 	}
 	element._content_size.x = total_width + gap * f32(max(element.cols - 1, 0))
 	element._flags += {.Grid_Width_Resolved}
@@ -410,6 +436,7 @@ grid_distribute_columns :: proc(ctx: ^Context, element: ^Element) {
 // Flex and grow sizes are relative to the column/row size, not the parent size.
 grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
+	state := grid_state(ctx, element)
 	col_gap := element.col_gap > 0 ? element.col_gap : element.gap
 
 	child := element.children
@@ -428,7 +455,7 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 		for i: i32 = 0; i < col_span; i += 1 {
 			index := start_col + i
 			if index < element.cols {
-				cell_width += element._grid_col_sizes[index]
+				cell_width += state.col_sizes[index]
 				if i < col_span - 1 {
 					cell_width += col_gap
 				}
@@ -459,13 +486,14 @@ grid_distribute_widths :: proc(ctx: ^Context, element: ^Element) {
 // Calculate row heights. NOT the heights of the grid cells.
 grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
+	state := grid_state(ctx, element)
 	element.rows = grid_used_rows(ctx, element)
 
 	for i in 0 ..< element.rows {
 		track := grid_track(element.row_sizes, i)
 		if track.type == .Fixed {
 			height := grid_clamp_size(track.value, track)
-			element._grid_row_sizes[i] = height
+			state.row_sizes[i] = height
 		} else if track.type == .Fit || track.type == .Grow {
 			max_height: f32 = 0
 			child := element.children
@@ -483,7 +511,7 @@ grid_fit_rows :: proc(ctx: ^Context, element: ^Element) {
 				child = child_element.next
 			}
 			max_height = grid_clamp_size(max_height, track)
-			element._grid_row_sizes[i] = max_height
+			state.row_sizes[i] = max_height
 		}
 	}
 }
@@ -495,10 +523,11 @@ grid_fit_height :: proc(ctx: ^Context, element: ^Element) {
 		return
 	}
 
+	state := grid_state(ctx, element)
 	row_gap := element.row_gap > 0 ? element.row_gap : element.gap
 	total: f32 = 0
 	for i in 0 ..< element.rows {
-		total += element._grid_row_sizes[i]
+		total += state.row_sizes[i]
 	}
 	gaps := row_gap * f32(max(element.rows - 1, 0))
 	total += gaps + y_padding(element) + y_border(element)
@@ -512,6 +541,7 @@ grid_fit_height :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 // Set percent and grow row heights.
 grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
+	state := grid_state(ctx, element)
 	target_height := inner_height(element)
 	gap := element.row_gap > 0 ? element.row_gap : element.gap
 	gaps := gap * f32(max(element.rows - 1, 0))
@@ -525,13 +555,13 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 
 		switch track.type {
 		case .Fixed:
-			base = element._grid_row_sizes[i]
+			base = state.row_sizes[i]
 		case .Percent:
 			base = target_height * track.value
 		case .Fit:
-			base = element._grid_row_sizes[i]
+			base = state.row_sizes[i]
 		case .Grow:
-			base = element._grid_row_sizes[i]
+			base = state.row_sizes[i]
 		}
 
 		items[i] = AxisAllocationItem {
@@ -550,9 +580,9 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 	)
 	offset: f32 = 0
 	for i in 0 ..< element.rows {
-		element._grid_row_sizes[i] = items[i].size
-		element._grid_row_offsets[i] = offset
-		offset += element._grid_row_sizes[i] + gap
+		state.row_sizes[i] = items[i].size
+		state.row_offsets[i] = offset
+		offset += state.row_sizes[i] + gap
 	}
 	element._content_size.y = total_height + gap * f32(max(element.rows - 1, 0))
 	element._flags += {.Grid_Height_Resolved}
@@ -563,6 +593,7 @@ grid_distribute_rows :: proc(ctx: ^Context, element: ^Element) {
 // Flex and grow sizes are relative to the column/row size, not the parent size.
 grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
+	state := grid_state(ctx, element)
 	row_gap := element.row_gap > 0 ? element.row_gap : element.gap
 
 	child := element.children
@@ -580,7 +611,7 @@ grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 		for i: i32 = 0; i < row_span; i += 1 {
 			index := start_row + i
 			if index < element.rows {
-				cell_height += element._grid_row_sizes[index]
+				cell_height += state.row_sizes[index]
 				if i < row_span - 1 {
 					cell_height += row_gap
 				}
@@ -610,6 +641,7 @@ grid_distribute_heights :: proc(ctx: ^Context, element: ^Element) {
 @(private)
 grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
+	state := grid_state(ctx, element)
 	start_x := element.padding.left + element.border.left
 	start_y := element.padding.top + element.border.top
 
@@ -624,8 +656,8 @@ grid_compute_position :: proc(ctx: ^Context, element: ^Element) {
 		col := clamp(child_element._grid_col_index, 0, element.cols - 1)
 		row := clamp(child_element._grid_row_index, 0, element.rows - 1)
 
-		x := start_x + element._grid_col_offsets[col] + child_element.margin.left
-		y := start_y + element._grid_row_offsets[row] + child_element.margin.top
+		x := start_x + state.col_offsets[col] + child_element.margin.left
+		y := start_y + state.row_offsets[row] + child_element.margin.top
 
 		child_element._position = element._position + {x, y}
 		child_element._position -= get_scroll_offset(element)
@@ -725,11 +757,19 @@ grid_tracks_fixed :: proc(tracks: []Size, start: i32, span: i32) -> bool {
 }
 
 @(private)
-grid_inner_width :: proc(parent: ^Element, child: ^Element) -> (width: f32, definite: bool) {
+grid_inner_width :: proc(
+	ctx: ^Context,
+	parent: ^Element,
+	child: ^Element,
+) -> (
+	width: f32,
+	definite: bool,
+) {
+	state := grid_state(ctx, parent)
 	col_span := max(child.col_span, 1)
 	for i := child._grid_col_index; i < child._grid_col_index + col_span; i += 1 {
-		if i < i32(len(parent._grid_col_sizes)) {
-			width += parent._grid_col_sizes[i]
+		if i < i32(len(state.col_sizes)) {
+			width += state.col_sizes[i]
 		}
 	}
 
@@ -748,11 +788,19 @@ grid_inner_width :: proc(parent: ^Element, child: ^Element) -> (width: f32, defi
 }
 
 @(private)
-grid_inner_height :: proc(parent: ^Element, child: ^Element) -> (height: f32, definite: bool) {
+grid_inner_height :: proc(
+	ctx: ^Context,
+	parent: ^Element,
+	child: ^Element,
+) -> (
+	height: f32,
+	definite: bool,
+) {
+	state := grid_state(ctx, parent)
 	row_span := max(child.row_span, 1)
 	for i := child._grid_row_index; i < child._grid_row_index + row_span; i += 1 {
-		if i < i32(len(parent._grid_row_sizes)) {
-			height += parent._grid_row_sizes[i]
+		if i < i32(len(state.row_sizes)) {
+			height += state.row_sizes[i]
 		}
 	}
 
