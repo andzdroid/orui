@@ -772,27 +772,21 @@ flex_distribute_heights_line :: proc(
 	line_height: f32,
 ) {
 	elements := &ctx.elements[current_buffer(ctx)]
-	child := first_index
-	for child != 0 {
+
+	for child := first_index; child != last_index; child = elements[child].next {
+		assert(child != 0)
+
 		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
-			child = child_element.next
 			continue
 		}
 
 		if child_element.height.type != .Grow {
-			child = child_element.next
 			continue
 		}
 
 		child_element._size.y = line_height - y_margin(child_element)
 		flex_clamp_height(ctx, child_element)
-
-		if child == last_index {
-			break
-		}
-
-		child = child_element.next
 	}
 }
 
