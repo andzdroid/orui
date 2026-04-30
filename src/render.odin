@@ -99,7 +99,7 @@ collect_elements :: proc(ctx: ^Context, index: i32, parent_index: i32) {
 	elements := &ctx.elements[current_buffer(ctx)]
 	element := &elements[index]
 	parent := &elements[parent_index]
-		element._layer = element.layer == 0 ? parent._layer : i32(element.layer)
+	element._layer = element.layer == 0 ? parent._layer : i32(element.layer)
 
 	switch element.clip.type {
 	case .Inherit:
@@ -225,6 +225,7 @@ render_element :: proc(ctx: ^Context, index: i32) {
 		ctx.render_commands[ctx.render_command_count] = RenderCommand {
 			type = .Custom,
 			data = RenderCommandDataCustom {
+				source = element,
 				rectangle = {
 					element._position.x,
 					element._position.y,
