@@ -9,6 +9,7 @@ import rl "vendor:raylib"
 MAX_ELEMENTS :: 8192
 MAX_COMMANDS :: 8192
 
+// TODO: need scroll factor tuned for each OS
 SCROLL_FACTOR: f32 : 8
 
 @(thread_local)

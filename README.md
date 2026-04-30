@@ -6,8 +6,9 @@ orui is an immediate mode UI library for odin and raylib, with support for flex 
 
 It is meant for building user-facing UIs using familiar concepts from CSS.
 
-orui is a work in progress. **Requires odin 2026-03 release or newer!**
+**Requires odin 2026-03 release or newer!**
 
+<img src="examples/assets.png" width="48%" /><img src="examples/profiler.png" width="43%" />
 <img src="demo/test_flex.png" width="45%" /><img src="demo/test_grid.png" width="45%" />
 <img src="examples/skinning/screenshot.gif" width="45%" /><img src="examples/window/screenshot.gif" width="42%" />
 <img src="demo/test_scroll.gif" width="40%" /><img src="examples/widgets/screenshot.png" width="45%">
