@@ -9,8 +9,6 @@ import rl "vendor:raylib"
 MAX_ELEMENTS :: 8192
 MAX_COMMANDS :: 8192
 
-KEY_REPEAT_DELAY: f64 : 0.45
-KEY_REPEAT_INTERVAL: f64 : 0.1
 SCROLL_FACTOR: f32 : 8
 
 @(thread_local)
@@ -58,8 +56,6 @@ Context :: struct {
 	caret_index:          int,
 	caret_position:       rl.Vector2,
 	caret_time:           f32,
-	repeat_key:           rl.KeyboardKey,
-	repeat_time:          f64,
 	text_selection:       TextSelection,
 	selecting:            bool,
 }

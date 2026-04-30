@@ -3,7 +3,6 @@ package orui_test
 import orui "../src"
 import "core:strings"
 import "core:testing"
-import rl "vendor:raylib"
 
 @(test)
 rebind_focus_to_element :: proc(t: ^testing.T) {
@@ -37,7 +36,6 @@ clear_focus_when_element_is_missing :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, ctx.focus, 0)
 	testing.expect_value(t, ctx.focus_id, orui.Id(0))
-	testing.expect_value(t, ctx.repeat_key, rl.KeyboardKey.KEY_NULL)
 }
 
 @(test)
