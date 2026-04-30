@@ -773,20 +773,18 @@ flex_distribute_heights_line :: proc(
 ) {
 	elements := &ctx.elements[current_buffer(ctx)]
 
-	for child := first_index; child != last_index; child = elements[child].next {
-		assert(child != 0)
-
+	for child := first_index; child != 0; child = elements[child].next {
 		child_element := &elements[child]
-		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
-			continue
+		if child_element.position.type != .Absolute &&
+		   child_element.position.type != .Fixed &&
+		   child_element.height.type == .Grow {
+			child_element._size.y = line_height - y_margin(child_element)
+			flex_clamp_height(ctx, child_element)
 		}
 
-		if child_element.height.type != .Grow {
-			continue
+		if child == last_index {
+			break
 		}
-
-		child_element._size.y = line_height - y_margin(child_element)
-		flex_clamp_height(ctx, child_element)
 	}
 }
 
@@ -1302,39 +1300,37 @@ flex_compute_position_column_line :: proc(
 	x_start := element.padding.left + element.border.left + line_x_offset
 	index := 0
 	child := line_first
-	for child != 0 {
+	for child := line_first; child != 0; child = elements[child].next {
 		child_element := &elements[child]
-		if child_element.position.type == .Absolute || child_element.position.type != .Fixed {
-			child = child_element.next
-			continue
+
+		if child_element.position.type != .Absolute && child_element.position.type != .Fixed {
+			if index > 0 {
+				y += main_axis_offset.between
+			}
+
+			y += child_element.margin.top
+			x :=
+				x_start +
+				cross_offset(
+					element.align_cross,
+					line_width,
+					child_element._size.x + x_margin(child_element),
+					child_element.margin.left,
+				)
+
+			child_element._position = element._position + {x, y}
+			if child_element.position.type == .Relative {
+				child_element._position += child_element.position.value
+			}
+			child_element._position -= get_scroll_offset(element)
+
+			y += child_element._size.y + element.gap + child_element.margin.bottom
+			index += 1
 		}
 
-		if index > 0 {
-			y += main_axis_offset.between
-		}
-
-		y += child_element.margin.top
-		x :=
-			x_start +
-			cross_offset(
-				element.align_cross,
-				line_width,
-				child_element._size.x + x_margin(child_element),
-				child_element.margin.left,
-			)
-
-		child_element._position = element._position + {x, y}
-		if child_element.position.type == .Relative {
-			child_element._position += child_element.position.value
-		}
-		child_element._position -= get_scroll_offset(element)
-
-		y += child_element._size.y + element.gap + child_element.margin.bottom
-		index += 1
 		if child == line_last {
 			break
 		}
-		child = child_element.next
 	}
 }
 
