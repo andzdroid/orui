@@ -104,7 +104,9 @@ handle_input_state :: proc(ctx: ^Context) {
 			ctx.hover[current].count += 1
 
 			already_active := false
-				for active_index: i32 = 0; active_index < ctx.active[previous].count; active_index += 1 {
+			for active_index: i32 = 0;
+			    active_index < ctx.active[previous].count;
+			    active_index += 1 {
 				if ctx.active[previous].ids[active_index] == element.id {
 					already_active = true
 					break
@@ -460,7 +462,6 @@ sync_focus_element :: proc(ctx: ^Context) {
 clear_focus :: proc(ctx: ^Context) {
 	ctx.focus = 0
 	ctx.focus_id = 0
-	ctx.repeat_key = .KEY_NULL
 	ctx.text_selection = {}
 }
 
@@ -488,26 +489,7 @@ point_in_element :: proc(p: rl.Vector2, element: ^Element) -> bool {
 
 @(private)
 key_pressed :: proc(ctx: ^Context, key: rl.KeyboardKey) -> bool {
-	now := rl.GetTime()
-
-	if rl.IsKeyPressed(key) {
-		ctx.repeat_key = key
-		ctx.repeat_time = now + KEY_REPEAT_DELAY
-		return true
-	}
-
-	if ctx.repeat_key == key && rl.IsKeyDown(key) {
-		if now >= ctx.repeat_time {
-			ctx.repeat_time += KEY_REPEAT_INTERVAL
-			return true
-		}
-	}
-
-	if ctx.repeat_key == key && rl.IsKeyReleased(key) {
-		ctx.repeat_key = .KEY_NULL
-	}
-
-	return false
+	return rl.IsKeyPressed(key) || rl.IsKeyPressedRepeat(key)
 }
 
 @(private)
