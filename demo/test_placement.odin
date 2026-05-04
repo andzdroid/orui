@@ -1,7 +1,6 @@
 package demo
 
 import orui "../src"
-import "core:fmt"
 import rl "vendor:raylib"
 
 render_test_placement :: proc() {

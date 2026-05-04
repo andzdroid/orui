@@ -8,52 +8,34 @@ hovered :: proc {
 	_hovered_id,
 }
 
+hovered_ids :: proc() -> []Id {
+	ctx := current_context
+	buffer := current_buffer(ctx)
+	return ctx.hover[buffer].ids[:ctx.hover[buffer].count]
+}
+
 @(private)
 // Whether the mouse is over the current element.
 // Should only be used inside an element declaration.
 _hovered :: proc() -> bool {
-	ctx := current_context
-	if ctx.current == 0 {
-		return false
-	}
-
-	buffer := current_buffer(ctx)
-	count := ctx.hover[buffer].count
-	for i: i32 = 0; i < count; i += 1 {
-		if ctx.hover[buffer].ids[i] == ctx.current_id {
-			return true
-		}
-	}
-
-	return false
+	return _hovered_id(current_context.current_id)
 }
 
 @(private)
 // Whether the mouse is over the element with the given ID.
 _hovered_string :: proc(id: string) -> bool {
-	ctx := current_context
-	id := to_id(id)
-	buffer := current_buffer(ctx)
-	count := ctx.hover[buffer].count
-	for i: i32 = 0; i < count; i += 1 {
-		if ctx.hover[buffer].ids[i] == id {
-			return true
-		}
-	}
-
-	return false
+	return _hovered_id(to_id(id))
 }
 
 @(private)
 _hovered_id :: proc(id: Id) -> bool {
 	ctx := current_context
-	buffer := current_buffer(ctx)
-	count := ctx.hover[buffer].count
-	for i: i32 = 0; i < count; i += 1 {
-		if ctx.hover[buffer].ids[i] == id {
-			return true
-		}
+	if ctx.current == 0 do return false
+
+	for hid in hovered_ids() {
+		if hid == id do return true
 	}
+
 	return false
 }
 
