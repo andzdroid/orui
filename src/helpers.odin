@@ -18,6 +18,7 @@ hovered_ids :: proc() -> []Id {
 // Whether the mouse is over the current element.
 // Should only be used inside an element declaration.
 _hovered :: proc() -> bool {
+	if current_context.current == 0 do return false
 	return _hovered_id(current_context.current_id)
 }
 
@@ -29,9 +30,6 @@ _hovered_string :: proc(id: string) -> bool {
 
 @(private)
 _hovered_id :: proc(id: Id) -> bool {
-	ctx := current_context
-	if ctx.current == 0 do return false
-
 	for hid in hovered_ids() {
 		if hid == id do return true
 	}

@@ -244,7 +244,7 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_witdth_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(element, child_element, element_inner_width) {
 			continue
 		}
 
@@ -332,12 +332,10 @@ flex_distribute_widths_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 	first: i32 = 0
 	last: i32 = 0
 	child_count: i32 = 0
-
-
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_witdth_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(element, child_element, element_inner_width) {
 			continue
 		}
 
@@ -389,11 +387,10 @@ flex_distribute_widths_column :: proc(ctx: ^Context, element: ^Element) {
 	element_inner_width := inner_width(element)
 
 	max_width: f32 = 0
-
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_witdth_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(element, child_element, element_inner_width) {
 			continue
 		}
 
@@ -449,7 +446,7 @@ flex_distribute_widths_line :: proc(
 }
 
 @(private)
-flex_witdth_distribution_guard :: proc(
+flex_width_distribution_guard :: proc(
 	element: ^Element,
 	child_element: ^Element,
 	element_inner_width: f32,
@@ -613,8 +610,6 @@ flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 	item_count := 0
 	margin_total: f32 = 0
 	child_count := 0
-
-
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
@@ -660,7 +655,6 @@ flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 	)
 
 	item_index := 0
-
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 		if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
@@ -690,7 +684,6 @@ flex_distribute_heights_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	line_height: f32 = 0
 	line_first: i32 = 0
 	line_last: i32 = 0
-
 
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
@@ -742,7 +735,6 @@ flex_distribute_heights_row_unwrapped :: proc(ctx: ^Context, element: ^Element) 
 	element_inner_height := inner_height(element)
 
 	max_height: f32 = 0
-
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
