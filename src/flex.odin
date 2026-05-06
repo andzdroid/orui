@@ -455,7 +455,7 @@ flex_witdth_distribution_guard :: proc(
 	element_inner_width: f32,
 ) -> bool {
 	if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
-		if child_element.position.type == .Absolute && child_element.height.type == .Grow {
+		if child_element.position.type == .Absolute && child_element.width.type == .Grow {
 			child_element._size.x = element_inner_width - x_margin(child_element)
 		}
 		return true
