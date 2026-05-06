@@ -12,7 +12,6 @@ MAX_COMMANDS :: 8192
 when ODIN_OS == .Darwin {
 	SCROLL_FACTOR: f32 : 8
 } else {
-	// TODO: need scroll factor tuned for each OS
 	SCROLL_FACTOR: f32 : 40
 }
 

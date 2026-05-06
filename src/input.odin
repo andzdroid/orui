@@ -59,7 +59,7 @@ handle_input_state :: proc(ctx: ^Context) {
 			continue
 		}
 
-		handle_scroll: if !scroll_consumed {
+		if !scroll_consumed {
 			if scroll.x != 0 && scrolls_x(element) {
 				scroll_offset := get_scroll_offset(element)
 				old := scroll_offset.x
@@ -69,13 +69,12 @@ handle_input_state :: proc(ctx: ^Context) {
 					0,
 					element._content_size.x - inner_width(element),
 				)
-				if scroll_offset.x == old {
-					// don't consume the scroll if it didn't change
-					break handle_scroll
-				}
-				element.scroll.offset = scroll_offset
-				if element.block == .True {
-					scroll_consumed = true
+				// don't consume the scroll if it didn't change
+				if scroll_offset.x != old {
+					element.scroll.offset = scroll_offset
+					if element.block == .True {
+						scroll_consumed = true
+					}
 				}
 			}
 			if scroll.y != 0 && scrolls_y(element) {
@@ -87,13 +86,12 @@ handle_input_state :: proc(ctx: ^Context) {
 					0,
 					element._content_size.y - inner_height(element),
 				)
-				if scroll_offset.y == old {
-					// don't consume the scroll if it didn't change
-					break handle_scroll
-				}
-				element.scroll.offset = scroll_offset
-				if element.block == .True {
-					scroll_consumed = true
+				// don't consume the scroll if it didn't change
+				if scroll_offset.y != old {
+					element.scroll.offset = scroll_offset
+					if element.block == .True {
+						scroll_consumed = true
+					}
 				}
 			}
 		}
