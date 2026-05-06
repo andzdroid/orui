@@ -2,12 +2,27 @@ package orui
 
 import "core:math"
 import "core:strings"
+import "core:unicode"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
 
 TextSelection :: struct {
 	start: int,
 	end:   int,
+}
+
+TextSelectionMode :: enum u8 {
+	Character,
+	Word,
+	Line,
+}
+
+@(private)
+TextSelectionClass :: enum u8 {
+	Word,
+	Whitespace,
+	Newline,
+	Other,
 }
 
 @(private = "file")
@@ -21,7 +36,13 @@ is_space :: #force_inline proc(b: u8) -> bool {
 }
 
 @(private)
-utf8_prev :: proc(text: ^strings.Builder, index: int) -> int {
+utf8_prev :: proc {
+	utf8_prev_builder,
+	utf8_prev_string,
+}
+
+@(private)
+utf8_prev_builder :: proc(text: ^strings.Builder, index: int) -> int {
 	if index <= 0 {
 		return 0
 	}
@@ -35,7 +56,13 @@ utf8_prev :: proc(text: ^strings.Builder, index: int) -> int {
 }
 
 @(private)
-utf8_next :: proc(text: ^strings.Builder, index: int) -> int {
+utf8_next :: proc {
+	utf8_next_builder,
+	utf8_next_string,
+}
+
+@(private)
+utf8_next_builder :: proc(text: ^strings.Builder, index: int) -> int {
 	if index >= len(text.buf) {
 		return len(text.buf)
 	}
@@ -81,6 +108,158 @@ utf8_next_word :: proc(text: ^strings.Builder, index: int) -> int {
 }
 
 @(private)
+utf8_prev_string :: proc(text: string, idx: int) -> int {
+	if idx <= 0 {
+		return 0
+	}
+
+	index := min(idx, len(text))
+	index -= 1
+	for index > 0 && is_continuation_byte(text[index]) {
+		index -= 1
+	}
+	return index
+}
+
+@(private)
+utf8_next_string :: proc(text: string, idx: int) -> int {
+	if idx >= len(text) {
+		return len(text)
+	}
+
+	index := max(idx, 0)
+	index += 1
+	for index < len(text) && is_continuation_byte(text[index]) {
+		index += 1
+	}
+	return index
+}
+
+@(private)
+rune_start :: proc(text: string, idx: int) -> int {
+	if len(text) == 0 {
+		return 0
+	}
+
+	index := clamp(idx, 0, len(text))
+	if index == len(text) {
+		return utf8_prev(text, index)
+	}
+	for index > 0 && is_continuation_byte(text[index]) {
+		index -= 1
+	}
+	return index
+}
+
+@(private)
+text_selection_class :: proc(text: string, idx: int) -> TextSelectionClass {
+	if len(text) == 0 {
+		return .Other
+	}
+
+	index := rune_start(text, idx)
+	r, _ := utf8.decode_rune(text[index:])
+	if r == '\n' {
+		return .Newline
+	}
+	if r == '_' || unicode.is_letter(r) || unicode.is_digit(r) {
+		return .Word
+	}
+	if unicode.is_space(r) {
+		return .Whitespace
+	}
+	return .Other
+}
+
+@(private)
+previous_selection_index :: proc(text: string, idx: int) -> int {
+	index := clamp(idx, 0, len(text))
+	for index > 0 {
+		prev := utf8_prev(text, index)
+		class := text_selection_class(text, prev)
+		if class != .Whitespace && class != .Newline {
+			return prev
+		}
+		index = prev
+	}
+	return 0
+}
+
+@(private)
+text_word_range :: proc(text: string, index: int) -> TextSelection {
+	if len(text) == 0 {
+		return {}
+	}
+
+	index := index
+	if index >= len(text) {
+		// handle edge case of double-clicking the end of the text
+		index = previous_selection_index(text, index)
+	} else {
+		index = rune_start(text, index)
+	}
+	selection_class := text_selection_class(text, index)
+
+	start := index
+	for start > 0 {
+		prev := utf8_prev(text, start)
+		if text_selection_class(text, prev) != selection_class {
+			break
+		}
+		start = prev
+	}
+
+	end := utf8_next(text, index)
+	for end < len(text) {
+		if text_selection_class(text, end) != selection_class {
+			break
+		}
+		end = utf8_next(text, end)
+	}
+
+	return {start, end}
+}
+
+@(private)
+text_line_range :: proc(text: string, idx: int) -> TextSelection {
+	if len(text) == 0 {
+		return {}
+	}
+
+	index := clamp(idx, 0, len(text))
+	if index == len(text) {
+		index = utf8_prev(text, index)
+	}
+	start := index
+	for start > 0 && text[start - 1] != '\n' {
+		start -= 1
+	}
+
+	end := index
+	for end < len(text) && text[end] != '\n' {
+		end += 1
+	}
+	if end < len(text) && text[end] == '\n' {
+		end += 1
+	}
+
+	return {start, end}
+}
+
+@(private)
+extend_text_selection :: proc(
+	anchor, target: TextSelection,
+) -> (
+	selection: TextSelection,
+	caret: int,
+) {
+	if target.start < anchor.start {
+		return {anchor.end, target.start}, target.start
+	}
+	return {anchor.start, target.end}, target.end
+}
+
+@(private)
 insert_bytes :: proc(builder: ^strings.Builder, position: int, text: string) -> int {
 	if position < 0 || position > len(builder.buf) {
 		return 0
@@ -111,6 +290,51 @@ delete_range :: proc(builder: ^strings.Builder, start: int, end: int) -> bool {
 	return true
 }
 
+@(private)
+text_index_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector2) -> int {
+	text := element.text
+	if len(text) == 0 {
+		return 0
+	}
+
+	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
+	inner_width := inner_width(element)
+
+	x_start :=
+		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	y_start :=
+		element._position.y +
+		element.padding.top +
+		element.border.top +
+		calculate_text_offset(element) -
+		element.scroll.offset.y
+
+	if element.overflow == .Visible {
+		line_offset := calculate_line_offset(element, element._text_width, inner_width)
+		local_x := point.x - (x_start + line_offset)
+		if local_x >= element._text_width {
+			return len(text)
+		}
+		return text_index_in_line(element, text, 0, len(text), local_x, letter_spacing)
+	} else if element.overflow == .Wrap {
+		total_lines := element._line_count > 0 ? element._line_count : 1
+		target_line := int(math.floor((point.y - y_start) / element._line_height))
+		target_line = clamp(target_line, 0, int(total_lines - 1))
+
+		cache := get_text_cache(ctx, element, inner_width, letter_spacing)
+		line := cache.lines[target_line]
+		line_offset := calculate_line_offset(element, line.width, inner_width)
+		x := point.x - (x_start + line_offset)
+		if x >= line.width && line.end == len(text) {
+			return len(text)
+		}
+		return text_index_in_line(element, text, line.start, line.end, x, letter_spacing)
+	}
+
+	return 0
+}
+
+@(private)
 text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector2) -> int {
 	text := element.text
 	if len(text) == 0 {
@@ -219,7 +443,44 @@ wrapped_line_at :: proc(
 }
 
 @(private)
+// Get the text index under a point in a line of text.
+text_index_in_line :: proc(
+	element: ^Element,
+	text: string,
+	start: int,
+	end: int,
+	x: f32,
+	letter_spacing: f32,
+) -> int {
+	acc: f32 = 0
+	count := 0
+	i := start
+	prev := start
+
+	for i < end {
+		prev = i
+		r, size := utf8.decode_rune(text[i:end])
+		adv := glyph_advance(element.font, r, element.font_size)
+		spacing := count > 0 ? letter_spacing : 0
+		step := spacing + adv
+
+		if x <= acc + step {
+			return i
+		}
+
+		acc += step
+		count += 1
+		i += size
+	}
+
+	return prev
+}
+
+@(private)
 // Get the caret index in a line of text, given an x position.
+// This rounds to the nearest caret position:
+// left half of a glyph returns caret index to the left of the character
+// right half of a glyph returns caret index to the right of the character
 caret_index_in_line :: proc(
 	element: ^Element,
 	text: string,

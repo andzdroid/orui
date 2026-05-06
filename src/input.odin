@@ -1,8 +1,12 @@
 package orui
 
+import "core:math/linalg"
 import "core:strings"
 import "core:unicode/utf8"
 import rl "vendor:raylib"
+
+TEXT_MULTI_CLICK_TIME: f64 : 0.5
+TEXT_MULTI_CLICK_DISTANCE: f32 : 6
 
 @(private)
 handle_input_state :: proc(ctx: ^Context) {
@@ -123,6 +127,7 @@ handle_input_state :: proc(ctx: ^Context) {
 								   rl.IsKeyDown(.LEFT_SHIFT) ||
 								   rl.IsKeyDown(.RIGHT_SHIFT)) {
 							// handle text selection with drag or shift click
+							ctx.text_selection_mode = .Character
 							ctx.text_selection.end = text_caret_from_point(ctx, element, position)
 							ctx.caret_index = ctx.text_selection.end
 							ctx.caret_time = 0
@@ -130,16 +135,14 @@ handle_input_state :: proc(ctx: ^Context) {
 						} else {
 							ctx.focus = ctx.sorted[i]
 							ctx.focus_id = element.id
-							start := text_caret_from_point(ctx, element, position)
-							ctx.text_selection.start = start
-							ctx.text_selection.end = start
-							ctx.caret_index = start
-							ctx.caret_time = 0
+							click_count := next_text_click_count(ctx, element.id, position)
 							ctx.selecting = true
-							ensure_caret_visible(ctx, element, ctx.caret_index)
+							start_text_click_selection(ctx, element, position, click_count)
 						}
 					} else if ctx.focus != 0 {
 						clear_focus(ctx)
+					} else {
+						clear_text_click_state(ctx)
 					}
 				}
 
@@ -161,11 +164,7 @@ handle_input_state :: proc(ctx: ^Context) {
 
 	if ctx.selecting && mouse_down && ctx.focus != 0 {
 		el := &elements[ctx.focus]
-		end := text_caret_from_point(ctx, el, position)
-		ctx.text_selection.end = end
-		ctx.caret_index = end
-		ctx.caret_time = 0
-		ensure_caret_visible(ctx, el, ctx.caret_index)
+		update_text_drag_selection(ctx, el, position)
 	}
 
 	if released {
@@ -173,6 +172,96 @@ handle_input_state :: proc(ctx: ^Context) {
 	}
 
 	handle_keyboard_input(ctx)
+}
+
+@(private)
+next_text_click_count :: proc(ctx: ^Context, id: Id, position: rl.Vector2) -> int {
+	now := rl.GetTime()
+	within_distance :=
+		linalg.distance(position, ctx.text_click_position) <= TEXT_MULTI_CLICK_DISTANCE
+	within_time := now - ctx.text_click_time <= TEXT_MULTI_CLICK_TIME
+
+	click_count := 1
+	if ctx.text_click_id == id && within_time && within_distance {
+		click_count = min(ctx.text_click_count + 1, 3)
+	}
+
+	ctx.text_click_id = id
+	ctx.text_click_time = now
+	ctx.text_click_position = position
+	ctx.text_click_count = click_count
+	return click_count
+}
+
+@(private)
+clear_text_click_state :: proc(ctx: ^Context) {
+	ctx.text_click_id = 0
+	ctx.text_click_count = 0
+	ctx.text_selection_mode = .Character
+	ctx.text_selection_anchor = {}
+}
+
+@(private)
+set_text_selection :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	selection: TextSelection,
+	caret: int,
+) {
+	ctx.text_selection = selection
+	ctx.caret_index = clamp(caret, 0, len(element.text_input.buf))
+	ctx.caret_time = 0
+	ensure_caret_visible(ctx, element, ctx.caret_index)
+}
+
+@(private)
+start_text_click_selection :: proc(
+	ctx: ^Context,
+	element: ^Element,
+	position: rl.Vector2,
+	click_count: int,
+) {
+	if click_count <= 1 {
+		caret := text_caret_from_point(ctx, element, position)
+		selection := TextSelection{caret, caret}
+		ctx.text_selection_mode = .Character
+		ctx.text_selection_anchor = selection
+		set_text_selection(ctx, element, selection, caret)
+		return
+	}
+
+	index := text_index_from_point(ctx, element, position)
+	selection: TextSelection
+	if click_count == 2 {
+		selection = text_word_range(element.text, index)
+		ctx.text_selection_mode = .Word
+	} else {
+		selection = text_line_range(element.text, index)
+		ctx.text_selection_mode = .Line
+	}
+
+	ctx.text_selection_anchor = selection
+	set_text_selection(ctx, element, selection, selection.end)
+}
+
+@(private)
+update_text_drag_selection :: proc(ctx: ^Context, element: ^Element, position: rl.Vector2) {
+	switch ctx.text_selection_mode {
+	case .Word:
+		target := text_word_range(element.text, text_index_from_point(ctx, element, position))
+		selection, caret := extend_text_selection(ctx.text_selection_anchor, target)
+		set_text_selection(ctx, element, selection, caret)
+	case .Line:
+		target := text_line_range(element.text, text_index_from_point(ctx, element, position))
+		selection, caret := extend_text_selection(ctx.text_selection_anchor, target)
+		set_text_selection(ctx, element, selection, caret)
+	case .Character:
+		end := text_caret_from_point(ctx, element, position)
+		ctx.text_selection.end = end
+		ctx.caret_index = end
+		ctx.caret_time = 0
+		ensure_caret_visible(ctx, element, ctx.caret_index)
+	}
 }
 
 @(private)
@@ -461,6 +550,8 @@ clear_focus :: proc(ctx: ^Context) {
 	ctx.focus = 0
 	ctx.focus_id = 0
 	ctx.text_selection = {}
+	ctx.selecting = false
+	clear_text_click_state(ctx)
 }
 
 @(private)

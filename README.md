@@ -43,6 +43,7 @@ Features:
   - Alignment
 - Text inputs
   - Click, move with arrow keys, home+end, insert, backspace, select all
+  - Double click, triple click
   - Single line and multi line
   - Mouse and keyboard text selection
   - Copy/cut/paste
@@ -55,7 +56,6 @@ To do:
 - Grid justify/align
 - Text inputs
   - Character filtering
-  - Double click, triple click
   - Undo/redo (maybe)
   - Drag and drop (maybe)
   - Placeholder (maybe)
@@ -135,8 +135,8 @@ Every element should have a unique ID. You can create the ID in 3 ways:
 
 ```odin
 // String:
-orui.id("container")
-// String literals will be hashed at compile time.
+orui.id("container") // String literals will be hashed at compile time.
+orui.id(string_var)
 
 // String + index:
 orui.id("row", i)
@@ -170,7 +170,7 @@ You can use this to build your own elements:
 ```odin
 my_element :: proc(id: string) {
   orui.element(orui.id(id), {...})
-  orui.label(...)
+  orui.label(orui.id(id, 1), ...)
   orui.end_element()
 }
 
