@@ -3,6 +3,23 @@ package orui
 import "core:strings"
 import rl "vendor:raylib"
 
+// Begin an element that can contain children
+// Can be closed with `end_element`
+// Alternatively use `container` that calls `end_element` automatically
+begin_container :: proc(
+	id: Id,
+	config: ElementConfig,
+	modifiers: ..ElementModifier,
+	loc := #caller_location,
+) {
+	ctx := current_context
+	element, parent := begin_element(id, loc)
+	configure_element(ctx, element, parent^, config)
+	for modifier in modifiers {
+		modifier(element)
+	}
+}
+
 @(deferred_none = end_element)
 // An element that can contain children.
 // Must have its own scope.
@@ -12,12 +29,7 @@ container :: proc(
 	modifiers: ..ElementModifier,
 	loc := #caller_location,
 ) -> bool {
-	ctx := current_context
-	element, parent := begin_element(id, loc)
-	configure_element(ctx, element, parent^, config)
-	for modifier in modifiers {
-		modifier(element)
-	}
+	begin_container(id, config, ..modifiers, loc = loc)
 	return true
 }
 

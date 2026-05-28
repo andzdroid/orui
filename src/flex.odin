@@ -244,7 +244,7 @@ flex_distribute_widths_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_width_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -335,7 +335,7 @@ flex_distribute_widths_row_unwrapped :: proc(ctx: ^Context, element: ^Element) {
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_width_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -390,7 +390,7 @@ flex_distribute_widths_column :: proc(ctx: ^Context, element: ^Element) {
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_width_distribution_guard(element, child_element, element_inner_width) {
+		if flex_width_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -447,12 +447,14 @@ flex_distribute_widths_line :: proc(
 
 @(private)
 flex_width_distribution_guard :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	child_element: ^Element,
-	element_inner_width: f32,
 ) -> bool {
 	if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 		if child_element.position.type == .Absolute && child_element.width.type == .Grow {
+			placement_element := find_placement_parent(ctx, child_element.parent)
+			element_inner_width := inner_width(placement_element)
 			child_element._size.x = element_inner_width - x_margin(child_element)
 		}
 		return true
@@ -613,7 +615,7 @@ flex_distribute_heights_column :: proc(ctx: ^Context, element: ^Element) {
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_height_distribution_guard(element, child_element, element_inner_height) {
+		if flex_height_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -687,7 +689,7 @@ flex_distribute_heights_row_wrapped :: proc(ctx: ^Context, element: ^Element) {
 
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
-		if flex_height_distribution_guard(element, child_element, element_inner_height) {
+		if flex_height_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -738,7 +740,7 @@ flex_distribute_heights_row_unwrapped :: proc(ctx: ^Context, element: ^Element) 
 	for child := element.children; child != 0; child = elements[child].next {
 		child_element := &elements[child]
 
-		if flex_height_distribution_guard(element, child_element, element_inner_height) {
+		if flex_height_distribution_guard(ctx, element, child_element) {
 			continue
 		}
 
@@ -762,12 +764,15 @@ flex_distribute_heights_row_unwrapped :: proc(ctx: ^Context, element: ^Element) 
 
 @(private)
 flex_height_distribution_guard :: proc(
+	ctx: ^Context,
 	element: ^Element,
 	child_element: ^Element,
-	element_inner_height: f32,
 ) -> bool {
 	if child_element.position.type == .Absolute || child_element.position.type == .Fixed {
 		if child_element.position.type == .Absolute && child_element.height.type == .Grow {
+			placement_element := find_placement_parent(ctx, child_element.parent)
+			element_inner_height := inner_height(placement_element)
+
 			child_element._size.y = element_inner_height - y_margin(child_element)
 		}
 		return true
@@ -815,6 +820,10 @@ flex_width_limits :: proc(
 	if parent_definite {
 		max_size = parent_width - x_margin(element)
 		apply_max = true
+	} else if element.bounds.target == .Window && element.bounds.mode == .Squish {
+		window := &ctx.elements[current_buffer(ctx)][0]
+		max_size = window._size.x - element.bounds.padding * 2
+		apply_max = true
 	}
 
 	if element.width.max > 0 {
@@ -845,6 +854,10 @@ flex_height_limits :: proc(
 	parent_height, parent_definite := parent_inner_height(ctx, element)
 	if parent_definite {
 		max_size = parent_height - y_margin(element)
+		apply_max = true
+	} else if element.bounds.target == .Window && element.bounds.mode == .Squish {
+		window := &ctx.elements[current_buffer(ctx)][0]
+		max_size = window._size.y - element.bounds.padding * 2
 		apply_max = true
 	}
 

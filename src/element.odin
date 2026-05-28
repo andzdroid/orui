@@ -73,6 +73,7 @@ BoundsTarget :: enum u8 {
 BoundsMode :: enum u8 {
 	None,
 	Shift,
+	Squish,
 	Flip,
 }
 

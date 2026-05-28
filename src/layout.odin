@@ -18,6 +18,21 @@ compute_layout :: proc(ctx: ^Context, index: i32) {
 	}
 }
 
+find_placement_parent :: proc(ctx: ^Context, immediate_parent: i32) -> ^Element {
+	elements := &ctx.elements[current_buffer(ctx)]
+
+	ancestor := immediate_parent
+	for ancestor != 0 {
+		parent_element := &elements[ancestor]
+		if parent_element.position.type != .Auto {
+			break
+		}
+		ancestor = parent_element.parent
+	}
+
+	return &elements[ancestor]
+}
+
 @(private)
 compute_position :: proc(ctx: ^Context, element: ^Element) {
 	elements := &ctx.elements[current_buffer(ctx)]
@@ -34,28 +49,14 @@ compute_position :: proc(ctx: ^Context, element: ^Element) {
 
 	if element.position.type == .Absolute {
 		// absolute position is relative to the nearest parent with a non-auto position
-		ancestor := element.parent
-		nearest := &elements[ancestor]
-		for ancestor != 0 {
-			parent_element := &elements[ancestor]
-			if parent_element.position.type != .Auto {
-				nearest = parent_element
-				break
-			}
-			ancestor = parent_element.parent
-		}
+		placement_parent := find_placement_parent(ctx, element.parent)
 
-		if ancestor == 0 {
-			placement_parent = &elements[0]
-			element._position = element.position.value
-			base_position = element._position
-			apply_placement(element, placement_parent)
-		} else {
-			placement_parent = nearest
-			element._position = nearest._position + element.position.value
-			base_position = element._position
-			apply_placement(element, placement_parent)
-		}
+		element._position =
+			placement_parent._position +
+			element.position.value +
+			{placement_parent.padding.left, placement_parent.padding.top}
+		base_position = element._position
+		apply_placement(element, placement_parent)
 	}
 
 	if element.position.type == .Relative {
@@ -136,7 +137,9 @@ apply_bounds :: proc(
 		}
 	}
 
-	if element.bounds.mode == .Shift || element.bounds.mode == .Flip {
+	if element.bounds.mode == .Shift ||
+	   element.bounds.mode == .Squish ||
+	   element.bounds.mode == .Flip {
 		max_x := max(left, right - element._size.x)
 		max_y := max(top, bottom - element._size.y)
 		element._position.x = clamp(element._position.x, left, max_x)

@@ -304,6 +304,16 @@ element_index_by_id :: proc(ctx: ^Context, buffer: int, id: Id) -> (index: i32, 
 
 	elements := &ctx.elements[buffer]
 	count := ctx.element_count[buffer]
+
+	// NOTE: most of the time the elements position does not change between
+	// frames so this N(1) check can save us linear scan
+	if id == ctx.current_id &&
+	   buffer == previous_buffer(ctx) &&
+	   count >= ctx.current &&
+	   elements[ctx.current].id == id {
+		return ctx.current, true
+	}
+
 	for i in 0 ..< count {
 		if elements[i].id == id {
 			return i, true
