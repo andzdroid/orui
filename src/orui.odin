@@ -2,8 +2,7 @@ package orui
 
 import "base:intrinsics"
 import "base:runtime"
-import "core:log"
-import "core:mem/virtual"
+import "core:mem"
 import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
@@ -24,7 +23,8 @@ IdBuffer :: struct {
 }
 
 Context :: struct {
-	arena:                 [2]virtual.Arena,
+	arena:                 [2]mem.Arena,
+	arena_buffer:          [2][]byte,
 	allocator:             [2]runtime.Allocator,
 	elements:              [2][MAX_ELEMENTS]Element,
 	grid_states:           [2][dynamic]GridState,
@@ -74,17 +74,15 @@ Context :: struct {
 
 init :: proc(ctx: ^Context) {
 	for i in 0 ..< 2 {
-		err := virtual.arena_init_growing(&ctx.arena[i])
-		if err != nil {
-			log.panicf("Failed to initialize arena: %v", err)
-		}
-		ctx.allocator[i] = virtual.arena_allocator(&ctx.arena[i])
+		ctx.arena_buffer[i] = make([]byte, 16 * mem.Megabyte)
+		mem.arena_init(&ctx.arena[i], ctx.arena_buffer[i])
+		ctx.allocator[i] = mem.arena_allocator(&ctx.arena[i])
 	}
 }
 
 destroy :: proc(ctx: ^Context) {
 	for i in 0 ..< 2 {
-		virtual.arena_destroy(&ctx.arena[i])
+		delete(ctx.arena_buffer[i])
 	}
 }
 
@@ -121,7 +119,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	ctx.frame += 1
 
 	i := current_buffer(ctx)
-	virtual.arena_free_all(&ctx.arena[i])
+    free_all(ctx.allocator[i])
 	ctx.text_cache[i] = make(map[TextCacheKey]TextCache, 1024, ctx.allocator[i])
 	ctx.text_width_cache[i] = make(map[TextWidthKey]f32, 1024, ctx.allocator[i])
 	ctx.grid_states[i] = make([dynamic]GridState, ctx.allocator[i])
@@ -180,7 +178,6 @@ _end_with_context :: proc(ctx: ^Context) -> []RenderCommand {
 	render(ctx)
 	return ctx.render_commands[:ctx.render_command_count]
 }
-
 
 // Declares an open element with the given ID.
 // All elements should be declared with this function.
