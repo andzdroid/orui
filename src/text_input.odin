@@ -299,15 +299,15 @@ text_index_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
+	scroll_offset := get_scroll_offset(element)
 
-	x_start :=
-		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	x_start := element._position.x + element.padding.left + element.border.left - scroll_offset.x
 	y_start :=
 		element._position.y +
 		element.padding.top +
 		element.border.top +
 		calculate_text_offset(element) -
-		element.scroll.offset.y
+		scroll_offset.y
 
 	if element.overflow == .Visible {
 		line_offset := calculate_line_offset(element, element._text_width, inner_width)
@@ -343,15 +343,15 @@ text_caret_from_point :: proc(ctx: ^Context, element: ^Element, point: rl.Vector
 
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
+	scroll_offset := get_scroll_offset(element)
 
-	x_start :=
-		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	x_start := element._position.x + element.padding.left + element.border.left - scroll_offset.x
 	y_start :=
 		element._position.y +
 		element.padding.top +
 		element.border.top +
 		calculate_text_offset(element) -
-		element.scroll.offset.y
+		scroll_offset.y
 
 	if element.overflow == .Visible {
 		line_offset := calculate_line_offset(element, element._text_width, inner_width)
@@ -594,6 +594,8 @@ ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_
 		element.font_size,
 		letter_spacing,
 	)
+	line_offset := calculate_line_offset(element, element._text_width, inner_width)
+	caret_x += line_offset
 	scroll_offset := get_scroll_offset(element)
 
 	if caret_x < scroll_offset.x {
@@ -604,8 +606,10 @@ ensure_caret_visible_horizontal :: proc(ctx: ^Context, element: ^Element, caret_
 		scroll_offset.x = caret_x - inner_width
 	}
 
-	max_scroll := max(0, element._content_size.x - inner_width)
-	scroll_offset.x = clamp(scroll_offset.x, 0, max_scroll)
+	min_scroll, max_scroll := scroll_bounds_x(element)
+	min_scroll = min(min_scroll, caret_x)
+	max_scroll = max(max_scroll, caret_x - inner_width)
+	scroll_offset.x = clamp(scroll_offset.x, min_scroll, max_scroll)
 	element.scroll.offset = scroll_offset
 }
 
@@ -621,7 +625,8 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 	inner_height := inner_height(element)
 
 	caret_line := find_caret_line(ctx, element, caret_index, inner_width, letter_spacing)
-	caret_y := f32(caret_line) * line_height
+	text_offset := calculate_text_offset(element)
+	caret_y := text_offset + f32(caret_line) * line_height
 
 	scroll_offset := get_scroll_offset(element)
 
@@ -633,10 +638,10 @@ ensure_caret_visible_vertical :: proc(ctx: ^Context, element: ^Element, caret_in
 		scroll_offset.y = caret_y + line_height - inner_height
 	}
 
-	prev_max := max(0, element._content_size.y - inner_height)
-	needed_max := max(0, caret_y + line_height - inner_height)
-	max_scroll := max(prev_max, needed_max)
-	scroll_offset.y = clamp(scroll_offset.y, 0, max_scroll)
+	min_scroll, max_scroll := scroll_bounds_y(element)
+	min_scroll = min(min_scroll, caret_y)
+	max_scroll = max(max_scroll, caret_y + line_height - inner_height)
+	scroll_offset.y = clamp(scroll_offset.y, min_scroll, max_scroll)
 	element.scroll.offset = scroll_offset
 }
 

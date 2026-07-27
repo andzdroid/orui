@@ -68,11 +68,8 @@ handle_input_state :: proc(ctx: ^Context) {
 				scroll_offset := get_scroll_offset(element)
 				old := scroll_offset.x
 				scroll_offset.x -= scroll.x * SCROLL_FACTOR
-				scroll_offset.x = clamp(
-					scroll_offset.x,
-					0,
-					element._content_size.x - inner_width(element),
-				)
+				min_x, max_x := scroll_bounds_x(element)
+				scroll_offset.x = clamp(scroll_offset.x, min_x, max_x)
 				// don't consume the scroll if it didn't change
 				if scroll_offset.x != old {
 					element.scroll.offset = scroll_offset
@@ -85,11 +82,8 @@ handle_input_state :: proc(ctx: ^Context) {
 				scroll_offset := get_scroll_offset(element)
 				old := scroll_offset.y
 				scroll_offset.y -= scroll.y * SCROLL_FACTOR
-				scroll_offset.y = clamp(
-					scroll_offset.y,
-					0,
-					element._content_size.y - inner_height(element),
-				)
+				min_y, max_y := scroll_bounds_y(element)
+				scroll_offset.y = clamp(scroll_offset.y, min_y, max_y)
 				// don't consume the scroll if it didn't change
 				if scroll_offset.y != old {
 					element.scroll.offset = scroll_offset

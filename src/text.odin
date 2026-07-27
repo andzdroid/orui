@@ -791,14 +791,15 @@ _render_text_line :: proc(
 render_text :: proc(ctx: ^Context, element: ^Element) {
 	letter_spacing := element.letter_spacing > 0 ? element.letter_spacing : 1
 	inner_width := inner_width(element)
+	scroll_offset := get_scroll_offset(element)
 
-	x := element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	x := element._position.x + element.padding.left + element.border.left - scroll_offset.x
 	y :=
 		element._position.y +
 		element.padding.top +
 		element.border.top +
 		calculate_text_offset(element) -
-		element.scroll.offset.y
+		scroll_offset.y
 
 	if current_context.focus_id == element.id {
 		render_selection(
@@ -847,14 +848,14 @@ render_text :: proc(ctx: ^Context, element: ^Element) {
 render_wrapped_text :: proc(ctx: ^Context, element: ^Element) {
 	text := element.text
 	text_len := len(element.text)
-	x_start :=
-		element._position.x + element.padding.left + element.border.left - element.scroll.offset.x
+	scroll_offset := get_scroll_offset(element)
+	x_start := element._position.x + element.padding.left + element.border.left - scroll_offset.x
 	y_start :=
 		element._position.y +
 		element.padding.top +
 		element.border.top +
 		calculate_text_offset(element) -
-		element.scroll.offset.y
+		scroll_offset.y
 	letter_spacing := _letter_spacing(element.letter_spacing)
 	inner_width := inner_width(element)
 

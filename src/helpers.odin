@@ -361,24 +361,27 @@ scrollbar_handle_params :: proc(id: Id) -> (percent: [2]f32, size: [2]f32) {
 	element := get_element(id)
 	if element != nil {
 		viewport := rl.Vector2{inner_width(element), inner_height(element)}
-		scroll_range := element._content_size - viewport
+		content_size := scroll_content_size(element)
+		min_x, max_x := scroll_bounds_x(element)
+		min_y, max_y := scroll_bounds_y(element)
+		scroll_range := rl.Vector2{max_x - min_x, max_y - min_y}
 
 		scroll_percent: rl.Vector2 = {}
 		if scroll_range.x > 0 {
-			scroll_percent.x = clamp(element.scroll.offset.x / scroll_range.x, 0, 1)
+			scroll_percent.x = clamp((element.scroll.offset.x - min_x) / scroll_range.x, 0, 1)
 		}
 		if scroll_range.y > 0 {
-			scroll_percent.y = clamp(element.scroll.offset.y / scroll_range.y, 0, 1)
+			scroll_percent.y = clamp((element.scroll.offset.y - min_y) / scroll_range.y, 0, 1)
 		}
 
 		handle_size: rl.Vector2 = {}
-		if element._content_size.x > viewport.x {
-			handle_size.x = viewport.x / element._content_size.x
+		if content_size.x > viewport.x {
+			handle_size.x = viewport.x / content_size.x
 		} else {
 			handle_size.x = 1
 		}
-		if element._content_size.y > viewport.y {
-			handle_size.y = viewport.y / element._content_size.y
+		if content_size.y > viewport.y {
+			handle_size.y = viewport.y / content_size.y
 		} else {
 			handle_size.y = 1
 		}
@@ -499,17 +502,19 @@ has_round_corners :: proc(corners: Corners) -> bool {
 
 @(private)
 scrolls_x :: proc(element: ^Element) -> bool {
+	min_x, max_x := scroll_bounds_x(element)
 	return(
 		(element.scroll.direction == .Auto || element.scroll.direction == .Horizontal) &&
-		element._content_size.x > inner_width(element) \
+		max_x > min_x \
 	)
 }
 
 @(private)
 scrolls_y :: proc(element: ^Element) -> bool {
+	min_y, max_y := scroll_bounds_y(element)
 	return(
 		(element.scroll.direction == .Auto || element.scroll.direction == .Vertical) &&
-		element._content_size.y > inner_height(element) \
+		max_y > min_y \
 	)
 }
 
@@ -517,22 +522,209 @@ scrolls_y :: proc(element: ^Element) -> bool {
 clamp_scroll_offset :: proc(element: ^Element) {
 	// TODO: remove this, replace with scroll velocity/gravity/something
 	// animate towards the nearest scrollable position instead of snapping
-	max_x := max(0, element._content_size.x - inner_width(element))
-	max_y := max(0, element._content_size.y - inner_height(element))
+	min_x, max_x := scroll_bounds_x(element)
+	min_y, max_y := scroll_bounds_y(element)
 	scroll := element.scroll.offset
 
 	switch element.scroll.direction {
 	case .None:
 		scroll = {}
 	case .Auto:
-		scroll = {clamp(scroll.x, 0, max_x), clamp(scroll.y, 0, max_y)}
+		scroll = {clamp(scroll.x, min_x, max_x), clamp(scroll.y, min_y, max_y)}
 	case .Vertical:
-		scroll.y = clamp(scroll.y, 0, max_y)
+		scroll.y = clamp(scroll.y, min_y, max_y)
 	case .Horizontal:
-		scroll.x = clamp(scroll.x, 0, max_x)
+		scroll.x = clamp(scroll.x, min_x, max_x)
 	case .Manual:
 	}
 	element.scroll.offset = scroll
+}
+
+@(private)
+scroll_bounds_x :: proc(element: ^Element) -> (min_x: f32, max_x: f32) {
+	viewport := inner_width(element)
+	content_min, content_max := scroll_content_bounds_x(element)
+	if content_max - content_min <= viewport {
+		return 0, 0
+	}
+
+	return content_min, content_max - viewport
+}
+
+@(private)
+scroll_bounds_y :: proc(element: ^Element) -> (min_y: f32, max_y: f32) {
+	viewport := inner_height(element)
+	content_min, content_max := scroll_content_bounds_y(element)
+	if content_max - content_min <= viewport {
+		return 0, 0
+	}
+
+	return content_min, content_max - viewport
+}
+
+@(private)
+scroll_content_size :: proc(element: ^Element) -> rl.Vector2 {
+	min_x, max_x := scroll_content_bounds_x(element)
+	min_y, max_y := scroll_content_bounds_y(element)
+	return {max_x - min_x, max_y - min_y}
+}
+
+@(private)
+scroll_content_bounds_x :: proc(element: ^Element) -> (min_x: f32, max_x: f32) {
+	if element.has_text {
+		return aligned_content_bounds(
+			element.align.x,
+			inner_width(element),
+			element._content_size.x,
+		)
+	}
+
+	if element.texture != nil {
+		texture_size := texture_content_size(element)
+		return aligned_content_bounds(element.align.x, inner_width(element), texture_size.x)
+	}
+
+	if element.layout == .Flex && element.direction == .TopToBottom && !flex_should_wrap(element) {
+		return aligned_content_bounds(
+			content_alignment(element.align_cross),
+			inner_width(element),
+			element._content_size.x,
+		)
+	}
+
+	return 0, element._content_size.x
+}
+
+@(private)
+scroll_content_bounds_y :: proc(element: ^Element) -> (min_y: f32, max_y: f32) {
+	if element.has_text {
+		return aligned_content_bounds(
+			element.align.y,
+			inner_height(element),
+			element._content_size.y,
+		)
+	}
+
+	if element.texture != nil {
+		texture_size := texture_content_size(element)
+		return aligned_content_bounds(element.align.y, inner_height(element), texture_size.y)
+	}
+
+	if element.layout == .Flex && element.direction == .LeftToRight && !flex_should_wrap(element) {
+		return aligned_content_bounds(
+			content_alignment(element.align_cross),
+			inner_height(element),
+			element._content_size.y,
+		)
+	}
+
+	return 0, element._content_size.y
+}
+
+@(private)
+aligned_content_bounds :: proc(
+	alignment: ContentAlignment,
+	viewport: f32,
+	content: f32,
+) -> (
+	min_position: f32,
+	max_position: f32,
+) {
+	if content <= 0 {
+		return 0, 0
+	}
+
+	start := calculate_alignment_offset(alignment, viewport, content)
+	return start, start + content
+}
+
+@(private)
+content_alignment :: proc(alignment: CrossAlignment) -> ContentAlignment {
+	switch alignment {
+	case .Start:
+		return .Start
+	case .Center:
+		return .Center
+	case .End:
+		return .End
+	}
+	return .Start
+}
+
+@(private)
+texture_source_rect :: proc(element: ^Element) -> rl.Rectangle {
+	source := element.texture_source
+	if source.width == 0 && source.height == 0 && element.texture != nil {
+		source = {0, 0, f32(element.texture^.width), f32(element.texture^.height)}
+	}
+	return source
+}
+
+@(private)
+texture_content_size :: proc(element: ^Element) -> rl.Vector2 {
+	source := texture_source_rect(element)
+	if source.width <= 0 || source.height <= 0 {
+		return {}
+	}
+
+	container_width := inner_width(element)
+	container_height := inner_height(element)
+
+	switch element.texture_fit {
+	case .Fill:
+		return {container_width, container_height}
+	case .Contain:
+		return texture_contain_size(source, container_width, container_height)
+	case .Cover:
+		return texture_cover_size(source, container_width, container_height)
+	case .None:
+		return {source.width, source.height}
+	case .ScaleDown:
+		if source.width <= container_width && source.height <= container_height {
+			return {source.width, source.height}
+		}
+		return texture_contain_size(source, container_width, container_height)
+	}
+
+	return {}
+}
+
+@(private)
+texture_contain_size :: proc(
+	source: rl.Rectangle,
+	container_width, container_height: f32,
+) -> rl.Vector2 {
+	if container_width <= 0 || container_height <= 0 {
+		return {}
+	}
+
+	source_aspect := source.width / source.height
+	container_aspect := container_width / container_height
+
+	if source_aspect > container_aspect {
+		return {container_width, container_width / source_aspect}
+	}
+
+	return {container_height * source_aspect, container_height}
+}
+
+@(private)
+texture_cover_size :: proc(
+	source: rl.Rectangle,
+	container_width, container_height: f32,
+) -> rl.Vector2 {
+	if container_width <= 0 || container_height <= 0 {
+		return {}
+	}
+
+	source_aspect := source.width / source.height
+	container_aspect := container_width / container_height
+
+	if source_aspect > container_aspect {
+		return {container_height * source_aspect, container_height}
+	}
+
+	return {container_width, container_width / source_aspect}
 }
 
 @(private)

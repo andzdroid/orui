@@ -466,9 +466,10 @@ render_image :: proc(
 
 @(private)
 render_texture :: proc(ctx: ^Context, element: ^Element) {
-	source := element.texture_source
-	if source.width == 0 && source.height == 0 {
-		source = {0, 0, f32(element.texture^.width), f32(element.texture^.height)}
+	source := texture_source_rect(element)
+	dest_size := texture_content_size(element)
+	if dest_size.x <= 0 || dest_size.y <= 0 {
+		return
 	}
 
 	color := element.color
@@ -478,67 +479,22 @@ render_texture :: proc(ctx: ^Context, element: ^Element) {
 
 	container_x := element._position.x + element.padding.left + element.border.left
 	container_y := element._position.y + element.padding.top + element.border.top
-	container_width := element._size.x - x_padding(element) - x_border(element)
-	container_height := element._size.y - y_padding(element) - y_border(element)
+	container_width := inner_width(element)
+	container_height := inner_height(element)
+	scroll_offset := get_scroll_offset(element)
 
-	dest: rl.Rectangle
-
-	switch element.texture_fit {
-	case .Fill:
-		dest = {container_x, container_y, container_width, container_height}
-	case .Contain:
-		source_aspect := source.width / source.height
-		container_aspect := container_width / container_height
-
-		if source_aspect > container_aspect {
-			// image is wider
-			dest.width = container_width
-			dest.height = container_width / source_aspect
-		} else {
-			// image is taller
-			dest.width = container_height * source_aspect
-			dest.height = container_height
-		}
-	case .Cover:
-		source_aspect := source.width / source.height
-		container_aspect := container_width / container_height
-
-		if source_aspect > container_aspect {
-			// image is wider
-			dest.width = container_height * source_aspect
-			dest.height = container_height
-		} else {
-			// image is taller
-			dest.width = container_width
-			dest.height = container_width / source_aspect
-		}
-	case .None:
-		dest.width = source.width
-		dest.height = source.height
-	case .ScaleDown:
-		// same as contain, but only scale down
-		source_aspect := source.width / source.height
-		container_aspect := container_width / container_height
-
-		if source.width <= container_width && source.height <= container_height {
-			dest.width = source.width
-			dest.height = source.height
-		} else {
-			if source_aspect > container_aspect {
-				// image is wider
-				dest.width = container_width
-				dest.height = container_width / source_aspect
-			} else {
-				// image is taller
-				dest.width = container_height * source_aspect
-				dest.height = container_height
-			}
-		}
+	dest := rl.Rectangle {
+		width  = dest_size.x,
+		height = dest_size.y,
 	}
-
-	dest.x = container_x + calculate_alignment_offset(element.align.x, container_width, dest.width)
+	dest.x =
+		container_x +
+		calculate_alignment_offset(element.align.x, container_width, dest.width) -
+		scroll_offset.x
 	dest.y =
-		container_y + calculate_alignment_offset(element.align.y, container_height, dest.height)
+		container_y +
+		calculate_alignment_offset(element.align.y, container_height, dest.height) -
+		scroll_offset.y
 
 	// clip image to container
 	// don't use scissor mode, it's sloooow

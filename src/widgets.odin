@@ -156,8 +156,8 @@ scrollbar :: proc(
 				mouse_position - scrollbar_background._position.y - handle_size.y / 2
 			track_range := background_size.y - handle_size.y
 			percent := track_range > 0 ? clamp(relative_position / track_range, 0, 1) : 0
-			scroll_offset.y =
-				percent * max(0, scroll_container._content_size.y - inner_height(scroll_container))
+			min_y, max_y := scroll_bounds_y(scroll_container)
+			scroll_offset.y = min_y + percent * (max_y - min_y)
 			set_scroll_offset(parent, scroll_offset)
 		} else {
 			mouse_position := rl.GetMousePosition().x
@@ -165,8 +165,8 @@ scrollbar :: proc(
 				mouse_position - scrollbar_background._position.x - handle_size.x / 2
 			track_range := background_size.x - handle_size.x
 			percent := track_range > 0 ? clamp(relative_position / track_range, 0, 1) : 0
-			scroll_offset.x =
-				percent * max(0, scroll_container._content_size.x - inner_width(scroll_container))
+			min_x, max_x := scroll_bounds_x(scroll_container)
+			scroll_offset.x = min_x + percent * (max_x - min_x)
 			set_scroll_offset(parent, scroll_offset)
 		}
 	}
