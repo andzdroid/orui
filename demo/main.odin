@@ -240,8 +240,8 @@ main :: proc() {
 						orui.id("arena 1"),
 						fmt.tprintf(
 							"Arena 1: %v / %v",
-							ctx.arena[0].total_used,
-							ctx.arena[0].total_reserved,
+							ctx.arena[0].offset,
+							len(ctx.arena[0].data),
 						),
 						{font_size = 16, color = rl.WHITE},
 					)
@@ -249,8 +249,8 @@ main :: proc() {
 						orui.id("arena 2"),
 						fmt.tprintf(
 							"Arena 2: %v / %v",
-							ctx.arena[1].total_used,
-							ctx.arena[1].total_reserved,
+							ctx.arena[1].offset,
+							len(ctx.arena[1].data),
 						),
 						{font_size = 16, color = rl.WHITE},
 					)

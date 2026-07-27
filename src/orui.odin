@@ -7,6 +7,7 @@ import rl "vendor:raylib"
 
 MAX_ELEMENTS :: 8192
 MAX_COMMANDS :: 8192
+DEFAULT_ARENA_CAPACITY :: 16 * mem.Megabyte
 
 when ODIN_OS == .Darwin {
 	SCROLL_FACTOR: f32 : 8
@@ -74,7 +75,7 @@ Context :: struct {
 
 init :: proc(ctx: ^Context) {
 	for i in 0 ..< 2 {
-		ctx.arena_buffer[i] = make([]byte, 16 * mem.Megabyte)
+		ctx.arena_buffer[i] = make([]byte, DEFAULT_ARENA_CAPACITY)
 		mem.arena_init(&ctx.arena[i], ctx.arena_buffer[i])
 		ctx.allocator[i] = mem.arena_allocator(&ctx.arena[i])
 	}
