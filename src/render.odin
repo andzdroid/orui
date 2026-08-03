@@ -255,31 +255,86 @@ render_rounded_rectangle :: proc(
 	corners: Corners,
 	color: rl.Color,
 ) {
-	// central vertical rectangle
-	if size.x - (corners.top_left + corners.top_right) > 0 {
-		draw_rectangle(
-			{position.x + corners.top_left, position.y},
-			{size.x - (corners.top_left + corners.top_right), size.y},
-			color,
-		)
-	}
+	equal_radii := (
+		corners.top_left == corners.top_right &&
+		corners.top_right == corners.bottom_right &&
+		corners.bottom_right == corners.bottom_left \
+	)
 
-	// left bar
-	if corners.top_left + corners.bottom_left < size.y {
-		draw_rectangle(
-			{position.x, position.y + corners.top_left},
-			{corners.top_left, size.y - (corners.top_left + corners.bottom_left)},
+	if equal_radii {
+		radius := corners.top_left
+		roundness := radius * 2 / min(size.x, size.y)
+		rl.DrawRectangleRounded(
+			{position.x, position.y, size.x, size.y},
+			roundness,
+			CORNER_SEGMENTS,
 			color,
 		)
-	}
+		return
+	} else {
+		left_radius := max(corners.top_left, corners.bottom_left)
+		right_radius := max(corners.top_right, corners.bottom_right)
+		top_radius := max(corners.top_left, corners.top_right)
+		bottom_radius := max(corners.bottom_left, corners.bottom_right)
+		center_width := size.x - (left_radius + right_radius)
+		center_height := size.y - (top_radius + bottom_radius)
 
-	// right bar
-	if corners.top_right + corners.bottom_right < size.y {
-		draw_rectangle(
-			{position.x + size.x - corners.top_right, position.y + corners.top_right},
-			{corners.top_right, size.y - (corners.top_right + corners.bottom_right)},
-			color,
-		)
+		// central vertical rectangle
+		if center_width > 0 {
+			draw_rectangle(
+				{position.x + left_radius, position.y},
+				{center_width, size.y},
+				color,
+			)
+		}
+
+		// central horizontal rectangle handles large radii on diagonally opposite corners
+		if center_height > 0 {
+			draw_rectangle(
+				{position.x, position.y + top_radius},
+				{size.x, center_height},
+				color,
+			)
+		}
+
+		// top and bottom bars fill the space between corners on each edge
+		top_bar_height := min(top_radius, size.y - bottom_radius)
+		if size.x - (corners.top_left + corners.top_right) > 0 && top_bar_height > 0 {
+			draw_rectangle(
+				{position.x + corners.top_left, position.y},
+				{size.x - (corners.top_left + corners.top_right), top_bar_height},
+				color,
+			)
+		}
+
+		bottom_bar_height := min(bottom_radius, size.y - top_radius)
+		if size.x - (corners.bottom_left + corners.bottom_right) > 0 && bottom_bar_height > 0 {
+			draw_rectangle(
+				{position.x + corners.bottom_left, position.y + size.y - bottom_bar_height},
+				{size.x - (corners.bottom_left + corners.bottom_right), bottom_bar_height},
+				color,
+			)
+		}
+
+		// left bar
+		left_bar_width := min(left_radius, size.x - right_radius)
+		if corners.top_left + corners.bottom_left < size.y {
+			draw_rectangle(
+				{position.x, position.y + corners.top_left},
+				{left_bar_width, size.y - (corners.top_left + corners.bottom_left)},
+				color,
+			)
+		}
+
+		// right bar
+		right_bar_width := min(right_radius, size.x - left_radius)
+		if corners.top_right + corners.bottom_right < size.y {
+			draw_rectangle(
+				{position.x + size.x - right_bar_width, position.y + corners.top_right},
+				{right_bar_width, size.y - (corners.top_right + corners.bottom_right)},
+				color,
+			)
+		}
 	}
 
 	// corners
