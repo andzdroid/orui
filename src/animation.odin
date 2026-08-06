@@ -184,7 +184,7 @@ transition_factor :: proc(
 	target: f32 = trigger ? 1 : 0
 
 	if state, ok := animation_current(ctx, key); ok {
-		if data, ok := state.data.(AnimationFactorData); ok {
+		if data, ok2 := state.data.(AnimationFactorData); ok2 {
 			assert(
 				data.trigger == trigger,
 				"same transition id used with conflicting triggers in one frame",
@@ -197,7 +197,7 @@ transition_factor :: proc(
 	}
 
 	if state, ok := animation_previous(ctx, key); ok {
-		if data, ok := state.data.(AnimationFactorData); ok {
+		if data, ok2 := state.data.(AnimationFactorData); ok2 {
 			if data.trigger != trigger {
 				data.trigger = trigger
 				data.start = data.value
