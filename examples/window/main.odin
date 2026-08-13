@@ -23,7 +23,7 @@ main :: proc() {
 		logh_err == os.ERROR_NONE ? log.create_file_logger(logh, allocator = logger_allocator) : log.create_console_logger(allocator = logger_allocator)
 	context.logger = logger
 
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
 	rl.InitWindow(1280, 900, "orui")
 	defer rl.CloseWindow()
 
@@ -61,6 +61,7 @@ main :: proc() {
 	layer2 := 3
 
 	render_cube_event := 1
+	current_cursor := rl.MouseCursor.DEFAULT
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -69,6 +70,13 @@ main :: proc() {
 		width := rl.GetScreenWidth()
 		height := rl.GetScreenHeight()
 		orui.begin(ctx, width, height)
+		cursor_hint := orui.cursor(ctx)
+		next_cursor :=
+			cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+		if next_cursor != current_cursor {
+			rl.SetMouseCursor(next_cursor)
+			current_cursor = next_cursor
+		}
 
 		{orui.container(
 				orui.id("container"),
@@ -152,6 +160,7 @@ main :: proc() {
 								border = orui.border(1),
 								border_color = {100, 100, 100, 255},
 								corner_radius = orui.corner(4),
+								cursor = .Pointing_Hand,
 							},
 						) {
 							log.info("ok button clicked")
@@ -169,6 +178,7 @@ main :: proc() {
 								border = orui.border(1),
 								border_color = {100, 100, 100, 255},
 								corner_radius = orui.corner(4),
+								cursor = .Pointing_Hand,
 							},
 						) {
 							log.info("cancel button clicked")
@@ -271,6 +281,7 @@ window :: proc(id: string, title: string, position: rl.Vector2, dragging: bool, 
 				border_color = {150, 150, 150, 255},
 				align_main = .SpaceBetween,
 				capture = .True,
+				cursor = .Resize_All,
 			},
 		)
 		orui.label(orui.id(id, 2), title, {font_size = 16, color = rl.WHITE, disabled = .True})
@@ -282,6 +293,7 @@ window :: proc(id: string, title: string, position: rl.Vector2, dragging: bool, 
 				width = orui.fixed(24),
 				height = orui.fixed(24),
 				color = orui.active() ? {220, 220, 220, 255} : orui.hovered() ? rl.WHITE : {200, 200, 200, 255},
+				cursor = .Pointing_Hand,
 			},
 		)
 	}

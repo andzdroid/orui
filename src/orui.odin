@@ -53,6 +53,7 @@ Context :: struct {
 	// mouse input
 	pointer_capture:       i32,
 	pointer_capture_id:    Id,
+	pointer_cursor:        CursorHint,
 	hover:                 [2]IdBuffer,
 	active:                [2]IdBuffer,
 
@@ -120,7 +121,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 	ctx.frame += 1
 
 	i := current_buffer(ctx)
-    free_all(ctx.allocator[i])
+	free_all(ctx.allocator[i])
 	ctx.text_cache[i] = make(map[TextCacheKey]TextCache, 1024, ctx.allocator[i])
 	ctx.text_width_cache[i] = make(map[TextWidthKey]f32, 1024, ctx.allocator[i])
 	ctx.grid_states[i] = make([dynamic]GridState, ctx.allocator[i])
@@ -143,6 +144,7 @@ _begin :: proc(ctx: ^Context, width: f32, height: f32, dt: f32) {
 		disabled    = .False,
 		block       = .True,
 		capture     = .False,
+		cursor      = .Unspecified,
 		_grid_state = -1,
 	}
 	element_count^ += 1

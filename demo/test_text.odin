@@ -16,6 +16,7 @@ button_style :: proc(element: ^orui.Element) {
 	element.corner_radius = orui.corner(4)
 	element.color = rl.BLACK
 	element.padding = orui.padding(10, 8)
+	element.cursor = .Pointing_Hand
 }
 
 render_test_text :: proc() {

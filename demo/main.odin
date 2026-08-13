@@ -91,7 +91,7 @@ main :: proc() {
 		defer spall.buffer_destroy(&spall_ctx, &spall_buffer)
 	}
 
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
 	rl.InitWindow(1280, 900, "orui")
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(120)
@@ -140,6 +140,7 @@ main :: proc() {
 
 	avg1, avg2: time.Duration
 	update_timer: f32 = 0
+	current_cursor := rl.MouseCursor.DEFAULT
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -158,6 +159,13 @@ main :: proc() {
 		width := rl.GetScreenWidth()
 		height := rl.GetScreenHeight()
 		orui.begin(ctx, width, height)
+		cursor_hint := orui.cursor(ctx)
+		next_cursor :=
+			cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+		if next_cursor != current_cursor {
+			rl.SetMouseCursor(next_cursor)
+			current_cursor = next_cursor
+		}
 
 		switch Scene(scene) {
 		case .Test_Flex:

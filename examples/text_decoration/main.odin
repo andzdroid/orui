@@ -22,7 +22,7 @@ TextRanges :: struct {
 }
 
 main :: proc() {
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
 	rl.InitWindow(960, 540, "orui text decoration")
 	defer rl.CloseWindow()
 
@@ -47,12 +47,20 @@ main :: proc() {
 	text_id := orui.to_id("highlighted text")
 	search_ranges := find_all_ranges(BODY_TEXT, SEARCH_TEXT)
 	link_range := find_first_range(BODY_TEXT, LINK_TEXT)
+	current_cursor := rl.MouseCursor.DEFAULT
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground({245, 242, 235, 255})
 
 		orui.begin(ctx, rl.GetScreenWidth(), rl.GetScreenHeight())
+		cursor_hint := orui.cursor(ctx)
+		next_cursor :=
+			cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+		if next_cursor != current_cursor {
+			rl.SetMouseCursor(next_cursor)
+			current_cursor = next_cursor
+		}
 
 		{orui.container(
 				orui.id("root"),

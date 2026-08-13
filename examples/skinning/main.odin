@@ -14,7 +14,7 @@ Skin :: enum {
 }
 
 main :: proc() {
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
 	rl.InitWindow(1280, 900, "orui")
 	defer rl.CloseWindow()
 
@@ -35,6 +35,7 @@ main :: proc() {
 	defer rl.UnloadFont(font2)
 
 	skin := Skin.Dark
+	current_cursor := rl.MouseCursor.DEFAULT
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -43,6 +44,13 @@ main :: proc() {
 		width := rl.GetScreenWidth()
 		height := rl.GetScreenHeight()
 		orui.begin(ctx, width, height)
+		cursor_hint := orui.cursor(ctx)
+		next_cursor :=
+			cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+		if next_cursor != current_cursor {
+			rl.SetMouseCursor(next_cursor)
+			current_cursor = next_cursor
+		}
 
 		{orui.container(
 				orui.id("container"),
@@ -227,7 +235,13 @@ button :: proc(id: string, label: string, skin: Skin) -> bool {
 	return orui.label(
 		orui.id(id),
 		label,
-		{width = orui.fit(), height = orui.fit(), font_size = 16, padding = {10, 20, 10, 20}},
+		{
+			width = orui.fit(),
+			height = orui.fit(),
+			font_size = 16,
+			padding = {10, 20, 10, 20},
+			cursor = .Pointing_Hand,
+		},
 		button_style(skin),
 	)
 }

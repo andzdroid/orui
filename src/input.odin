@@ -28,6 +28,7 @@ handle_input_state :: proc(ctx: ^Context) {
 	ctx.prev_focus_id = ctx.focus_id
 	ctx.hover[current].count = 0
 	ctx.active[current].count = 0
+	ctx.pointer_cursor = .Unspecified
 
 	if released {
 		ctx.pointer_capture = 0
@@ -57,6 +58,11 @@ handle_input_state :: proc(ctx: ^Context) {
 
 		if element.disabled == .True {
 			continue
+		}
+
+		// pointer capture owns the cursor even when the pointer leaves the capturing element
+		if ctx.pointer_capture != 0 && element.cursor != .Inherit {
+			ctx.pointer_cursor = element.cursor
 		}
 
 		if !point_in_element(position, element) {
@@ -98,6 +104,12 @@ handle_input_state :: proc(ctx: ^Context) {
 			hover_count := ctx.hover[current].count
 			ctx.hover[current].ids[hover_count] = element.id
 			ctx.hover[current].count += 1
+
+			if ctx.pointer_cursor == .Unspecified &&
+			   element.cursor != .Inherit &&
+			   element.cursor != .Unspecified {
+				ctx.pointer_cursor = element.cursor
+			}
 
 			already_active := false
 			for active_index: i32 = 0;

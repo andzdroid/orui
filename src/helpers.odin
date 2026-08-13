@@ -2,6 +2,50 @@ package orui
 
 import rl "vendor:raylib"
 
+// Matches raylib's MouseCursor
+Cursor :: enum i8 {
+	Unspecified   = -1,
+	Default       = 0,
+	Pointing_Hand = 4,
+	IBeam         = 2,
+	Crosshair     = 3,
+	Resize_EW     = 5,
+	Resize_NS     = 6,
+	Resize_NWSE   = 7,
+	Resize_NESW   = 8,
+	Resize_All    = 9,
+	Not_Allowed   = 10,
+}
+
+cursor :: proc(ctx: ^Context) -> Cursor {
+	switch ctx.pointer_cursor {
+	case .Inherit, .Unspecified:
+		return .Unspecified
+	case .Default:
+		return .Default
+	case .Pointing_Hand:
+		return .Pointing_Hand
+	case .IBeam:
+		return .IBeam
+	case .Crosshair:
+		return .Crosshair
+	case .Resize_EW:
+		return .Resize_EW
+	case .Resize_NS:
+		return .Resize_NS
+	case .Resize_NWSE:
+		return .Resize_NWSE
+	case .Resize_NESW:
+		return .Resize_NESW
+	case .Resize_All:
+		return .Resize_All
+	case .Not_Allowed:
+		return .Not_Allowed
+	}
+
+	return .Unspecified
+}
+
 bounding_rect :: proc {
 	_bounding_rect,
 	_bounding_rect_string,

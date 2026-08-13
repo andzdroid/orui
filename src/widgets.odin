@@ -68,6 +68,7 @@ text_input :: proc(
 	element.text = string(text.buf[:])
 	element.editable = true
 	element.whitespace = .Preserve
+	element.cursor = .IBeam
 
 	for modifier in modifiers {
 		modifier(element)
@@ -122,6 +123,7 @@ scrollbar :: proc(
 	configure_element(ctx, background_element, background_parent^, config)
 	background_element.clip = {.None, {}}
 	background_element.capture = .True
+	background_element.cursor = .Pointing_Hand
 
 	scroll_percent, handle_percent := scrollbar_handle_params(parent)
 	background_size := size(background_id)

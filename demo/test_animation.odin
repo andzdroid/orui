@@ -112,6 +112,7 @@ animation_ease_button :: proc(id, text: string, easing: ease.Ease) {
 			color = orui.animate("text", target_text),
 			font_size = 16,
 			align = {.Center, .Center},
+			cursor = .Pointing_Hand,
 		},
 	) {
 		animation_ease = easing
@@ -150,6 +151,7 @@ animation_button_row :: proc() {
 			color = rl.BLACK,
 			font_size = 16,
 			align = {.Center, .Center},
+			cursor = .Pointing_Hand,
 		},
 	)
 }
@@ -262,6 +264,7 @@ animation_size_row :: proc() {
 			),
 			align_main = .Center,
 			align_cross = .Center,
+			cursor = .Pointing_Hand,
 		},
 	)
 	orui.label(

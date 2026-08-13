@@ -7,7 +7,7 @@ import "core:strings"
 import rl "vendor:raylib"
 
 main :: proc() {
-	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT})
+	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
 	rl.InitWindow(1280, 900, "orui")
 	defer rl.CloseWindow()
 
@@ -44,6 +44,7 @@ main :: proc() {
 		&input_buffer2,
 		"This is a multi-line text input!\nThe Enter key will add a new line to the text. Any line that exceeds the element width will be wrapped.\n\nMore lines here.",
 	)
+	current_cursor := rl.MouseCursor.DEFAULT
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
@@ -52,6 +53,13 @@ main :: proc() {
 		width := rl.GetScreenWidth()
 		height := rl.GetScreenHeight()
 		orui.begin(ctx, width, height)
+		cursor_hint := orui.cursor(ctx)
+		next_cursor :=
+			cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+		if next_cursor != current_cursor {
+			rl.SetMouseCursor(next_cursor)
+			current_cursor = next_cursor
+		}
 
 		{orui.container(
 				orui.id("container"),
@@ -149,6 +157,7 @@ _button_id :: proc(id: orui.Id, label: string, modifiers: ..orui.ElementModifier
 			padding = orui.padding(10, 8),
 			align = {.Center, .Center},
 			font_size = 16,
+			cursor = .Pointing_Hand,
 		},
 		..modifiers,
 	)
@@ -198,6 +207,7 @@ toggle_button :: proc(
 			border = orui.border(1),
 			border_color = {100, 100, 100, 255},
 			corner_radius = orui.corner(4),
+			cursor = .Pointing_Hand,
 		},
 		..modifiers,
 	) {
@@ -224,6 +234,7 @@ toggle_buttons :: proc(id: string, labels: []string, toggle_state: ^int) {
 				color = rl.BLACK,
 				border = orui.border(1),
 				border_color = {100, 100, 100, 255},
+				cursor = .Pointing_Hand,
 			},
 		) {
 			toggle_state^ = i
@@ -296,6 +307,7 @@ checkbox :: proc(id: string, label: string, checked_state: ^bool) {
 			width = orui.fit(),
 			height = orui.fit(),
 			align_cross = .Center,
+			cursor = .Pointing_Hand,
 		},
 	)
 

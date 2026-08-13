@@ -139,6 +139,21 @@ InheritedBool :: enum u8 {
 	True,
 }
 
+CursorHint :: enum u8 {
+	Inherit,
+	Unspecified,
+	Default,
+	Pointing_Hand,
+	IBeam,
+	Crosshair,
+	Resize_EW,
+	Resize_NS,
+	Resize_NWSE,
+	Resize_NESW,
+	Resize_All,
+	Not_Allowed,
+}
+
 Overflow :: enum u8 {
 	// Content will be wrapped to fit in the element.
 	Wrap,
@@ -332,6 +347,9 @@ ElementConfig :: struct {
 	// Recommended to be set to True for things like sliders and draggable windows.
 	// Inherited from parent by default.
 	capture:          InheritedBool,
+	// Pointer cursor intent for this element. Inherited from parent by default.
+	// Unspecified means ORUI has no opinion about the pointer cursor.
+	cursor:           CursorHint,
 	editable:         bool,
 
 	// Scroll configuration
@@ -407,6 +425,7 @@ Element :: struct {
 	disabled:          InheritedBool,
 	block:             InheritedBool,
 	capture:           InheritedBool,
+	cursor:            CursorHint,
 	editable:          bool,
 
 	// scroll
@@ -530,6 +549,7 @@ configure_element :: proc(
 	element.disabled = config.disabled == .Inherit ? parent.disabled : config.disabled
 	element.block = config.block == .Inherit ? parent.block : config.block
 	element.capture = config.capture == .Inherit ? parent.capture : config.capture
+	element.cursor = config.cursor == .Inherit ? parent.cursor : config.cursor
 	element.editable = config.editable
 
 	// scroll

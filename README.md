@@ -74,7 +74,8 @@ To do:
   - [hovered()](#hovered)
   - [active()](#active)
   - [clicked()](#clicked)
-	- [focused()](#focused)
+  - [focused()](#focused)
+  - [cursor()](#cursor)
 - [Animation](#animation)
 - [Element config](#element-config)
   - [Config helpers](#config-helpers)
@@ -408,6 +409,30 @@ if orui.captured("some element") {
   // is capturing input
 }
 ```
+
+### cursor()
+
+Returns a pointer cursor suggestion for the current mouse position. The suggestion uses the same disabled, layer, and blocking rules as hover.
+
+If an element has pointer capture, that element's cursor remains the suggestion even when the pointer leaves its bounds.
+
+Cursor hints must be assigned explicitly to each element.
+
+The returned `Cursor` matches Raylib's `rl.MouseCursor` values. `.Unspecified` means orui has no opinion, while `.Default` is an explicit request for the platform's default cursor:
+
+```odin
+current_cursor := rl.MouseCursor.DEFAULT
+
+// Each frame, after orui.begin():
+cursor_hint := orui.cursor(ctx)
+next_cursor := cursor_hint == .Unspecified ? rl.MouseCursor.DEFAULT : rl.MouseCursor(cursor_hint)
+if next_cursor != current_cursor {
+	rl.SetMouseCursor(next_cursor)
+	current_cursor = next_cursor
+}
+```
+
+You can ignore `.Unspecified`, map the suggestion to custom cursors, or combine it with world interaction, dragging, targeting, and other non-UI systems. The built-in text input and scrollbar widgets explicitly suggest `.IBeam` and `.Pointing_Hand`.
 
 ## Animation
 
@@ -844,7 +869,7 @@ ContentAlignment :: enum {
 }
 ```
 
-### disabled, block, capture
+### disabled, block, capture, cursor
 
 These are mouse input options. If omitted, the element will inherit the values from its parent element.
 
@@ -852,13 +877,32 @@ Disabled: whether the element can be interacted with. If disabled, it won't ever
 
 Block: whether the element will consume mouse interactions, block elements below it from receiving them. Default value is True.
 
-Consume: whether the element will consume interactions once they are activated. Recommended to be set to True for things like sliders and draggable windows. Default value is False.
+Capture: whether the element will consume interactions once they are activated. Recommended to be set to True for things like sliders and draggable windows. Default value is False.
 
 ```odin
 InheritedBool :: enum {
 	Inherit,
 	False,
 	True,
+}
+```
+
+Cursor hint: the element's desired pointer cursor. It inherits from the parent by default, so a button container can set `.Pointing_Hand` and its label and icon will use the same suggestion. Set `.Unspecified` to override an inherited cursor with no opinion.
+
+```odin
+CursorHint :: enum u8 {
+	Inherit,
+	Unspecified,
+	Default,
+	Pointing_Hand,
+	IBeam,
+	Crosshair,
+	Resize_EW,
+	Resize_NS,
+	Resize_NWSE,
+	Resize_NESW,
+	Resize_All,
+	Not_Allowed,
 }
 ```
 
