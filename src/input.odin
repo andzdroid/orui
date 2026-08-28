@@ -28,6 +28,7 @@ handle_input_state :: proc(ctx: ^Context) {
 	ctx.prev_focus_id = ctx.focus_id
 	ctx.hover[current].count = 0
 	ctx.active[current].count = 0
+	ctx.pointer_blocker_id = 0
 	ctx.pointer_cursor = .Unspecified
 
 	if released {
@@ -159,6 +160,7 @@ handle_input_state :: proc(ctx: ^Context) {
 			}
 
 			if element.block == .True {
+				ctx.pointer_blocker_id = element.id
 				click_consumed = true
 			}
 		}
