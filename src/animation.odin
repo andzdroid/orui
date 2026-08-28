@@ -261,7 +261,7 @@ animate_value :: proc(
 	key := animation_key(local_id)
 
 	if state, ok := animation_current(ctx, key); ok {
-		if data, ok2 := state.data.(AnimationValueData(T)); ok {
+		if data, ok2 := state.data.(AnimationValueData(T)); ok2 {
 			assert(
 				data.target == target,
 				"same animate id used with conflicting targets in one frame",
@@ -274,7 +274,7 @@ animate_value :: proc(
 	}
 
 	if state, ok := animation_previous(ctx, key); ok {
-		if data, ok2 := state.data.(AnimationValueData(T)); ok {
+		if data, ok2 := state.data.(AnimationValueData(T)); ok2 {
 			if data.target != target {
 				when T == Size {
 					if data.target.type != target.type {
